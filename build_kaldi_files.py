@@ -13,8 +13,6 @@
 """
 
 
-LIBMYSTT_PATH = "/home/gweltaz/Documents/STT/stt-tools"
-
 import sys
 import os
 import argparse
@@ -33,14 +31,13 @@ from ostilhou.asr import (
     phonetize,
 )
 
-sys.path.append(LIBMYSTT_PATH)
 from libMySTT import acronyms, is_acronym, get_cleaned_sentence, split_line
 
 
 
 SAVE_DIR = "data"
 LM_SENTENCE_MIN_WORDS = 3
-UTTERANCES_MIN_LENGTH = 3 # exclude utterances shorter than this length (in seconds)
+UTTERANCES_MIN_LENGTH = 0 # exclude utterances shorter than this length (in seconds)
 
 # AUDIO DATA AUGMENTATION
 # If True, duplicates the whole train dataset, adding various audio noises

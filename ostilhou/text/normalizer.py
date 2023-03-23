@@ -22,6 +22,7 @@ substitutions = {
     "ao."   : ["aotrou"],
     "niv." : ["niverenn"],
     "g.m." : ["goude meren"],
+    "St."  : ["Sant"],
 }
 
 
