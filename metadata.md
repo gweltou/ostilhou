@@ -4,7 +4,7 @@ Kinda like CSS for metadata integration in text corpuses.
 
 ## Speaker name
 
-{spk:marc'harid lagadeg}
+`{spk:marc'harid lagadeg}`
 
 Sentence scope.
 
@@ -14,11 +14,11 @@ As its usage is frequent, a metadata with no attribute should be interpreted as 
 
 Names are case-insensitive.
 
-{marc'harid lagadeg}
+`{marc'harid lagadeg}`
 
 ## Speaker gender
 
-{gender:f/m}
+`{gender:f/m}`
 
 Global scope.
 
@@ -28,11 +28,11 @@ It is enough to specify the speaker's gender only once. It like be taken into ac
 
 Different attribute can be chained in the same metadata with the `;` character :
 
-{spk:marc'harid lagadeg; gender:f}
+`{spk:marc'harid lagadeg; gender:f}`
 
 ## Accent
 
-{accent:gwenedeg}
+`{accent:gwenedeg}`
 
 Sentence scope.
 
@@ -42,19 +42,27 @@ Possible values : gwened(eg), leon(eg), treger(ieg), kerne(veg), gwenrann(eg), g
 
 You can specify a list of values for an attribute, by separating them with a comma `,` :
 
-{accent:kerneveg, kemper}
+`{accent:kerneveg, kemper}`
 
 ## Authors
 
 Names of people and software responsible for transcribing the text (in order if possible)
 
-{author:vosk-br, karen treguier, gweltaz duval-guennoc}
+`{author:vosk-br, katell lagadeg, yann kloareg}`
 
 Document scope.
 
 Transcriber metadata applies until another `author` property is found or end of document is reached.
 
 Names are case-insensitive.
+
+## Phon
+
+Add a pronunciation to the dictionary.
+
+Word scope.
+
+`{phon: B OU R D O N EH}`
 
 ## Parser
 

@@ -277,7 +277,6 @@ with open(_postproc_sub_path, 'r') as f:
     for l in f.readlines():
         l = l.strip()
         if l and not l.startswith('#'):
-            print(f"{l=}")
             k, v = l.split('\t')
             _postproc_sub[k] = v
 

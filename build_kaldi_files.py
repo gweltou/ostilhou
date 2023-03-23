@@ -291,12 +291,10 @@ if __name__ == "__main__":
                 augmented_files.append( (recording_id, output_filename) )
                 if os.path.exists(output_filename):
                     continue
-                print(filename)
                 if not os.path.exists(rep):
                     os.makedirs(rep)
                 add_amb_random(original_audio, output_filename)
 
-                
             corpora["train"]["wavscp"].extend(augmented_files)
             print("Done.")
 
