@@ -16,13 +16,12 @@ def add_amb_random(voice_file, output_file):
     voice = AudioSegment.from_file(voice_file)
     amb = AudioSegment.from_file(amb_file)
 
-    print(amb_file, amb.rms, amb.dBFS)
     if amb.dBFS > -30: amb -= amb.dBFS + 30
     if voice.dBFS < -25: voice += -voice.dBFS - 20
-    print(amb_file, amb.rms, amb.dBFS)
-    print(voice_file, voice.rms, voice.dBFS)
+    # print(amb_file, amb.rms, amb.dBFS)
+    # print(voice_file, voice.rms, voice.dBFS)
 
     combined = voice.overlay(amb, loop=True)
-    print("Exporting augmented audio file to", output_file)
-    combined.export(output_file, format='wav', parameters=[])
+    print("Exporting to", output_file)
+    combined.export(output_file, format='wav', parameters=['-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000'])
 

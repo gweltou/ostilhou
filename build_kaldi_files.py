@@ -21,9 +21,9 @@ import argparse
 import numpy as np
 import re
 from math import floor, ceil
-from talbr.dicts import proper_nouns
-from talbr.audio import add_amb_random, AUDIO_AMB_FILES
-from talbr.asr import (
+from ostilhou.dicts import proper_nouns
+from ostilhou.audio import add_amb_random, AUDIO_AMB_FILES
+from ostilhou.asr import (
     load_segments_data,
     load_text_data,
     extract_metadata,
