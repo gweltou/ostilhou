@@ -1,5 +1,6 @@
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 from .metadata import extract_metadata
+from ..dicts import proper_nouns
 
 
 # Graphemes to phonemes
@@ -158,37 +159,79 @@ for val in list(w2f.values()) + list(acr2f.values()) + list(verbal_fillers.value
         phonemes.add(tok)
 
 
-lexicon_sub = dict()
-_lexicon_sub_path = __file__.replace("__init__.py", "lexicon_sub.dic")
-with open(_lexicon_sub_path, 'r') as f:
-    for l in f.readlines():
-        w, *phon = l.split()
-        lexicon_sub[w] = phon
 
+# Lexicon_add contains pronunciation variants of words that can't be infered
+# by the `phonetize` function from their spelling in 'peurunvan' alone.
+# Those pronunciation should be added to the ones infered by `phonetize`.
 
-lexicon_add = dict()
-_lexicon_add_path = __file__.replace("__init__.py", "lexicon_add.dic")
+lexicon_add: Dict[str, List[str]] = dict()
+_lexicon_add_path = __file__.replace("__init__.py", "lexicon_add.tsv")
 with open(_lexicon_add_path, 'r') as f:
     for l in f.readlines():
-        w, *phon = l.split()
-        lexicon_add[w] = phon
+        w, phon = l.strip().split(maxsplit=1)
+        if w in lexicon_add:
+            lexicon_add[w].append(phon)
+        else:
+            lexicon_add[w] = [phon]
+
+
+# Lexicon_sub contains hardcoded pronunciations for (mostly) foreign words and
+# pronunciation exceptions.
+# When a word is present in `lexicon_sub`, the `phonetize` function will not
+# infer it's pronunciation from its spelling. Only the harcoded one(s) will
+# be returned.
+# When there is more than one possible particular pronunciation for a word,
+# supplementary pronunciation can be put in `lexicon_sub.dic` or `lexicon_add.dic`
+
+lexicon_sub: Dict[str, List[str]] = dict()
+_lexicon_sub_path = __file__.replace("__init__.py", "lexicon_sub.tsv")
+with open(_lexicon_sub_path, 'r') as f:
+    for l in f.readlines():
+        w, phon = l.strip().split(maxsplit=1)
+        if w in lexicon_sub:
+            lexicon_sub[w].append(phon)
+        else:
+            lexicon_sub[w] = [phon]
 
 
 
-def phonetize(word: str) -> str:
+def phonetize(word: str) -> List[str]:
+    """ Simple phonetizer
+        Returns a string of phonemes representing the pronunciation
+        of a given word
+    """
+    
+    word = word.strip().lower()
+
+    if '-' in word:
+        # Composed word with hyphen, treat every subword individually
+        prop = [""]
+        for sub in word.split('-'):
+            new_prop = []
+            rep = phonetize(sub)
+            for r in rep:
+                for pre in prop:
+                    new_prop.append(str.strip(pre + ' ' + r))
+            prop = new_prop
+        return prop
+
     if word in lexicon_sub:
-        return lexicon_sub[word]
+        alter = lexicon_add.get(word, [])
+        return lexicon_sub[word] + alter
+    if word in proper_nouns:
+        if proper_nouns[word]:
+            return proper_nouns[word]
     
     head = 0
-    phonemes = []
-    word = '.' + word.strip().lower().replace('-', '.') + '.'
+    phon = []
+    wordb = '.' + word + '.'
     error = False
-    while head < len(word):
+    while head < len(wordb):
         parsed = False
         for i in (4, 3, 2, 1):
-            token = word[head:head+i].lower()
+            token = wordb[head:head+i].lower()
             if token in w2f:
-                phonemes.append(w2f[token])
+                phon.append(w2f[token])
                 head += i-1
                 parsed = True
                 break
@@ -196,10 +239,13 @@ def phonetize(word: str) -> str:
         if not parsed and token not in ('.', "'"):
             error = True
     
+    pron = ' '.join(phon)
+
     if error:
-        print("ERROR [phonetizer]", word, ' '.join(phonemes))
+        print("ERROR [phonetizer]", word, pron)
     
-    return phonemes
+    variants = lexicon_add.get(word, [])
+    return [pron] + variants
 
 
 

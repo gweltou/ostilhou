@@ -19,6 +19,8 @@ import argparse
 import numpy as np
 import re
 from math import floor, ceil
+from ostilhou import normalize_sentence
+from ostilhou.text import filter_out
 from ostilhou.dicts import proper_nouns
 from ostilhou.audio import add_amb_random, AUDIO_AMB_FILES
 from ostilhou.asr import (
@@ -43,7 +45,7 @@ UTTERANCES_MIN_LENGTH = 0 # exclude utterances shorter than this length (in seco
 # If True, duplicates the whole train dataset, adding various audio noises
 # The augmented data will be put in a sister folder `augmented` with the same
 # hierarchy as the original audio corpus.
-USE_DATA_AUGMENTATION = True    
+USE_DATA_AUGMENTATION = False    
 
 
 spk2gender_files = ["spk2gender.txt", "corpus_common_voice/spk2gender"]
@@ -138,20 +140,25 @@ def parse_data_file(split_filename):
             
         cleaned_sentence, _ = get_cleaned_sentence(sentence)     
         if cleaned_sentence:
+            normalized = normalize_sentence(cleaned_sentence)
+            if len(normalized) != len(cleaned_sentence):
+                print(cleaned_sentence)
+                print(normalized)
+                print()
             speaker_ids.append(speaker_id)
-            sentences.append(cleaned_sentence.replace('*', ''))
+            sentences.append(normalized.replace('*', ''))
             
             # Add words to lexicon
-            for word in cleaned_sentence.split():
+            for word in normalized.split():
                 # Remove black-listed words (those beggining with '*')
                 if word.startswith('*'):
                     pass
-                elif word in verbal_fillers:
-                    pass
-                elif is_acronym(word):
-                    pass
-                elif word.lower() in proper_nouns:
-                    pass
+                # elif word in verbal_fillers:
+                #     pass
+                # elif is_acronym(word):
+                #     pass
+                # elif word.lower() in proper_nouns:
+                #     pass
                 else: data["lexicon"].add(word)
         
         # Add sentence to language model corpus
@@ -168,7 +175,7 @@ def parse_data_file(split_filename):
                 if cleaned_sub.count(' ') < LM_SENTENCE_MIN_WORDS - 1:
                     # print("corpus skip:", cleaned_sentence)
                     continue
-                data["corpus"].add(cleaned_sub)
+                data["corpus"].add(normalize_sentence(cleaned_sub))
     
     if replace_corpus:
         with open(substitute_corpus_filename, 'r') as f:
@@ -328,31 +335,31 @@ if __name__ == "__main__":
                         for word in cleaned.split():
                             if word.lower() in corpora["train"]["lexicon"]:
                                 pass
-                            elif word.lower() in proper_nouns:
-                                pass
-                            elif is_acronym(word.upper()) and word.upper() in acronyms:
-                                pass
+                            # elif word.lower() in proper_nouns:
+                            #     pass
+                            # elif is_acronym(word.upper()) and word.upper() in acronyms:
+                            #     pass
                             else:
                                 corpora["train"]["lexicon"].add(word)
                         fout.write(cleaned + '\n')
 
     
-    lexicon_phon = set()
-    for w in sorted(corpora["train"]["lexicon"]):
-        lexicon_phon.add(f"{w} {' '.join(phonetize(w))}")
+    # lexicon_phon = set()
+    # for w in sorted(corpora["train"]["lexicon"]):
+    #     lexicon_phon.add(f"{w} {phonetize(w)}")
     # with open(LEXICON_ADD_PATH, 'r') as f_in:
     #     for l in f_in.readlines():
     #         lexicon_phon.add(l.strip())
-    for word in lexicon_add:
-        lexicon_phon.add(f"{word} {lexicon_add[word]}")
-    for w in acronyms:
-        for pron in acronyms[w]:
-            lexicon_phon.add(f"{w} {pron}")
-    for w in proper_nouns:
-        for pron in proper_nouns[w]:
-            lexicon_phon.add(f"{w.capitalize()} {pron}")
-    for w in verbal_fillers:
-        lexicon_phon.add(f"{w} {verbal_fillers[w]}")
+    # for word in lexicon_add:
+    #     lexicon_phon.add(f"{word} {lexicon_add[word]}")
+    # for w in acronyms:
+    #     for pron in acronyms[w]:
+    #         lexicon_phon.add(f"{w} {pron}")
+    # for w in proper_nouns:
+    #     for pron in proper_nouns[w]:
+    #         lexicon_phon.add(f"{w.capitalize()} {pron}")
+    # for w in verbal_fillers:
+    #     lexicon_phon.add(f"{w} {verbal_fillers[w]}")
         
     
     if not args.dry_run:
@@ -366,9 +373,9 @@ if __name__ == "__main__":
 
         with open(lexicon_path, 'w') as f_out:
             f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n")
-            for line in sorted(lexicon_phon):
-                f_out.write(line + '\n')
-                
+            for word in sorted(corpora["train"]["lexicon"]):
+                for pron in phonetize(word):
+                    f_out.write(f"{word} {pron}\n")
         
         # silence_phones.txt
         silence_phones_path  = os.path.join(dir_dict_nosp, "silence_phones.txt")

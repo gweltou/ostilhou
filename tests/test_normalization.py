@@ -1,5 +1,6 @@
 from ostilhou.text.normalizer import normalize, normalize_sentence, norm_ordinal, norm_roman_ordinal
 from ostilhou.text.tokenizer import is_ordinal, is_roman_ordinal
+from ostilhou.text.normalizer import solve_mutation_article, solve_mutation_number
 
 
 def test_normalization():
@@ -25,8 +26,12 @@ def test_normalization():
         ("Loeiz XVI", "Loeiz c'hwezek"),
         ("kemeret perzh er 7vet hag en 8vet kuzuliadegoù", "kemeret perzh er seizhvet hag en eizhvet kuzuliadegoù"),
         ("en XXIvet kantved", "en un warn-ugentvet kantved"),
+        ("1 vloaz, 2 bloaz, 3 bloaz, 5 bloaz, 10 bloaz", "ur bloaz, daou vloaz, tri bloaz, pemp bloaz, dek vloaz"),
+        ("e 1982 e varvas", "e mil nav c'hant daou ha pevar-ugent e varvas"),
+        ("92 ki", "daouzek ki ha pevar-ugent"),
+        ("Ouzhpenn da 42 bemdez", "ouzhpenn da daou ha daou-ugent bemdez"),
+        ("51 dre den", "unan hag hanter-kant dre den"),
         ("d'an oad a 25 bloaz", "d'an oad a pemp bloaz warn-ugent"),
-        ("21 bloaz", "ur bloaz warn-ugent"),
         ("1, 1 c'hazh, 21 loarenn", "unan, ur c'hazh, ul loarenn warn-ugent"),
         ("32 687 bit", "daou ha tregont mil c'hwec'h kant seizh bit ha pevar-ugent"),
         ("21000 steredenn", "unan warn-ugent mil steredenn"),
@@ -34,7 +39,8 @@ def test_normalization():
         ("1m2, 2m2, 3m3", "ur metr karrez, daou metr karrez, tri metr diñs"),
         ("1cm, 2cm2, 3cm3", "ur santimetr, daou santimetr karrez, tri santimetr diñs"),
         ("20 € em eus en va chakod, ha n'eo ket 20$", "ugent euro em eus en va chakod, ha n'eo ket ugent dollar"),
-        ("da 1e g.m.", "da un eur goude meren"),
+        ("da 4 c'hm eus kreiz Montroulez e c'houlenne ar rannvro 200 000€ o c'houzout e oa ivez goude evit 1M€ a labourioù", "da pevar c'hilometr eus kreiz Montroulez e c'houlenne ar rannvro daou c'hant mil euro o c'houzout e oa ivez goude evit ur milion euro a labourioù"),
+        ("da 1e g.m., pe da 2e gm.", "da un eur goude meren, pe da ziv eur goude meren"),
         ("d’ar Sadorn 1añ a viz Ebrel da 8e30 noz e france.tv ha da 0e15 war France 3 Breizh.", ""),
         ("1,5, 3,50 €, 1,001%", "unan virgulenn pemp, tri euro hanter-kant, unan virgulenn mann mann unan dre gant"),
 
@@ -67,7 +73,6 @@ def test_normalization():
 
     
 
-
 def test_ordinal_normalization():
     test_cases = ["1añ", "2vet", "3de", "3vet", "IIIde", "4e", "IVe", "4re", "4vet", "5vet", "17vet", "XIIvet", "123vet", "XXIvet"]
     for t in test_cases:
@@ -75,3 +80,20 @@ def test_ordinal_normalization():
         if is_ordinal(t): print(norm_ordinal(t))
         elif is_roman_ordinal(t): print(norm_roman_ordinal(t))
         else: print("Not an ordinal", t)
+
+
+def test_mutations_articles():
+
+    def should_be(s1: str, s2: str) -> None:
+        mutated = solve_mutation_article(*s1.split())
+        assert s2 in mutated
+    
+    should_be("ar ki", "ar c'hi")
+    should_be("an dor", "an nor")
+    should_be("ur kador", "ur gador")
+    should_be("ar paner", "ar baner")
+    should_be("ul taol", "un daol")
+    should_be("an godell", "ar c'hodell")
+    should_be("ar gwastell", "ar wastell")
+    should_be("ar bag", "ar vag")
+    should_be("ar mamm", "ar vamm")

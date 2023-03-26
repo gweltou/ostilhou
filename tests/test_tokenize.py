@@ -18,7 +18,7 @@ def test_split_sentence():
         ("Ur maen-koun zo war lein, da bevar barzh eus ar vro : T. Hughes Jones, B.T. Hopkins, J. M. Edwards hag Edward Prosser Rhys.", 2),
         ("""C'hoariet en deus evit Stade Rennais Football Club etre 1973 ha 1977 hag e 1978-1979. Unan eus ar c'hoarierien wellañ bet gwelet e klub Roazhon e oa. Pelé en deus lavaret diwar e benn : « "Kavet 'm eus an hini a dapo ma flas. Laurent Pokou e anv." ».""", 5),
         ("""Hervez Levr ar C'heneliezh ec'h eo Yafet eil mab Noah. Hervez ar Bibl e tiskouezas doujañs e-kenver e dad mezv-dall. Benniget e voe gantañ evel Shem : "Frankiz ra roio Doue da Yafet ! Ha ra chomo e tinelloù Shem !" """, 5),
-        ]
+    ]
 
     for t in test_cases:
         sub_sentences = split_sentence(t[0])
@@ -47,7 +47,9 @@ def test_detokenize():
     should_be('3 / 4 eus an dud.', '3/4 eus an dud.')
     should_be('Dindan c\'hwec\'h vloaz :digoust.', 'Dindan c\'hwec\'h vloaz\xa0: digoust.')
     should_be("unan... daou ...tri ... pevar ....pemp!... c'hwec'h,....seizh", "unan... daou... tri... pevar.... pemp !... c'hwec'h,.... seizh")
-
+    should_be("n'eus ster ebet, « na penn na lost» da gement-se.", "n'eus ster ebet, «\xa0na penn na lost\xa0» da gement-se.")
+    should_be("un abadenn “ mikro digor” tro-dro d’ar rap", "un abadenn “mikro digor” tro-dro d’ar rap")
+    should_be("Gouel Broadel ar Brezhoneg ( GBB ) .", "Gouel Broadel ar Brezhoneg (GBB).")
 
 def test_norm_punct():
     def should_be(s1: str, s2: str) -> None:

@@ -1,6 +1,6 @@
 from typing import List, Iterator, Any
 from .tokenizer import Token, tokenize, detokenize, split_sentence, PUNCTUATION
-from .normalizer import normalize
+from .normalizer import normalize, normalize_sentence
 from .inverse_normalizer import inverse_normalize_sentence
 
 
@@ -30,6 +30,9 @@ def pre_process(text: str) -> str:
     text = text.replace('ʼ', "'")
     text = text.replace('˜', '') # Found instead of non-breakable spaces when parsing Ya! pdfs
     text = text.replace('Š', '') # Found instead of long dashes when parsing Ya! pdfs
+    text = text.replace('ñ', 'ñ') # A sneaky n-tilde (found in Ya! webpages)
+    text = text.replace('ň', 'ñ')
+    text = text.replace('ù', 'ù') # Another sneaky one (found in Ya! webpages)
     return text
 
 

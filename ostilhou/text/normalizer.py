@@ -9,6 +9,8 @@ from .tokenizer import match_time, SI_UNITS
 from .tokenizer import ORDINALS, match_ordinal, is_ordinal
 from .tokenizer import ROMAN_ORDINALS, match_roman_ordinal, is_roman_ordinal
 from .tokenizer import tokenize, detokenize, Token
+from ..dicts import nouns_f, nouns_m
+
 
 
 substitutions = {
@@ -22,11 +24,85 @@ substitutions = {
     "ao."   : ["aotrou"],
     "niv." : ["niverenn"],
     "g.m." : ["goude meren"],
+    "GM"   : ["goude meren"],
     "St."  : ["Sant"],
+    "h.a." : ["hag all"],
+    "km/h" : [],
+    "c'hm" : ["c'hilometr", "c'hilometrad"],
 }
 
 
-# Numbers
+
+# MUTATIONS
+
+def solve_mutation_number(number: int, noun: str) -> str:
+    if noun in ("bloaz", "vloaz"):
+        if number in (1, 3, 4, 5, 9, 1000, 1_000_000, 1_000_000_000):
+            return "bloaz"
+        else:
+            return "vloaz"
+    else:
+        return noun
+
+
+def solve_mutation_article(article: str, noun: str) -> List[str]:
+    """ ar, an, al, un, ur, ul
+        Correct the article and change the noun's first letter
+        according to mutation rules.
+
+        Some homonyme nouns can be both male an female
+        hence the returned list or results
+        Ex: taol
+    """
+
+    results = []
+    noun_first_letter = noun[0].lower()
+    is_cap = noun[0].isupper()
+
+    if noun_first_letter == 'l':
+        article = article[:-1] + 'l'
+    elif noun_first_letter in "adehinot":
+        article = article[:-1] + 'n'
+    else:
+        article = article[:-1] + 'r'
+
+    if noun == 'dor':
+        # Special rule
+        noun = 'n' + noun[1:]
+        results.append(f"{article} {noun}")
+    elif noun in nouns_m:
+        if noun_first_letter == 'k':
+            noun = "c'h" + noun[1:]
+
+        if is_cap:
+            noun = noun.capitalize()
+        
+        results.append(f"{article} {noun}")
+    
+    if noun in nouns_f:
+        if noun_first_letter == 'k':
+            noun = 'g' + noun[1:]
+        elif noun_first_letter == 'p':
+            noun = 'b' + noun[1:]
+        elif noun_first_letter == 't':
+            noun = 'd' + noun[1:]
+        elif noun.lower().startswith('gw'):
+            noun = 'w' + noun[2:]
+        elif noun_first_letter == 'g':
+            noun = "c'h" + noun[1:]
+        elif noun_first_letter == 'b':
+            noun = 'v' + noun[1:]
+        elif noun_first_letter == 'm':
+            noun = 'v' + noun[1:]
+        
+        if is_cap:
+            noun = noun.capitalize()
+        
+        results.append(f"{article} {noun}")
+
+    return results
+
+
 
 # replace_words = {"bloaz", "bloavezh", "den", "metr", "metrad", "dregant", "lisead"}
 
@@ -35,6 +111,9 @@ def norm_number_noun(number: int, noun: str) -> str:
         TODO:
             * diwall d'ar c'hemadurioù
     """
+
+    noun = solve_mutation_number(number, noun)
+
     if number > 1000:
         thousands = (number//1000)*1000
         below_thousands = number - thousands
@@ -44,16 +123,14 @@ def norm_number_noun(number: int, noun: str) -> str:
             return f"{num2txt(thousands)} {norm_number_noun(below_thousands, noun)}"
     
     num_txt = num2txt(number)
-    noun_first_letter = noun.lower()[0]
-    is_cap = noun_first_letter.isupper()
+    noun_first_letter = noun[0].lower()
+    # is_cap = noun[0].isupper()
     if str(number).endswith('1'):
         if noun_first_letter == 'l':
             num_txt = num_txt.replace('unan', 'ul')
         elif noun_first_letter in "adehinot":
             num_txt = num_txt.replace('unan', 'un')
         else:
-            if noun_first_letter == 'k':
-                noun = f"""{"C'H" if is_cap else "c'h"}{noun[1:]}"""
             num_txt = num_txt.replace('unan', 'ur')
 
     split_index = max( [num_txt.rfind(tok) for tok in (" ha ", " hag ", " warn-")] )
@@ -176,8 +253,8 @@ def norm_time(s: str) -> List[str]:
 
 # Ordinals
 
-
 norm_ordinal = lambda s: ORDINALS[s] if s in ORDINALS else num2txt(int(match_ordinal(s).group(1))) + "vet"
+
 
 roman2br = {
     'I'    : "unan",
@@ -206,14 +283,19 @@ roman2br = {
 norm_roman_ordinal = lambda s: ROMAN_ORDINALS[s] if s in ROMAN_ORDINALS else roman2br[match_roman_ordinal(s).group(1)] + "vet"
 
 
+
 def normalize_sentence(sentence: str) -> str:
     """
         Normalize a single sentence
         return: list of all possible normalization for the sentence
     """
+
+    # Option: cap_first_letter ?
+
     propositions = []
     result = ""
     return detokenize(normalize(tokenize(sentence)))
+
 
 
 def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
@@ -233,7 +315,8 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
             tok.norm.append(num2txt(int(tok.data)))
         elif tok.kind == Token.ROMAN_NUMBER: tok.norm.append(roman2br[tok.data])
         elif tok.kind == Token.TIME: tok.norm.extend(norm_time(tok.data))
-        elif tok.kind == Token.ORDINAL: tok.norm.append(norm_ordinal(tok.data))
+        elif tok.kind == Token.ORDINAL:
+            tok.norm.append(norm_ordinal(tok.data))
         elif tok.kind == Token.ROMAN_ORDINAL: tok.norm.append(norm_roman_ordinal(tok.data))
         elif tok.kind == Token.QUANTITY:
             if tok.unit == '%':

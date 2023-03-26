@@ -7,7 +7,10 @@
     Convert audio file to correct format (wav mono 16kHz) if needed
     UI to listen and align audio segments with sentences in text file
     
-    Author: Gweltaz Duval-Guennoc 
+    Author: Gweltaz Duval-Guennoc
+
+    Bugs:
+        - Automatic translation gets stuck when given an 'eaf' file as argument
 """
 
 
@@ -22,9 +25,11 @@ from pydub.silence import detect_nonsilent
 from pydub.playback import _play_with_simpleaudio
 from pyrubberband import time_stretch
 #import librosa
-from libMySTT import load_segments, load_textfile, get_correction, get_player_name, get_audiofile_info, convert_to_wav
+from libMySTT import get_correction, get_player_name, get_audiofile_info, convert_to_wav
 from libMySTT import transcribe_segment, acronyms, prompt_acronym_phon, extract_acronyms, ACRONYM_PATH
 from libMySTT import splitToEafFile, eafToSplitFile
+
+from ostilhou.asr import load_text_data, load_segments_data
 
 
 
@@ -147,12 +152,12 @@ if __name__ == "__main__":
                 if a == 'y':
                     break
                 if a == 'n':
-                    segments, split_header = load_segments(split_filename)
+                    segments, split_header = load_segments_data(split_filename)
                     do_split = False
                     break
         else:
             # Load split file
-            segments, split_header = load_segments(split_filename)
+            segments, split_header = load_segments_data(split_filename)
             do_split = False
 
     if split_header:
@@ -217,7 +222,7 @@ if __name__ == "__main__":
         if not os.path.exists(text_filename):
             with open(text_filename, 'w') as fw:
                 fw.write('#\n' * 4 + '\n' * 6)  # Text file split_header
-    utterances = load_textfile(text_filename)
+    utterances = load_text_data(text_filename)
 
 
     short_utterances = []
@@ -256,7 +261,7 @@ if __name__ == "__main__":
         # Reload text file if it's been modified
         mtime = os.path.getmtime(text_filename)
         if mtime > textfile_mtime:
-            utterances = load_textfile(text_filename)     
+            utterances = load_text_data(text_filename)     
         if resize_match:
             segments_undo = segments[:]
             pos = resize_match.groups()[0]

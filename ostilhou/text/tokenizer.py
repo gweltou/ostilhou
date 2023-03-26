@@ -6,9 +6,10 @@
 """
 
 
-from typing import Iterator, Iterable, List, Any, Union
+from typing import Iterator, Iterable, List, Any, Union, Set
 import re
-from ostilhou.dicts import proper_nouns, nouns
+from .definitions import is_noun, is_noun_f, is_noun_m
+from ..dicts import proper_nouns, acronyms
 
 
 PUNCTUATION = '.?!,‚;:«»“”"()/…'
@@ -20,9 +21,15 @@ CLOSING_QUOTES = "»”"
 
 # Regular words
 
-re_word = re.compile(r"(['aâàbdeêfghijklmnñoprstuüùûvwyz-]|c'h|ch)+", re.IGNORECASE)
+re_word = re.compile(r"(['aâàbdeêfghijklmnñoprstuüùûvwyz-·]|c'h|ch)+", re.IGNORECASE)
 match_word = lambda s: re_word.fullmatch(s)
 is_word = lambda s: bool(match_word(s))
+
+# Inclusive words (ex: arvester·ez)
+# will always match as regular words
+re_word_inclusive = re.compile(r"(['aâàbdeêfghijklmnñoprstuüùûvwyz-]+)·(['aâàbdeêfghijklmnñoprstuüùûvwyz-]+)", re.IGNORECASE)
+match_word_inclusive = lambda s: re_word_inclusive.fullmatch(s)
+is_word_inclusive = lambda s: bool(match_word_inclusive(s))
 
 
 
@@ -42,17 +49,19 @@ SI_UNITS = {
     'm²'    : ["metr karrez", "metrad karrez"],
     'm3'    : ["metr diñs"],
     'km'    : ["kilometr", "kilometrad"],
+    "c'hm"  : ["c'hilometr", "c'hilometrad"],
     'km2'   : ["kilometr karrez", "kilometrad karrez"],
     'km²'   : ["kilometr karrez", "kilometrad karrez"],
     'mn'    : ["munutenn"],
     '€'     : ['euro'],
     '$'     : ['dollar', 'dollar amerikan'],
+    'M€'    : ['milion euro'],
     '%'     : ["dre gant"],
     }
 
 # A percentage or a number followed by a unit
 
-re_unit_number = re.compile(r"(\d+)([%€$]|\w+)", re.IGNORECASE)
+re_unit_number = re.compile(r"(\d+)([\w%€$]+)", re.IGNORECASE)
 match_unit_number = lambda s: re_unit_number.fullmatch(s)
 def is_unit_number(s):
     match = match_unit_number(s)
@@ -164,11 +173,17 @@ class Token:
         self.data = data
         self.norm = []
         self.kind = kind
+        self.flags: Set[Flag] = set()
     
     def __repr__(self):
         return f"Token({repr(self.data)}, {self.descr[self.kind]})"
 
 
+class Flag:
+    FIRST_WORD = 1
+    MASCULINE = 2
+    FEMININE = 3
+    INCLUSIVE = 4
 
 
 def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Token]:
@@ -277,12 +292,16 @@ def parse_regular_words(token_stream: Iterator[Token]) -> Iterator[Token]:
 
     for tok in token_stream:
         if tok.kind == Token.RAW:
-            if is_word(tok.data):
+            if tok.data in acronyms:
+                tok.kind = Token.ACRONYM
+            elif is_word(tok.data):
                 # Token is a simple and well formed word
                 if tok.data.lower() in proper_nouns:
                     tok.kind = Token.PROPER_NOUN
                 else:
                     tok.kind = Token.WORD
+                    if is_word_inclusive(tok.data):
+                        tok.flags.add(Flag.INCLUSIVE)
         yield tok
 
 
@@ -325,14 +344,21 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                         tok.unit = tok.data
                         tok.data = num_concat + tok.data
                         num_concat = ""
-                    else:
+                    elif tok.data not in ('l', 'm', 't', 'g'):
                         tok.kind = Token.UNIT
                 # elif num_concat and tok.data.lower() in nouns:
-                elif num_concat and is_word(tok.data.lower()):
+                elif num_concat and is_noun(tok.data):
                     # ex: "32 bloaz"
                     tok.kind = Token.QUANTITY
                     tok.number = num_concat
                     tok.unit = tok.data
+                    if is_word_inclusive(tok.data):
+                        tok.flags.add(Flag.INCLUSIVE)
+                    else:
+                        if is_noun_f(tok.data):
+                            tok.flags.add(Flag.FEMININE)
+                        if is_noun_m(tok.data):
+                            tok.flags.add(Flag.MASCULINE)
                     tok.data = f"{num_concat} {tok.data}"
                     num_concat = ""
                 
@@ -354,6 +380,15 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
 
 
 def split_sentence(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
+    """ Split a text (or list of text) according to its punctuation
+        This function can be used independently
+
+        Options:
+            'end' : end the sentences with the given character 
+    """
+
+    end_line = options.pop("end", '\n')
+    preserve_newline = options.pop("preserve_newline", False)
 
     if isinstance(text_or_gen, str):
         if not text_or_gen:
@@ -366,12 +401,12 @@ def split_sentence(text_or_gen: Union[str, Iterable[str]], **options: Any) -> It
     current_sentence = []
     for tok in token_stream:
         if tok.kind == Token.END_SENTENCE:
-            yield detokenize(current_sentence, **options)
+            yield detokenize(current_sentence, **options) + end_line
             current_sentence = []
         else:
             current_sentence.append(tok)
     if current_sentence:
-        yield detokenize(current_sentence, **options)
+        yield detokenize(current_sentence, **options) + end_line
 
 
 
@@ -395,7 +430,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
     end_sentence = options.pop('end_sentence', '')
 
     parts: List[str] = []
-    punct_stack = []
+    punct_stack = [] # Used to keep track of coupled punctuation (ex: quotes)
 
     for tok in token_stream:
         data = tok.norm[0] if tok.norm else tok.data
@@ -403,7 +438,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
         prefix = ''
         if tok.kind == Token.PUNCTUATION:
             if data in '!?:;':
-                prefix = '\u00A0'
+                prefix = '\xa0' # Non-breakable space
             elif data == '"':
                 if punct_stack and punct_stack[-1] == '"':
                     punct_stack.pop()
@@ -419,7 +454,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
             elif data in CLOSING_QUOTES:
                 if punct_stack and punct_stack[-1] == '"':
                     punct_stack.pop()
-                prefix = ''
+                prefix = '\xa0' if data == '»' else ''
             elif data == '(':
                 punct_stack.append('(')
                 prefix = ' '
@@ -435,7 +470,11 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
 
         elif parts and parts[-1]:
             last_char = parts[-1][-1]
-            if punct_stack and last_char == punct_stack[-1]:
+            if last_char == '«':
+                prefix = '\xa0'
+            elif punct_stack and last_char == punct_stack[-1]:
+                prefix = ''
+            elif punct_stack and last_char == '“':
                 prefix = ''
             elif last_char not in '-/':
                 prefix = ' '

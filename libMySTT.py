@@ -24,16 +24,24 @@ from colorama import Fore
 from xml.dom import minidom
 import datetime, pytz
 
-from ostilhou.asr import sentence_post_process, lexicon_sub, verbal_fillers, acr2f, phonemes
+from ostilhou.asr import (
+    sentence_post_process,
+    lexicon_sub,
+    verbal_fillers,
+    acr2f,
+    phonemes,
+    load_text_data
+)
 from ostilhou.dicts import proper_nouns, acronyms
+from ostilhou.text.tokenizer import is_word_inclusive, match_word_inclusive
 
 
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
-HS_DIC_PATH = os.path.join(ROOT, os.path.join("hunspell-dictionary", "br_FR"))
-HS_AFF_PATH = os.path.join(ROOT, os.path.join("hunspell-dictionary", "br_FR.aff"))
-HS_ADD_PATH= os.path.join(ROOT, os.path.join("hunspell-dictionary", "add.txt"))
+HS_DIC_PATH = os.path.join(ROOT, "ostilhou", "dicts", os.path.join("hunspell-dictionary", "br_FR"))
+HS_AFF_PATH = os.path.join(ROOT, "ostilhou", "dicts", os.path.join("hunspell-dictionary", "br_FR.aff"))
+HS_ADD_PATH= os.path.join(ROOT, "ostilhou", "dicts", os.path.join("hunspell-dictionary", "add.txt"))
 
 CORRECTED_PATH = os.path.join(ROOT, "corrected.txt")
 JOINED_PATH = os.path.join(ROOT, "joined.txt")
@@ -59,14 +67,14 @@ def get_hunspell_dict():
         hs.add(w)
     return hs
 
-# hs_dict = get_hunspell_dict()
+hs_dict = get_hunspell_dict()
 
 
 
 def get_corrected_dict():
     corrected = dict()
     corrected_sentences = dict()
-    corrected_sentences["&ltbr&gt"] = "" # Special rule for sentences comming from wikipedia
+    corrected_sentences["&ltbr&gt"] = "" # Special rule for sentences coming from wikipedia
     
     with open(CORRECTED_PATH, 'r') as f:
         for l in f.readlines():
@@ -122,89 +130,6 @@ corrected, corrected_sentences = get_corrected_dict()
 ##
 ################################################################################
 ################################################################################
-
-
-def load_textfile(filename):
-    """ return list of sentences with metadata
-
-        Return
-        ------
-            list of tuple (text sentences, metadata)
-    """
-    utterances = []
-    with open(filename, 'r') as f:
-        current_speaker = 'unknown'
-        current_gender = 'unknown'
-        no_lm = False
-        for l in f.readlines():
-            l = l.strip()
-            if l and not l.startswith('#'):
-                # Extract speaker id and other metadata
-                l, metadata = extract_metadata(l)
-                if "speaker" in metadata:
-                    current_speaker = metadata["speaker"]
-                else:
-                    metadata["speaker"] = current_speaker
-                
-                if "gender" in metadata:
-                    current_gender = metadata["gender"]
-                else:
-                    metadata["gender"] = current_gender
-                
-                if "parser" in metadata:
-                    if "no-lm" in metadata["parser"]: no_lm = True
-                    elif "add-lm" in metadata["parser"]: no_lm = False
-                else:
-                    if no_lm:
-                        metadata["parser"] = ["no-lm"]
-                if l:
-                    utterances.append((l, metadata))
-    return utterances
-
-
-
-SPEAKER_ID_PATTERN = re.compile(r'{([-\'\w]+):*([mf])*}')
-METADATA_PATTERN = re.compile(r'{(.+?)}')
-
-def extract_metadata(sentence: str):
-    """ Returns the sentence stripped of its metadata (if any)
-        and a dictionary of metadata
-        Keeps unknown word marker '{?}'
-    """
-    metadata = dict()
-
-    if METADATA_PATTERN.search(sentence):
-        stripped = ""
-        head = 0
-        for match in METADATA_PATTERN.finditer(sentence):
-            param = match.group(1)
-            if param == '?':
-                metadata["unknown_words"] = True
-            elif param in ('parser:no-lm', 'parser:add-lm'):   # Dirty hack until next version
-                metadata["parser"] = param.split(':')[1]
-                start, end = match.span()
-                stripped += sentence[head:start]
-                head = end
-            else:
-                speaker_id_match = SPEAKER_ID_PATTERN.fullmatch(match.group(0))
-                if speaker_id_match:
-                    name = speaker_id_match[1].lower()
-                    metadata["speaker"] = name
-                    gender = speaker_id_match[2]
-                    if gender:
-                        metadata["gender"] = gender.lower()
-                    elif "paotr" in name: metadata["gender"] = 'm'
-                    elif "plach" in name or "plac'h" in name: metadata["gender"] = 'f'
-
-                    start, end = match.span()
-                    stripped += sentence[head:start]
-                    head = end
-
-        if head > 0:
-            stripped += sentence[head:]
-            sentence = stripped
-    
-    return sentence.strip(), metadata
 
 
 
@@ -393,54 +318,67 @@ def get_cleaned_sentence(sentence, rm_bl=False, rm_verbal_ticks=False, keep_dash
 
 
 
-# def get_correction(sentence):
-#     """
-#         Return a string which is a colored correction of the sentence
-#         and the number of spelling mistakes in sentence (after correction)
-#     """
+def get_correction(sentence, allow_digits=True):
+    """
+        Return a string which is a colored correction of the sentence
+        and the number of spelling mistakes in sentence (after correction)
+    """
     
-#     sentence = sentence.strip()
-#     if not sentence:
-#         return '', 0
+    sentence = sentence.strip()
+    if not sentence:
+        return '', 0
     
-#     num_errors = 0
-#     tokens = []
-#     for token in tokenize(sentence, post_proc=False):
-#         spell_error = False
-#         lowered_token = token.lower()
-#         # Ignore black listed words
-#         if token.startswith('*'):
-#             tokens.append(Fore.YELLOW + token + Fore.RESET)
-#         elif lowered_token in verbal_fillers:
-#             tokens.append(Fore.YELLOW + token + Fore.RESET)
-#         elif lowered_token in corrected:
-#             tokens.append(Fore.GREEN + corrected[lowered_token] + Fore.RESET)
-#         elif token in corrected:
-#             tokens.append(Fore.GREEN + corrected[token] + Fore.RESET)
-#         elif token.isdigit():
-#             spell_error = True
-#             tokens.append(Fore.RED + token + Fore.RESET)
+    num_errors = 0
+    tokens = []
+    for token in tokenize(sentence, post_proc=False):
+        spell_error = False
+        lowered_token = token.lower()
+        # Ignore black listed words
+        if token.startswith('*'):
+            tokens.append(Fore.YELLOW + token + Fore.RESET)
+        elif lowered_token in verbal_fillers:
+            tokens.append(Fore.YELLOW + token + Fore.RESET)
+        elif lowered_token in corrected:
+            tokens.append(Fore.GREEN + corrected[lowered_token] + Fore.RESET)
+        elif token in corrected:
+            tokens.append(Fore.GREEN + corrected[token] + Fore.RESET)
+        elif len(token) == 1 and token in "$€%":
+            tokens.append(lowered_token)
+        elif not allow_digits and token.isdigit():
+            spell_error = True
+            tokens.append(Fore.RED + token + Fore.RESET)
             
-#         # Check for hyphenated words
+        # Check for hyphenated words
         
-#         elif is_acronym(token):
-#             if token in acronyms:
-#                 tokens.append(Fore.BLUE + token + Fore.RESET)
-#             else:
-#                 tokens.append(Fore.MAGENTA + token + Fore.RESET)
-#                 spell_error = True
-#         elif lowered_token in proper_nouns:
-#             tokens.append(token.capitalize())
-#         elif not hs_dict.spell(token):
-#             spell_error = True
-#             tokens.append(Fore.RED + token + Fore.RESET)
-#         else:
-#             tokens.append(lowered_token)
+        elif is_acronym(token):
+            if token in acronyms:
+                tokens.append(Fore.BLUE + token + Fore.RESET)
+            else:
+                tokens.append(Fore.MAGENTA + token + Fore.RESET)
+                spell_error = True
+        elif lowered_token in proper_nouns:
+            tokens.append(token.capitalize())
+        elif is_word_inclusive(token):
+            # Inclusive notation (ex: arvester·ez)
+            # Check if the first part can be found in dictionary
+            match = match_word_inclusive(token)
+            if not hs_dict.spell(match.group(1)):
+                spell_error = True
+                tokens.append(Fore.RED + token + Fore.RESET)
+            else:
+                tokens.append(lowered_token)
+        elif not hs_dict.spell(token):
+            spell_error = True
+            tokens.append(Fore.RED + token + Fore.RESET)
+        else:
+            tokens.append(lowered_token)
         
-#         if spell_error:
-#             num_errors += 1
+        # Maybe we should check in lexicon_sub as well...
         
-#     return ' '.join(tokens), num_errors
+        if spell_error:
+            num_errors += 1
+        
+    return ' '.join(tokens), num_errors
 
 
 
@@ -779,7 +717,7 @@ def splitToEafFile(split_filename, type="wav"):
     eaf_filename = os.path.extsep.join((record_id, 'eaf'))
 
     segments, _ = load_segments(split_filename)
-    utterances = load_textfile(text_filename)
+    utterances = load_text_data(text_filename)
 
     doc = minidom.Document()
 
