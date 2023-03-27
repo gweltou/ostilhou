@@ -375,6 +375,7 @@ if __name__ == "__main__":
             f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize(word):
+                    print(f"{word} {pron}\n")
                     f_out.write(f"{word} {pron}\n")
         
         # silence_phones.txt

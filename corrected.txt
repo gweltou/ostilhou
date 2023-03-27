@@ -3,101 +3,109 @@
 # Unvaniañ
 #anezhe	anezho
 #goût	gouzout
-ty	ti
-stokholm	Stockholm
-hirie	hiziv
-hiriv	hiziv
-hirio	hiziv
-hounnezh	honnezh
-plastek	plastik
-evid	evit
-warlerc'h	war lerc'h
-formaj	fourmaj
-koa	kwa
+beljia	Belgia
 breiz	Breizh
+danemark	Danmark
+dervezh	devezh
 egipt	Ejipt
+evid	evit
+formaj	fourmaj
+hirie	hiziv
+hirio	hiziv
+hiriv	hiziv
+hounnezh	honnezh
+japon	Japan
+koa	kwa
+moutik	moutig
+plastek	plastik
+poher	Poc'hêr
+rostrenn	Rostren
 russia	Rusia
-ukrainia	Ukraina
-ukrenia	Ukraina
+stokholm	Stockholm
 tailand	Thailand
 taïland	Thailand
 thaïland	Thailand
-japon	Japan
-poher	Poc'hêr
-danemark	Danmark
-moutik	moutig
-rostrenn	Rostren
-dervezh	devezh
+ty	ti
+ukrainia	Ukraina
+ukrenia	Ukraina
+warlerc'h	war lerc'h
+atao	atav
 
 
-# Fr to Br
+
+# Fr to Br,
+# Those words sound the same in both language so we rewrite them to help the phonetizer
 office	ofis
 musique	muzik
 télégramme	telegram
-saint	sant
+
 
 
 # Fazioù boutin
-chenchet	cheñchet
-goulou	gouloù
-diouzthu	diouzhtu
-personnel	personel
-mennozioù	menozioù
-mouezioù	mouezhioù
-vigouden	Vigoudenn
-doareou	doareoù
-memez	memes
-vakansoù	vakañsoù
-pannelloù	panelloù
-biniou	binioù
-dansoù	dañsoù
-dlihad	dilhad
-diposupl	dibosupl
-nozvat	noz vat
+posubl	posupl
+perzhiou	perzhioù
+adkemmeret	adkemeret
+aman	amañ
 aotroù	aotrou
+araok	a-raok
+avañtur	avantur
+awalc'h	a-walc'h
+biniou	binioù
+bourrabl	bourrapl
+brezoneg	brezhoneg
+chenchet	cheñchet
+chigago	Chicago
+choant 	c'hoant 
+c'homlec'h	chomlec'h
+choulz 	 c'houlz
+dalc'hmad	dalc'hmat
+dansoù	dañsoù
+dañvez	danvez
+dañvezioù	danvezioù
+diagnostics	diagnostiks
+diouzthu	diouzhtu
+diposupl	dibosupl
+dishenvel	disheñvel
+dishenvel	disheñvel
+dlihad	dilhad
+doareou	doareoù
+emsalc'h	emzalc'h
+founnus	fonnus
+goulou	gouloù
+gouvezet	gouezet
+grenv	greñv
+gwann	gwan
 jug	chug
+kaozadennoù	kaozeadennoù
+konchennoù	koñchennoù
+laret	lâret
+marc'hatmatoc'h	marc'hadmatoc'h
+marmoused	marmouzed
+memez	memes
+mennozioù	menozioù
+miliadou	miliadoù
+milliadou	miliadoù
 moneizh	moneiz
 monneizh	moneiz
-grenv	greñv
-aman	amañ
-dañvezioù	danvezioù
-dañvez	danvez
-emsalc'h	emzalc'h
-stañk	stank
-avañtur	avantur
-seitekved	seitekvet
-vel	evel
-gouvezet	gouezet
-awalc'h	a-walc'h
-araok	a-raok
-marmoused	marmouzed
-diagnostics	diagnostiks
-marc'hatmatoc'h	marc'hadmatoc'h
-chigago	Chicago
-toud	tout
-siezhvet	seizhvet
-c'homlec'h	chomlec'h
+mouezioù	mouezhioù
 neizhañ	neizhiañ
-choulz 	 c'houlz
-choant 	c'hoant 
-virgulen	virgulenn
-founnus	fonnus
-vit	evit
-vidon	evidon
-dishenvel	disheñvel
-adkemmeret	adkemeret
-gwann	gwan
-laret	lâret
-brezoneg	brezhoneg
-vousc'hoarz	vousc'hoarzh
-vousc'hoarzin	vousc'hoarzhin
-milliadou	miliadoù
-dishenvel	disheñvel
-kaozadennoù	kaozeadennoù
-miliadou	miliadoù
-konchennoù	koñchennoù
-treuskas	treuzkas
+nozvat	noz vat
+pannelloù	panelloù
+personnel	personel
+seitekved	seitekvet
+siezhvet	seizhvet
+stañk	stank
+toud	tout
 traouigoù	traoùigoù
+treuskas	treuzkas
+vakansoù	vakañsoù
+vel	evel
+vidon	evidon
+vigouden	Vigoudenn
+virgulen	virgulenn
+vit	evit
+vousc'hoarzin	vousc'hoarzhin
+vousc'hoarz	vousc'hoarzh
 
 
 
@@ -198,40 +206,40 @@ brasenn	blasenn
 
 
 # Anvioù
-marie	Mari
-stéphan	Stefan
+amélie	Ameli
+argoat	Argoad
 catherine	Katrin
 christian	Kristian
 christophe	Kristof
-helen	Elen
-hélène	Elen
-helena	Elena
-huelgoat	Uhelgoad
-kambodjia	Kambodja
-émile	Emil
-maría	Maria
-marianna	Mariana
-yannick	Yannig
-frederig	Frederik
-maël	Mael
-loïc	Loig
-fabrice	Fabris
-argoat	Argoad
-victoria	Viktoria
-victor	Viktor
-amélie	Ameli
 dominique	Dominig
+émile	Emil
 eric	Erik
-normandie	Normandi
+fabrice	Fabris
+frederig	Frederik
+helena	Elena
+hélène	Elen
+helen	Elen
+huelgoat	Uhelgoad
 isabelle	Izabel
 justine	Justin
-plougastel	Plougastell
-plouescat	Ploueskad
+kambodjia	Kambodja
+loïc	Loig
+maël	Mael
 marcel	Marsel
+maría	Maria
+marianna	Mariana
+marie	Mari
 mélanie	Melani
-tanguy	Tangi
+normandie	Normandi
 patrig	Padrig
 philippe	Filip
+plouescat	Ploueskad
+plougastel	Plougastell
+stéphan	Stefan
+tanguy	Tangi
+victoria	Viktoria
+victor	Viktor
+yannick	Yannig
 
 
 
@@ -243,7 +251,6 @@ philippe	Filip
  d' he 	 d'he 
  d' en 	 d'en 
  pa z 	 pa'z 
-arru	erru
 be'h	bec'h
 #me 'm eus	me'm eus
  'm eus	 m'eus

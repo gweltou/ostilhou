@@ -8,7 +8,12 @@
 
 from typing import Iterator, Iterable, List, Any, Union, Set
 import re
-from .definitions import is_noun, is_noun_f, is_noun_m
+from .definitions import (
+    is_noun, is_noun_f, is_noun_m,
+    is_time, match_time,
+    is_unit_number, match_unit_number,
+    SI_UNITS,
+)
 from ..dicts import proper_nouns, acronyms
 
 
@@ -31,54 +36,6 @@ re_word_inclusive = re.compile(r"(['aâàbdeêfghijklmnñoprstuüùûvwyz-]+)·(
 match_word_inclusive = lambda s: re_word_inclusive.fullmatch(s)
 is_word_inclusive = lambda s: bool(match_word_inclusive(s))
 
-
-
-SI_UNITS = {
-    'g'     : ["gramm"],
-    'kg'    : ["kilo", "kilogramm"],
-    't'     : ["tonenn"],
-    'l'     : ["litr", "litrad"],
-    'cl'    : ["santiltr", "santilitrad"],
-    'ml'    : ["mililitr", "mililitrad"],
-    'cm'    : ["santimetr", "kantimetr"],
-    'cm2'   : ["santimetr karrez", "kantimetr karrez"],
-    'cm²'   : ["santimetr karrez", "kantimetr karrez"],
-    'cm3'   : ["santimetr diñs", "kantimetr diñs"],
-    'm'     : ["metr", "metrad"],
-    'm2'    : ["metr karrez", "metrad karrez"],
-    'm²'    : ["metr karrez", "metrad karrez"],
-    'm3'    : ["metr diñs"],
-    'km'    : ["kilometr", "kilometrad"],
-    "c'hm"  : ["c'hilometr", "c'hilometrad"],
-    'km2'   : ["kilometr karrez", "kilometrad karrez"],
-    'km²'   : ["kilometr karrez", "kilometrad karrez"],
-    'mn'    : ["munutenn"],
-    '€'     : ['euro'],
-    '$'     : ['dollar', 'dollar amerikan'],
-    'M€'    : ['milion euro'],
-    '%'     : ["dre gant"],
-    }
-
-# A percentage or a number followed by a unit
-
-re_unit_number = re.compile(r"(\d+)([\w%€$]+)", re.IGNORECASE)
-match_unit_number = lambda s: re_unit_number.fullmatch(s)
-def is_unit_number(s):
-    match = match_unit_number(s)
-    if not match: return False
-    unit = match.group(2)
-    return unit in SI_UNITS
-
-
-# Time (hours and minutes)
-
-re_time = re.compile(r"(\d+)(?:e|h)(\d+)?")
-match_time = lambda s: re_time.fullmatch(s)
-def is_time(s):
-    match = match_time(s)
-    if not match: return False
-    _, m = match.groups(default='00')
-    return int(m) < 60
 
 
 # Percentage

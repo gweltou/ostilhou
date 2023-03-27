@@ -180,6 +180,7 @@ stummadurezh
 tabletennoù
 temperadur
 tempo
+buheziñ
 termenaduriñ
 termeniñ
 teuzar
@@ -188,6 +189,8 @@ tofou
 trio
 troiadur
 trug
+normalizet
+normalizañ
 vejetarian
 venelour
 venelouriezh
@@ -199,3 +202,4 @@ whisky
 youc'hou
 zenien
 zigentañ
+ziwar

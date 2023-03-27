@@ -36,7 +36,7 @@ def test_wiki150():
     # Find male and female nouns by looking at the words following
     # the cardinals 'daou', 'tri', 'pevar' (for male nouns) and
     # 'div', 'teir', 'peder' (for female nouns)
-    # Write them to files
+    # Write them to separate files
 
     sentences = load_wikipedia_150k()
     print(len(sentences))
@@ -50,7 +50,7 @@ def test_wiki150():
             try:
                 i = words.index(card)
                 if i+1 < len(words):
-                    word = strip_punct(words[i+1])
+                    word = strip_punct(words[i+1]).lower()
                     if word.endswith("-se"):
                         word = word[:-3]
                     elif word.endswith("-mañ"):
@@ -63,10 +63,10 @@ def test_wiki150():
                 continue
     
     with open("noun_f.txt", 'w') as f:
-        for noun, num in sorted(f_noun.items(), key=lambda x: x[1], reverse=True):
+        for noun, _ in sorted(f_noun.items(), key=lambda x: x[1], reverse=True):
             f.write(f"{noun}\n")
     with open("noun_m.txt", 'w') as f:
-        for noun, num in sorted(m_noun.items(), key=lambda x: x[1], reverse=True):
+        for noun, _ in sorted(m_noun.items(), key=lambda x: x[1], reverse=True):
             f.write(f"{noun}\n")
 
 
@@ -74,7 +74,7 @@ def test_sarmoniou():
     sarmoniou = load_sarmoniou()
 
     # Using a translation dictionary to replace words with their modern form
-    td = load_translation_dict("talbr/dicts/old_leoneg.tsv")
+    td = load_translation_dict("talbr/dicts/sarmonioù_peurunvan.tsv")
 
     # with open("sarmonioù.txt", 'w') as f:
     #     for line in sarmoniou:
@@ -100,20 +100,21 @@ def test_clean_ya():
                         continue
                     if len(sentence) / ntok < 3.2:
                         continue
+
                     corr, n_mistakes = get_correction(sentence)
                     if n_mistakes >= 1:
-                        # print(corr)
+                        print(corr)
                         rejected += 1
                     elif n_mistakes == 0:
                         sentences.add(sentence)
-                    normalized = normalize_sentence(sentence)
-                    if normalized[1:].split() != sentence[1:].split():
-                        print(sentence[:-1])
-                        print(normalized)
-                        print()
-                    corr, n_mistakes = get_correction(sentence)
-                    if n_mistakes == 0:
-                        sentences_norm.add(normalized)
+                    # normalized = normalize_sentence(sentence)
+                    # if normalized[1:].split() != sentence[1:].split():
+                    #     print(sentence[:-1])
+                    #     print(normalized)
+                    #     print()
+                    # corr, n_mistakes = get_correction(sentence)
+                    # if n_mistakes == 0:
+                    #     sentences_norm.add(normalized)
                     
     with open("ya_propr.txt", 'w') as fout:
         for sentence in sentences:
@@ -124,10 +125,11 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "Ya, Aogust. Tad e vamm. Soñj a deu dezhañ bremañ eus komzoù an den kozh, tra ma raent tro ar c’harter o-daou d’an abardaez : “Gwechall, pa oa c’hoazh stank an tiegezhioù er vro-mañ, e veze ar c’heuneud un dra prizius-kenañ evit an dud, un dra hag a ranke bezañ lodennet hag esperniet pizh. Reolennoù strizh a veze marilhet e-barzh al lizhiri-feurm : arabat pilañ gwez derv pe faou a-raok ma vije tapet gante an oad a nav bloaz, c’hwec’h evit an haleg, hennezh a greske buanoc’h. Rak ar gwez, va mabig, hag ar c’hleuzioù ma kreskent warne, a oa ur gwir binvidigezh er vro baour-mañ”, a lavare an den kozh en ur ziskouez un alez bevennet gant gwez faou d’e vab-bihan gant e vazh. “Ya ‘vat, va mab, ar gwez. Hag ar c’hleuzioù. D’al loened e roent gwasked diouzh ar glav ha diouzh an avel, ha disheol e-kreiz an hañv. D’ar votaouerien e oa un drugar kaout koad faou evit fardañ boteier-koad, a veze douget gant an holl d’an ampoent, ha petra o dije graet ar galvizien hag an amunuzerien hep koad ar vro ? Rak gwechall ne veze ket lakaet koad da zont eus penn all ar bed, ‘giz ma krogont d’ober bremañ ! Koad derv pe kerez d’ober taolioù, armelioù, gweleoù hag all tout, kistin d’ober plañchod… Ar c’histin ne vreine ket, setu gantañ e veze graet peulioù evit ar skloturioù, pe troadet ostilhoù… An onn ne oa ket fall evit se ivez. Barrikennoù ‘veze graet ivez, rodoù karr, ha me ‘oar-me. Pep tra, kwa. Hag arabat ankouaat ar gwez bihan, talvoudus e oant ivez : an aozilh evit fardañ paneroù, ar c’helvez evit tommañ ar fornioù bara, hag ur bern traoù all c’hoazh… An troen evit ar girzhier, ma nije ar gwenan en-dro dezhe… Hep kontañ ar gwez avaloù, evel-just, a roe deomp frouezh saourus en diskaramzer ha chistr berv alaouret a-hed ar bloaz.”"
+    sentence = "klask ar 500 000€ a vo ezhomm"
     # test_tokenize(sentence)
     # test_detokenize(sentence)
-    test_wiki150()
+    # test_normalize(sentence)
+    # test_wiki150()
     # test_sarmoniou()
     
-    # test_clean_ya()
+    test_clean_ya()
