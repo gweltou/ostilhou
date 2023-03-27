@@ -47,6 +47,7 @@ def test_normalization():
         ("da 1e g.m., pe da 2e gm.", "da un eur goude meren, pe da ziv eur goude meren"),
         ("d’ar Sadorn 1añ a viz Ebrel da 8e30 noz e france.tv ha da 0e15 war France 3 Breizh.", ""),
         ("1,5, 3,50 €, 1,001%", "unan virgulenn pemp, tri euro hanter-kant, unan virgulenn mann mann unan dre gant"),
+        ("13,1 km, 378 m a zinaou", "")
 
         # OPAB - Mozilla Common Voice
         ("Un 40 den bennak.", "un daou-ugent den bennak."),

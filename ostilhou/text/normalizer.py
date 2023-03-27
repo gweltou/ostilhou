@@ -277,7 +277,8 @@ roman2br = {
     "XVIII": "triwec'h",
     "XIX"  : "naontek",
     "XX"   : "ugent",
-    "XXI"  : "un warn-ugent"
+    "XXI"  : "un warn-ugent",
+    "IXX"  : "naontek",
 }
 
 norm_roman_ordinal = lambda s: ROMAN_ORDINALS[s] if s in ROMAN_ORDINALS else roman2br[match_roman_ordinal(s).group(1)] + "vet"

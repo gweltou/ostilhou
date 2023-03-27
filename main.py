@@ -1,3 +1,4 @@
+import re
 from ostilhou import tokenize, detokenize
 from ostilhou.text import (
     strip_punct,
@@ -9,7 +10,7 @@ from ostilhou.text import (
 from ostilhou.corpora import load_wikipedia_150k, load_sarmoniou
 from ostilhou.asr import phonetize
 
-from libMySTT import get_cleaned_sentence, corrected, corrected_sentences, get_correction
+from libMySTT import get_cleaned_sentence, corrected, corrected_sentences, get_hspell_correction
 
 
 def read_file(filename):
@@ -83,49 +84,87 @@ def test_sarmoniou():
         print(detokenize( translate(tokenize(line), td) ))
 
 
+
 def test_clean_ya():
     # Parse a ya.bzh dump file
-    rejected = 0
     sentences = set()
     sentences_norm = set()
     n_parsed = 0
+    #with open("ostilhou/corpora/wikipedia-br-150k.txt", 'r') as fin:
     with open("ya_dump.txt", 'r') as fin:
         for line in fin.readlines():
             if line:
                 line = pre_process(line).replace('*', '').replace('OOO', '000')
-                for sentence in split_sentence(line, end='\n'):
+                for sentence in split_sentence(line, end=''):
                     n_parsed += 1
+
+                    if sentence.startswith("– "):
+                        sentence = sentence[2:]
+                    elif re.match(r"\d – ", sentence):
+                        sentence = sentence[4:]
+                    elif re.match(r".\) ", sentence):
+                        sentence = sentence[3:]
+                    elif re.match(r".'\) ", sentence):
+                        sentence = sentence[4:]
+                    colored, n_mistakes = get_hspell_correction(sentence)
+                    # if n_mistakes >= 1:
+                    #     print(colored)
+                    
                     ntok = len(sentence.split())
                     if ntok < 3:
+                        # Too short sentences
                         continue
                     if len(sentence) / ntok < 3.2:
+                        # sentences with suspiciously short tokens
                         continue
-
-                    corr, n_mistakes = get_correction(sentence)
-                    if n_mistakes >= 1:
-                        print(corr)
-                        rejected += 1
-                    elif n_mistakes == 0:
-                        sentences.add(sentence)
-                    # normalized = normalize_sentence(sentence)
-                    # if normalized[1:].split() != sentence[1:].split():
-                    #     print(sentence[:-1])
-                    #     print(normalized)
-                    #     print()
-                    # corr, n_mistakes = get_correction(sentence)
-                    # if n_mistakes == 0:
-                    #     sentences_norm.add(normalized)
+                    if re.search(r"\d\d \d\d ", sentence):
+                        # Telephone numbers
+                        continue
+                    if re.search(r"\d\d\.\d\d\.", sentence):
+                        # Telephone numbers (no match but in case)
+                        print(colored)
+                        continue
+                    if re.search(r"[\w.]+@[\w.]+", sentence):
+                        # E-mail adresses
+                        continue
+                    if '@' in sentence:
+                        # E-mail adresses, more severe
+                        continue
                     
+                    if n_mistakes == 0:
+                        sentences.add(sentence)
+                    
+                    normalized = normalize_sentence(sentence)
+                    _, n_mistakes = get_hspell_correction(sentence)
+                    if n_mistakes == 0:
+                        sentences_norm.add(normalized)
+
     with open("ya_propr.txt", 'w') as fout:
-        for sentence in sentences:
-            fout.write(sentence)
+        for sentence in sorted(sentences):
+            fout.write(sentence + '\n')
+
+    with open("comparaison.txt", 'w') as fout:
+        for sentence in sorted(sentences):
+            normalized = normalize_sentence(sentence)
+            if len(sentence) != len(normalized):
+                fout.write(sentence + '\n')
+                fout.write(normalized + '\n\n')
+
+    n_kept = 0
+    with open("ya_propr_norm.txt", 'w') as fout:
+        for sentence in sorted(sentences_norm):
+            if not re.search("[0-9]", sentence):
+                fout.write(sentence + '\n')
+                n_kept += 1
+    
     print(f"Total sentences: {n_parsed}")
-    print(f"Kept: {len(sentences)}")
-    print(f"{rejected=} ({rejected/n_parsed:.2%})")
+    print(f"Kept: {len(sentences)} ({len(sentences)/n_parsed:.2%})")
+    print(f"Kept (normalized): {n_kept} ({n_kept/n_parsed:.2%})")
+
 
 
 if __name__ == "__main__":
-    sentence = "klask ar 500 000€ a vo ezhomm"
+    sentence = ""
     # test_tokenize(sentence)
     # test_detokenize(sentence)
     # test_normalize(sentence)

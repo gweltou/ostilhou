@@ -178,6 +178,7 @@ strategiezhioù
 strikt
 stummadurezh
 tabletennoù
+atmosferel
 temperadur
 tempo
 buheziñ
@@ -187,6 +188,7 @@ teuzar
 tierigoù
 tofou
 trio
+nutrimantoù
 troiadur
 trug
 normalizet

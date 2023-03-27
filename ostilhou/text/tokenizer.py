@@ -440,8 +440,11 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
             parts.append(prefix + data)
         else:
             # First word in sentence
-            parts.append(data)
+            parts.append(data if data else '')
         if parts[-1] == '':
             parts.pop()
     
-    return ''.join(parts)
+    if parts:
+        ret = ''.join(parts)
+        return ret
+    return ''

@@ -28,6 +28,7 @@ def pre_process(text: str) -> str:
     text = text.replace('‘', "'")
     text = text.replace('’', "'")
     text = text.replace('ʼ', "'")
+    text = text.replace(',', ',')
     text = text.replace('˜', '') # Found instead of non-breakable spaces when parsing Ya! pdfs
     text = text.replace('Š', '') # Found instead of long dashes when parsing Ya! pdfs
     text = text.replace('ñ', 'ñ') # A sneaky n-tilde (found in Ya! webpages)

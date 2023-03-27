@@ -25,7 +25,7 @@ from pydub.silence import detect_nonsilent
 from pydub.playback import _play_with_simpleaudio
 from pyrubberband import time_stretch
 #import librosa
-from libMySTT import get_correction, get_player_name, get_audiofile_info, convert_to_wav
+from libMySTT import get_hspell_correction, get_player_name, get_audiofile_info, convert_to_wav
 from libMySTT import transcribe_segment, acronyms, prompt_acronym_phon, extract_acronyms, ACRONYM_PATH
 from libMySTT import splitToEafFile, eafToSplitFile
 
@@ -49,7 +49,7 @@ def play_segment_text(idx, song, segments, utterances, speed):
         play_process.stop()
     
     if idx < len(utterances):
-        correction, _ = get_correction(utterances[idx][0])
+        correction, _ = get_hspell_correction(utterances[idx][0])
         print(f'{{{utterances[idx][1].get("speaker", "unkwnown")}}} {correction}')
     seg = song[segments[idx][0]:segments[idx][1]]
     if speed != 1.0:

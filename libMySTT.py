@@ -9,6 +9,7 @@
 """
 
 
+from typing import Tuple
 import os
 import json
 import re
@@ -318,7 +319,7 @@ def get_cleaned_sentence(sentence, rm_bl=False, rm_verbal_ticks=False, keep_dash
 
 
 
-def get_correction(sentence, allow_digits=True):
+def get_hspell_correction(sentence: str, allow_digits=True) -> Tuple[str, int]:
     """
         Return a string which is a colored correction of the sentence
         and the number of spelling mistakes in sentence (after correction)
@@ -488,7 +489,7 @@ def extract_acronyms_from_file(text_filename):
 ################################################################################
 ################################################################################
 ##
-##                PYDUB AUDIO SEGMENT MANIPULATION FUNCTIONS
+##          PYDUB AUDIO SEGMENT / SPLIT FILES MANIPULATION FUNCTIONS
 ##
 ################################################################################
 ################################################################################

@@ -33,22 +33,21 @@ from ostilhou.asr import (
     phonetize,
 )
 
+# Old library
 from libMySTT import acronyms, is_acronym, get_cleaned_sentence, split_line
 
 
 
 SAVE_DIR = "data"
-LM_SENTENCE_MIN_WORDS = 3
+LM_SENTENCE_MIN_WORDS = 3 # Min number of words for a sentence to be added to the LM
 UTTERANCES_MIN_LENGTH = 0 # exclude utterances shorter than this length (in seconds)
 
 # AUDIO DATA AUGMENTATION
-# If True, duplicates the whole train dataset, adding various audio noises
-# The augmented data will be put in a sister folder `augmented` with the same
-# hierarchy as the original audio corpus.
+# If True, duplicates the whole train dataset, adding various audio noises.
+# The augmented data will be put in a sister folder `augmented`, with the same
+# directory hierarchy as the original audio corpus.
 USE_DATA_AUGMENTATION = False    
 
-
-spk2gender_files = ["spk2gender.txt", "corpus_common_voice/spk2gender"]
 
 
 
@@ -91,6 +90,7 @@ def parse_dataset(file_or_dir):
 
 
 def parse_data_file(split_filename):
+    # Kaldi doensn't like whitespaces in file path
     if ' ' in split_filename:
         print("ERROR: whitespaces in path", split_filename)
         sys.exit(1)
