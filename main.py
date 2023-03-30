@@ -1,21 +1,18 @@
 import re
 from ostilhou import tokenize, detokenize
 from ostilhou.text import (
-    strip_punct,
-    split_sentence,
+    strip_punct, filter_out,
+    split_sentence, extract_parenthesis_content,
     load_translation_dict, translate,
     normalize, normalize_sentence,
-    pre_process
+    pre_process, sentence_stats,
     )
+from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES
 from ostilhou.corpora import load_wikipedia_150k, load_sarmoniou
 from ostilhou.asr import phonetize
 
 from libMySTT import get_cleaned_sentence, corrected, corrected_sentences, get_hspell_correction
 
-
-def read_file(filename):
-    with open(filename, 'r') as f:
-        return f.read()
 
 
 def test_tokenize(sentence):
@@ -95,8 +92,33 @@ def test_clean_ya():
         for line in fin.readlines():
             if line:
                 line = pre_process(line).replace('*', '').replace('OOO', '000')
+                line = filter_out(line, OPENING_QUOTES + CLOSING_QUOTES)
                 for sentence in split_sentence(line, end=''):
                     n_parsed += 1
+
+                    if sentence.count('.') > 1:
+                        print(sentence)
+
+                    stats = sentence_stats(sentence)
+                    if stats["upper"] / len(sentence) > 0.2:
+                        # Lots of uppercases
+                        continue
+                    if stats["letter"] / len(sentence) < 0.5:
+                        # Too few letters
+                        continue
+                    if re.search(r"\d\d \d\d ", sentence):
+                        # Telephone numbers
+                        continue
+                    if re.search(r"\d\d\.\d\d\.", sentence):
+                        # Telephone numbers (no match but in case)
+                        print(colored)
+                        continue
+                    if re.search(r"[\w.]+@[\w.]+", sentence):
+                        # E-mail adresses
+                        continue
+                    if '@' in sentence:
+                        # E-mail adresses, more severe
+                        continue
 
                     if sentence.startswith("– "):
                         sentence = sentence[2:]
@@ -114,25 +136,9 @@ def test_clean_ya():
                     if ntok < 3:
                         # Too short sentences
                         continue
-                    if len(sentence) / ntok < 3.2:
-                        # sentences with suspiciously short tokens
-                        continue
-                    if re.search(r"\d\d \d\d ", sentence):
-                        # Telephone numbers
-                        continue
-                    if re.search(r"\d\d\.\d\d\.", sentence):
-                        # Telephone numbers (no match but in case)
-                        print(colored)
-                        continue
-                    if re.search(r"[\w.]+@[\w.]+", sentence):
-                        # E-mail adresses
-                        continue
-                    if '@' in sentence:
-                        # E-mail adresses, more severe
-                        continue
                     
                     if n_mistakes == 0:
-                        sentences.add(sentence)
+                        sentences.add(sentence.capitalize())
                     
                     normalized = normalize_sentence(sentence)
                     _, n_mistakes = get_hspell_correction(sentence)
@@ -151,11 +157,11 @@ def test_clean_ya():
                 fout.write(normalized + '\n\n')
 
     n_kept = 0
-    with open("ya_propr_norm.txt", 'w') as fout:
-        for sentence in sorted(sentences_norm):
-            if not re.search("[0-9]", sentence):
-                fout.write(sentence + '\n')
-                n_kept += 1
+    # with open("ya_propr_norm.txt", 'w') as fout:
+    #     for sentence in sorted(sentences_norm):
+    #         if not re.search("[0-9]", sentence):
+    #             fout.write(sentence + '\n')
+    #             n_kept += 1
     
     print(f"Total sentences: {n_parsed}")
     print(f"Kept: {len(sentences)} ({len(sentences)/n_parsed:.2%})")
@@ -164,11 +170,19 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = ""
+    sentence = "hervez Garry Donnely « dizalc’h » ar c’hontre (Donnely zo ac’h. Ar ofisour (ag ar… PSNI, just a-walc’h !)  « n’eo ket anezhañ ». Sklaer evel daoulagad an naer. Garry Middleton, anezhañ kannad an DUP, kontre Derry, a c’houlenn ag e du « e vroudahe PSNI ». Chañs vat dezhañ !"
     # test_tokenize(sentence)
     # test_detokenize(sentence)
     # test_normalize(sentence)
     # test_wiki150()
     # test_sarmoniou()
+    # for s in split_sentence(sentence):
+    #     print(s)
     
-    test_clean_ya()
+    # test_clean_ya()
+
+    s1 = "Iwerzhonad a-orin eo ar prezidant nevez (gant e vamm-gozh, hag a oa o chom gantañ ha gant e dud. Komzet e veze iwerzhoneg er gêr zoken) ha lorc'h ennañ."
+
+    r, p = extract_parenthesis_content(s1)
+    print(r, len(r))
+    print(p)

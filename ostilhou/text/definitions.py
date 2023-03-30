@@ -3,6 +3,13 @@ import re
 from ostilhou.dicts import proper_nouns, nouns_f, nouns_m
 
 
+LETTERS = "aâàbcdeêfghijklmnñoprstuüùûvwyz"
+PUNCTUATION = '.?!,‚;:«»“”"()/…'
+OPENING_QUOTES = "«“"
+CLOSING_QUOTES = "»”"
+# CLOSING_PUNCT = {'»': '«', '”': '“', ')': '('}
+# OPENING_PUNCT = CLOSING_PUNCT.values()
+
 
 SI_UNITS = {
     'g'     : ["gramm"],

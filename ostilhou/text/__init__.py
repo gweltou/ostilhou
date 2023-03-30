@@ -1,7 +1,9 @@
-from typing import List, Iterator, Any
+from typing import List, Iterator, Any, Tuple
+from .definitions import LETTERS, PUNCTUATION
 from .tokenizer import Token, tokenize, detokenize, split_sentence, PUNCTUATION
 from .normalizer import normalize, normalize_sentence
 from .inverse_normalizer import inverse_normalize_sentence
+import re
 
 
 
@@ -24,6 +26,20 @@ def filter_out(text: str, chars: str) -> str:
     return filtered_text
 
 
+PATTERN_BETWEEN_PARENTHESIS = re.compile(r"\((.+?)\)")
+
+def extract_parenthesis_content(txt: str) -> Tuple[str, str]:
+    extracted = []
+    remaining = txt
+    match = re.search(PATTERN_BETWEEN_PARENTHESIS, remaining)
+    while match:
+        extracted.append(match.group(1))
+        start, end = match.span()
+        remaining = remaining[:start] + remaining[end:]
+        match = re.search(PATTERN_BETWEEN_PARENTHESIS, remaining)
+    return remaining, extracted
+
+
 def pre_process(text: str) -> str:
     text = text.replace('‘', "'")
     text = text.replace('’', "'")
@@ -35,6 +51,35 @@ def pre_process(text: str) -> str:
     text = text.replace('ň', 'ñ')
     text = text.replace('ù', 'ù') # Another sneaky one (found in Ya! webpages)
     return text
+
+
+def sentence_stats(sentence: str) -> dict:
+    """ Get statistics about a string """
+
+    stats = {
+        "letter": 0,
+        "decimal": 0,
+        "upper": 0,
+        "punct": 0,
+        "blank": 0,
+        "other": 0,
+    }
+
+    for c in sentence:
+        if c.lower() in LETTERS or c in "'-":
+            stats["letter"] += 1
+            if c.isupper():
+                stats["upper"] += 1
+        elif c.isdecimal():
+            stats["decimal"] += 1
+        elif c.isspace():
+            stats["blank"] += 1
+        elif c in PUNCTUATION:
+            stats["punct"] += 1
+        else:
+            stats["other"] += 1
+    
+    return stats
 
 
 def load_translation_dict(path: str) -> dict:
@@ -60,8 +105,6 @@ def translate(token_stream: Iterator[Token], tra_dict: dict, **options: Any) -> 
         Key/value pairs of the translation dictionary can contain
         the '*' character to match any character
         Ex: "*a" : "*añ"    -> will change suffixes of words ending with 'a'
-
-
     """
 
     for tok in token_stream:
@@ -95,5 +138,4 @@ def translate(token_stream: Iterator[Token], tra_dict: dict, **options: Any) -> 
                 if key == tok.data:
                     tok.data = tra_dict[tok.data]
                     break
-        
         yield tok

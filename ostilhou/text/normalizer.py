@@ -5,7 +5,8 @@
 # import random
 import re
 from typing import Iterator, List, Any
-from .tokenizer import match_time, SI_UNITS
+from .definitions import SI_UNITS
+from .tokenizer import match_time
 from .tokenizer import ORDINALS, match_ordinal, is_ordinal
 from .tokenizer import ROMAN_ORDINALS, match_roman_ordinal, is_roman_ordinal
 from .tokenizer import tokenize, detokenize, Token
@@ -36,8 +37,11 @@ substitutions = {
 # MUTATIONS
 
 def solve_mutation_number(number: int, noun: str) -> str:
+    # Special rule for "bloaz"
     if noun in ("bloaz", "vloaz"):
         if number in (1, 3, 4, 5, 9, 1000, 1_000_000, 1_000_000_000):
+            return "bloaz"
+        elif number%10 in (1, 3, 4, 5, 9):
             return "bloaz"
         else:
             return "vloaz"
@@ -122,7 +126,8 @@ def norm_number_noun(number: int, noun: str) -> str:
         else:
             return f"{num2txt(thousands)} {norm_number_noun(below_thousands, noun)}"
     
-    num_txt = num2txt(number)
+    feminine = noun.lower() in nouns_f
+    num_txt = num2txt(number, feminine)
     noun_first_letter = noun[0].lower()
     # is_cap = noun[0].isupper()
     if str(number).endswith('1'):
@@ -142,16 +147,15 @@ def norm_number_noun(number: int, noun: str) -> str:
 
 
 num_units = ["", "unan", "daou", "tri", "pevar", "pemp", "c'hwec'h", "seizh", "eizh", "nav",
-         "dek", "unnek", "daouzek", "trizek", "pevarzek", "pemzek", "c'hwezek", "seitek", "triwec'h", "naontek", "ugent"]
+             "dek", "unnek", "daouzek", "trizek", "pevarzek", "pemzek", "c'hwezek", "seitek", "triwec'h", "naontek", "ugent"]
 num_units_f = ["", "un", "div", "teir", "peder"]
 num_tens = ["", "", "ugent", "tregont", "daou-ugent", "hanter-kant", "tri-ugent", "dek ha tri-ugent", "pevar-ugent", "dek ha pevar-ugent"]
-
 
 
 def num2txt(num: int, feminine=False) -> str:
     if num == 0:
         return "mann"
-    
+        
     if feminine and num < 5:
         return num_units_f[num]
 
@@ -160,20 +164,22 @@ def num2txt(num: int, feminine=False) -> str:
 
     if num < 100:
         t, u = divmod(num, 10)
+        unit = num_units_f[u] if feminine and u in (2, 3, 4) else num_units[u]
         if u == 0:
             return num_tens[t]
         if t == 2:
-            return num_units[u] + " warn-" + num_tens[t]
+            return unit + " warn-" + num_tens[t]
         if t == 5:
-            return num_units[u] + " hag " + num_tens[t]
+            return unit + " hag " + num_tens[t]
         if t in (7, 9):
             t -= 1; u += 10
-        return num_units[u] + " ha " + num_tens[t]
+            unit = num_units_f[u] if feminine and u in (2, 3, 4) else num_units[u]
+        return unit + " ha " + num_tens[t]
 
     if num < 1000:
         h, u = divmod(num, 100)
         if u == 0: unit_str = ""
-        else: unit_str = " " + num2txt(u)
+        else: unit_str = " " + num2txt(u, feminine=feminine)
 
         if h == 1:
             return "kant" + unit_str
@@ -310,7 +316,7 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
     for tok in token_stream:
         # A PROPER_NOUN can also be a WORD so test order is important
         if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data.capitalize())
-        elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
+        # elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
         elif tok.kind == Token.NUMBER:
             # hold_token = True
             tok.norm.append(num2txt(int(tok.data)))

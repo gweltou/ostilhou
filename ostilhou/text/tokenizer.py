@@ -12,27 +12,22 @@ from .definitions import (
     is_noun, is_noun_f, is_noun_m,
     is_time, match_time,
     is_unit_number, match_unit_number,
-    SI_UNITS,
+    PUNCTUATION, LETTERS, SI_UNITS,
+    OPENING_QUOTES, CLOSING_QUOTES,
 )
 from ..dicts import proper_nouns, acronyms
 
 
-PUNCTUATION = '.?!,‚;:«»“”"()/…'
-OPENING_QUOTES = "«“"
-CLOSING_QUOTES = "»”"
-# CLOSING_PUNCT = {'»': '«', '”': '“', ')': '('}
-# OPENING_PUNCT = CLOSING_PUNCT.values()
-
 
 # Regular words
 
-re_word = re.compile(r"(['aâàbdeêfghijklmnñoprstuüùûvwyz-·]|c'h|ch)+", re.IGNORECASE)
+re_word = re.compile(r"(['-·" + LETTERS + r"]|c'h|ch)+", re.IGNORECASE)
 match_word = lambda s: re_word.fullmatch(s)
 is_word = lambda s: bool(match_word(s))
 
 # Inclusive words (ex: arvester·ez)
 # will always match as regular words
-re_word_inclusive = re.compile(r"(['aâàbdeêfghijklmnñoprstuüùûvwyz-]+)·(['aâàbdeêfghijklmnñoprstuüùûvwyz-]+)", re.IGNORECASE)
+re_word_inclusive = re.compile(r"(['-" + LETTERS + r"]+)·([-" + LETTERS + r"]+)", re.IGNORECASE)
 match_word_inclusive = lambda s: re_word_inclusive.fullmatch(s)
 is_word_inclusive = lambda s: bool(match_word_inclusive(s))
 
@@ -141,6 +136,7 @@ class Flag:
     MASCULINE = 2
     FEMININE = 3
     INCLUSIVE = 4
+    CAPITALIZED = 5
 
 
 def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Token]:
@@ -342,10 +338,11 @@ def split_sentence(text_or_gen: Union[str, Iterable[str]], **options: Any) -> It
 
         Options:
             'end' : end the sentences with the given character 
+
     """
 
     end_line = options.pop("end", '\n')
-    preserve_newline = options.pop("preserve_newline", False)
+    # preserve_newline = options.pop("preserve_newline", False)
 
     if isinstance(text_or_gen, str):
         if not text_or_gen:
