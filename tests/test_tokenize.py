@@ -51,6 +51,7 @@ def test_detokenize():
     should_be("un abadenn “ mikro digor” tro-dro d’ar rap", "un abadenn “mikro digor” tro-dro d’ar rap")
     should_be("Gouel Broadel ar Brezhoneg ( GBB ) .", "Gouel Broadel ar Brezhoneg (GBB).")
 
+
 def test_norm_punct():
     def should_be(s1: str, s2: str) -> None:
         toklist = tokenize(s1, norm_punct=True)
@@ -84,3 +85,11 @@ def test_tokenize_list():
     ]
 
     assert len(detokenize(tokenize(sentences))) == 411
+
+
+def test_autocorrection():
+    def should_be(sent: str, correction: str) -> str:
+        assert detokenize(tokenize(sent, autocorrect=True)) == correction
+    
+    should_be("kemer an taski", "kemer an taksi") 
+    should_be("abadenn France 3", "abadenn Frañs 3")

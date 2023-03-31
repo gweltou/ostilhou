@@ -9,13 +9,13 @@
 from typing import Iterator, Iterable, List, Any, Union, Set
 import re
 from .definitions import (
-    is_noun, is_noun_f, is_noun_m,
+    is_noun, is_noun_f, is_noun_m, is_proper_noun,
     is_time, match_time,
     is_unit_number, match_unit_number,
     PUNCTUATION, LETTERS, SI_UNITS,
     OPENING_QUOTES, CLOSING_QUOTES,
 )
-from ..dicts import proper_nouns, acronyms
+from ..dicts import acronyms, corrected_tokens
 
 
 
@@ -137,6 +137,7 @@ class Flag:
     FEMININE = 3
     INCLUSIVE = 4
     CAPITALIZED = 5
+    CORRECTED = 6
 
 
 def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Token]:
@@ -153,7 +154,12 @@ def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Toke
 
 
 def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
-    """ Parse a stream of raw tokens to find punctuation """
+    """ Parse a stream of raw tokens to find punctuation
+    
+        TODO:
+            words with a dot in the middle and more than 2 letters
+                (ex: [...] fin miz Gouere.Laouen e oa [...])
+    """
 
     # Normalize punctuation option
     norm_punct = options.pop('norm_punct', False)
@@ -240,22 +246,51 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
 
 
 
-def parse_regular_words(token_stream: Iterator[Token]) -> Iterator[Token]:
-    """ It should be called after `parse_punctuation` """
+def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
+    """ It should be called after `parse_punctuation`
+    
+        TODO:
+            Slashed couple (ex: "Brezhoneg/Galleg")
+    """
+
+    # OPTIONS
+    # Autocorrection
+    autocorrect = options.pop('autocorrect', False)
 
     for tok in token_stream:
         if tok.kind == Token.RAW:
-            if tok.data in acronyms:
-                tok.kind = Token.ACRONYM
-            elif is_word(tok.data):
-                # Token is a simple and well formed word
-                if tok.data.lower() in proper_nouns:
-                    tok.kind = Token.PROPER_NOUN
-                else:
-                    tok.kind = Token.WORD
-                    if is_word_inclusive(tok.data):
-                        tok.flags.add(Flag.INCLUSIVE)
-        yield tok
+            # We use a buffer to parse tokens generated from autocorrection
+            buffer = [tok]
+            while buffer:
+                tok = buffer.pop(0)
+                if autocorrect:
+                    lowered = tok.data.lower()
+                    if lowered in corrected_tokens:
+                        # We have a substitute word for this token
+                        iscap = tok.data[0].isupper()
+                        tokens = corrected_tokens[lowered]
+                        first = tokens[0]
+                        if iscap:
+                            tok.data = first[0].upper() + first[1:]
+                        else:
+                            tok.data = first
+                        tok.flags.add(Flag.CORRECTED)
+                        buffer.extend(tokens[1:])
+
+                if tok.data in acronyms:
+                    tok.kind = Token.ACRONYM
+                elif is_word(tok.data):
+                    # Token is a simple and well formed word
+                    if is_proper_noun(tok.data):
+                        tok.kind = Token.PROPER_NOUN
+                    else:
+                        tok.kind = Token.WORD
+                        if is_word_inclusive(tok.data):
+                            tok.flags.add(Flag.INCLUSIVE)
+                yield tok
+        else:
+            yield tok
+
 
 
 def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
@@ -279,6 +314,7 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                 elif is_roman_ordinal(tok.data):
                     tok.kind = Token.ROMAN_ORDINAL
                 elif is_time(tok.data):
+                    # TODO: Check for token 'gm', 'g.m', 'GM'...
                     tok.kind = Token.TIME
                 elif is_unit_number(tok.data):
                     # ex: "10m2"
@@ -368,15 +404,13 @@ def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator
     # if options.pop('pre_process', True):
     #     sentence = pre_process(sentence)
     
-    # Normalize punctuation option
-    norm_punct = options.pop('norm_punct', False)
-    
     token_stream = generate_raw_tokens(text_or_gen)
-    token_stream = parse_punctuation(token_stream, norm_punct=norm_punct)
+    token_stream = parse_punctuation(token_stream, **options)
     token_stream = parse_numerals(token_stream)
     # token_stream = parse_acronyms(token_stream)
-    token_stream = parse_regular_words(token_stream)
+    token_stream = parse_regular_words(token_stream, **options)
     return token_stream
+
 
 
 def detokenize(token_stream: Iterator[Token], **options: Any) -> str:

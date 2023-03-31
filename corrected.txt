@@ -1,126 +1,5 @@
-
-
-# Unvaniañ
-#anezhe	anezho
-#goût	gouzout
-beljia	Belgia
-breiz	Breizh
-danemark	Danmark
-dervezh	devezh
-egipt	Ejipt
-evid	evit
-formaj	fourmaj
-hirie	hiziv
-hirio	hiziv
-hiriv	hiziv
-hounnezh	honnezh
-japon	Japan
-koa	kwa
-moutik	moutig
-plastek	plastik
-poher	Poc'hêr
-rostrenn	Rostren
-russia	Rusia
-stokholm	Stockholm
-tailand	Thailand
-taïland	Thailand
-thaïland	Thailand
-ty	ti
-ukrainia	Ukraina
-ukrenia	Ukraina
-warlerc'h	war lerc'h
-atao	atav
-
-
-
-# Fr to Br,
-# Those words sound the same in both language so we rewrite them to help the phonetizer
-office	ofis
-musique	muzik
-télégramme	telegram
-
-
-
-# Fazioù boutin
-posubl	posupl
-perzhiou	perzhioù
-adkemmeret	adkemeret
-aman	amañ
-aotroù	aotrou
-araok	a-raok
-avañtur	avantur
-awalc'h	a-walc'h
-biniou	binioù
-bourrabl	bourrapl
-brezoneg	brezhoneg
-chenchet	cheñchet
-chigago	Chicago
-choant 	c'hoant 
-c'homlec'h	chomlec'h
-choulz 	 c'houlz
-dalc'hmad	dalc'hmat
-dansoù	dañsoù
-dañvez	danvez
-dañvezioù	danvezioù
-diagnostics	diagnostiks
-diouzthu	diouzhtu
-diposupl	dibosupl
-dishenvel	disheñvel
-dishenvel	disheñvel
-dlihad	dilhad
-doareou	doareoù
-emsalc'h	emzalc'h
-founnus	fonnus
-goulou	gouloù
-gouvezet	gouezet
-grenv	greñv
-gwann	gwan
-jug	chug
-kaozadennoù	kaozeadennoù
-konchennoù	koñchennoù
-laret	lâret
-marc'hatmatoc'h	marc'hadmatoc'h
-marmoused	marmouzed
-memez	memes
-mennozioù	menozioù
-miliadou	miliadoù
-milliadou	miliadoù
-moneizh	moneiz
-monneizh	moneiz
-mouezioù	mouezhioù
-neizhañ	neizhiañ
-nozvat	noz vat
-pannelloù	panelloù
-personnel	personel
-seitekved	seitekvet
-siezhvet	seizhvet
-stañk	stank
-toud	tout
-traouigoù	traoùigoù
-treuskas	treuzkas
-vakansoù	vakañsoù
-vidon	evidon
-vigouden	Vigoudenn
-virgulen	virgulenn
-vit	evit
-vousc'hoarzin	vousc'hoarzhin
-vousc'hoarz	vousc'hoarzh
-
-
-
 # Fazioù Common voice
-c'hoazhin	c'hoarzhin
-million	milion
-choari	c'hoari
-bezaén	bezañ
-hanterkanvedenn	hanterkantvedenn
-brezhonek	brezhoneg
-erwann	Erwan
-nebuet	nebeut
-france	Frañs
-peseut	peseurt
-vitale	vital
-techout	tec'hout
+
 ne reomp nemer sentiñ	ne reomp nemet sentiñ
 er borioù pell	er broioù pell
 aozadennn	aozadenn
@@ -128,6 +7,7 @@ emcihañs	emichañs
 vrummenn	vrumenn
 skinwell	skinwel
 migon	mignon
+migoned	mignoned
 taski	taksi
 ecowatt	eko watt
 c'houlzma	c'houlz ma
@@ -204,42 +84,6 @@ dilamour	dilabour
 brasenn	blasenn
 
 
-# Anvioù
-amélie	Ameli
-argoat	Argoad
-catherine	Katrin
-christian	Kristian
-christophe	Kristof
-dominique	Dominig
-émile	Emil
-eric	Erik
-fabrice	Fabris
-frederig	Frederik
-helena	Elena
-hélène	Elen
-helen	Elen
-huelgoat	Uhelgoad
-isabelle	Izabel
-justine	Justin
-kambodjia	Kambodja
-loïc	Loig
-maël	Mael
-marcel	Marsel
-maría	Maria
-marianna	Mariana
-marie	Mari
-mélanie	Melani
-normandie	Normandi
-patrig	Padrig
-philippe	Filip
-plouescat	Ploueskad
-plougastel	Plougastell
-stéphan	Stefan
-tanguy	Tangi
-victoria	Viktoria
-victor	Viktor
-yannick	Yannig
-
 
 
  d' ar 	 d'ar 
@@ -260,12 +104,6 @@ be'h	bec'h
 bzh	BZH
 www	WWW
 fm	FM
-m2	metrad karrez
-cl	santilitr
-ml	mililitr
-cm	santimetr
-km	kilometr
-kg	kilogramm
 kant g 	kant gramm 
 c'hant g 	c'hant gramm 
 

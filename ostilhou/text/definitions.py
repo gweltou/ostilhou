@@ -3,12 +3,18 @@ import re
 from ostilhou.dicts import proper_nouns, nouns_f, nouns_m
 
 
-LETTERS = "aâàbcdeêfghijklmnñoprstuüùûvwyz"
+LETTERS = "aâàbcdeêéèfghijklmnñoôprstuüùûvwyzç"
 PUNCTUATION = '.?!,‚;:«»“”"()/…'
 OPENING_QUOTES = "«“"
 CLOSING_QUOTES = "»”"
 # CLOSING_PUNCT = {'»': '«', '”': '“', ')': '('}
 # OPENING_PUNCT = CLOSING_PUNCT.values()
+
+
+# Acronyms
+
+PATTERN_DOTTED_ACRONYM = re.compile(r"([A-Z]\.)+([A-Z])?")
+
 
 
 SI_UNITS = {
@@ -39,7 +45,7 @@ SI_UNITS = {
 
 # A percentage or a number followed by a unit
 
-re_unit_number = re.compile(r"(\d+)([\w%€$]+)", re.IGNORECASE)
+re_unit_number = re.compile(r"(\d+)([\w%€$']+)", re.IGNORECASE)
 match_unit_number = lambda s: re_unit_number.fullmatch(s)
 def is_unit_number(s):
     match = match_unit_number(s)
@@ -58,6 +64,17 @@ def is_time(s):
     _, m = match.groups(default='00')
     return int(m) < 60
 
+
+# Nouns and proper nouns
+
+def is_proper_noun(word: str) -> bool:
+    if '-' in word:
+        for sub in word.split('-'):
+            if sub not in proper_nouns:
+                return False
+        return True
+    else:
+        return word in proper_nouns
 
 
 def is_noun_f(word: str) -> bool:

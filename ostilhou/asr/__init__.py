@@ -201,7 +201,7 @@ def phonetize(word: str) -> List[str]:
         of a given word
     """
     
-    word = word.strip().lower()
+    word = word.strip()
 
     if '-' in word:
         # Composed word with hyphen, treat every subword individually
@@ -215,9 +215,10 @@ def phonetize(word: str) -> List[str]:
             prop = new_prop
         return prop
 
-    if word in lexicon_sub:
+    if word.lower() in lexicon_sub:
         alter = lexicon_add.get(word, [])
         return lexicon_sub[word] + alter
+    
     if word in proper_nouns:
         if proper_nouns[word]:
             return proper_nouns[word]

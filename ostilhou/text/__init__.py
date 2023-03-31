@@ -17,6 +17,7 @@ def strip_punct(word: str) -> str:
     return word
 
 
+
 def filter_out(text: str, chars: str) -> str:
     """ Remove characters from a string """
 
@@ -24,6 +25,7 @@ def filter_out(text: str, chars: str) -> str:
     for l in text:
         if not l in chars: filtered_text += l
     return filtered_text
+
 
 
 PATTERN_BETWEEN_PARENTHESIS = re.compile(r"\((.+?)\)")
@@ -40,6 +42,7 @@ def extract_parenthesis_content(txt: str) -> Tuple[str, str]:
     return remaining, extracted
 
 
+
 def pre_process(text: str) -> str:
     text = text.replace('‘', "'")
     text = text.replace('’', "'")
@@ -51,6 +54,7 @@ def pre_process(text: str) -> str:
     text = text.replace('ň', 'ñ')
     text = text.replace('ù', 'ù') # Another sneaky one (found in Ya! webpages)
     return text
+
 
 
 def sentence_stats(sentence: str) -> dict:
@@ -93,6 +97,7 @@ def load_translation_dict(path: str) -> dict:
             else:
                 translation_dict[line] = ""
     return translation_dict
+
 
 
 def translate(token_stream: Iterator[Token], tra_dict: dict, **options: Any) -> Iterator[Token]:

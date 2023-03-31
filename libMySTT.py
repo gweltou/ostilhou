@@ -33,16 +33,16 @@ from ostilhou.asr import (
     phonemes,
     load_text_data
 )
-from ostilhou.dicts import proper_nouns, acronyms
+from ostilhou.dicts import proper_nouns, acronyms, corrected_tokens
 from ostilhou.text.tokenizer import is_word_inclusive, match_word_inclusive
 
 
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
-HS_DIC_PATH = os.path.join(ROOT, "ostilhou", "dicts", os.path.join("hunspell-dictionary", "br_FR"))
-HS_AFF_PATH = os.path.join(ROOT, "ostilhou", "dicts", os.path.join("hunspell-dictionary", "br_FR.aff"))
-HS_ADD_PATH= os.path.join(ROOT, "ostilhou", "dicts", os.path.join("hunspell-dictionary", "add.txt"))
+HS_DIC_PATH = os.path.join(ROOT, "ostilhou", "hspell", "hunspell-dictionary", "br_FR")
+HS_AFF_PATH = os.path.join(ROOT, "ostilhou", "hspell", "hunspell-dictionary", "br_FR.aff")
+HS_ADD_PATH= os.path.join(ROOT, "ostilhou", "hspell", "add.txt")
 
 CORRECTED_PATH = os.path.join(ROOT, "corrected.txt")
 JOINED_PATH = os.path.join(ROOT, "joined.txt")
@@ -91,7 +91,7 @@ def get_corrected_dict():
                 corrected[k] = v
     return corrected, corrected_sentences
 
-corrected, corrected_sentences = get_corrected_dict()
+_, corrected_sentences = get_corrected_dict()
 
 
 
@@ -198,10 +198,10 @@ def tokenize(sentence, post_proc=True, keep_dash=False, keep_punct=False):
         new_tokens = []
         for t in tokens:
             lowered = t.lower()
-            if lowered in corrected:
-                new_tokens.append(corrected[lowered])
-            elif t in corrected:
-                new_tokens.append(corrected[t])
+            if lowered in corrected_tokens:
+                new_tokens.extend(corrected_tokens[lowered])
+            elif t in corrected_tokens:
+                new_tokens.extend(corrected_tokens[t])
             elif lowered in proper_nouns:
                 new_tokens.append(t.capitalize())
             elif t in acronyms:
@@ -211,24 +211,6 @@ def tokenize(sentence, post_proc=True, keep_dash=False, keep_punct=False):
         tokens = new_tokens
 
     return list(filter(bool, tokens))
-
-
-
-PARENTHESIS_PATTERN = re.compile(r"\([^\(]+\)")
-
-def extract_parenthesis(sentence):
-    """ Extract text between parenthesis
-        TODO: refactor so it returns (sentence_wo_parenthesis, list_or_sentences_in_parenthesis)
-    """
-    in_parenthesis = []
-    match = PARENTHESIS_PATTERN.search(sentence)
-    while match:
-        start, end = match.span()
-        sentence = sentence[:start] + sentence[end:]
-        in_parenthesis.append(match.group())
-        match = PARENTHESIS_PATTERN.search(sentence)
-        
-    return [sentence] + in_parenthesis
 
 
 
@@ -301,10 +283,10 @@ def get_cleaned_sentence(sentence, rm_bl=False, rm_verbal_ticks=False, keep_dash
             num_blacklisted += 1
         elif rm_verbal_ticks and lowered_token in verbal_fillers:
             pass
-        elif lowered_token in corrected:
-            tokens.append(corrected[lowered_token])
-        elif token in corrected:
-            tokens.append(corrected[token])
+        elif lowered_token in corrected_tokens:
+            tokens.extend(corrected_tokens[lowered_token])
+        elif token in corrected_tokens:
+            tokens.extend(corrected_tokens[token])
         elif lowered_token in proper_nouns:
             tokens.append(token.capitalize())
         elif is_acronym(token):
@@ -339,10 +321,9 @@ def get_hspell_correction(sentence: str, allow_digits=True) -> Tuple[str, int]:
             tokens.append(Fore.YELLOW + token + Fore.RESET)
         elif lowered_token in verbal_fillers:
             tokens.append(Fore.YELLOW + token + Fore.RESET)
-        elif lowered_token in corrected:
-            tokens.append(Fore.GREEN + corrected[lowered_token] + Fore.RESET)
-        elif token in corrected:
-            tokens.append(Fore.GREEN + corrected[token] + Fore.RESET)
+        elif lowered_token in corrected_tokens:
+            correction = ' '.join(corrected_tokens[lowered_token])
+            tokens.append(Fore.YELLOW + correction + Fore.RESET)
         elif len(token) == 1 and token in "$€%":
             tokens.append(lowered_token)
         elif not allow_digits and token.isdigit():
@@ -357,8 +338,8 @@ def get_hspell_correction(sentence: str, allow_digits=True) -> Tuple[str, int]:
             else:
                 tokens.append(Fore.MAGENTA + token + Fore.RESET)
                 spell_error = True
-        elif lowered_token in proper_nouns:
-            tokens.append(token.capitalize())
+        elif token in proper_nouns:
+            tokens.append(Fore.GREEN + token + Fore.RESET)
         elif is_word_inclusive(token):
             # Inclusive notation (ex: arvester·ez)
             # Check if the first part can be found in dictionary

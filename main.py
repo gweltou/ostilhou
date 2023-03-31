@@ -7,11 +7,10 @@ from ostilhou.text import (
     normalize, normalize_sentence,
     pre_process, sentence_stats,
     )
-from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES
+from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES, PATTERN_DOTTED_ACRONYM
 from ostilhou.corpora import load_wikipedia_150k, load_sarmoniou
 from ostilhou.asr import phonetize
-
-from libMySTT import get_cleaned_sentence, corrected, corrected_sentences, get_hspell_correction
+from ostilhou.hspell import get_hspell_mistakes
 
 
 
@@ -96,8 +95,8 @@ def test_clean_ya():
                 for sentence in split_sentence(line, end=''):
                     n_parsed += 1
 
-                    if sentence.count('.') > 1:
-                        print(sentence)
+                    # if re.search(PATTERN_DOTTED_ACRONYM, sentence):
+                    #     print(sentence)
 
                     stats = sentence_stats(sentence)
                     if stats["upper"] / len(sentence) > 0.2:
@@ -110,8 +109,7 @@ def test_clean_ya():
                         # Telephone numbers
                         continue
                     if re.search(r"\d\d\.\d\d\.", sentence):
-                        # Telephone numbers (no match but in case)
-                        print(colored)
+                        # Telephone numbers (no match but it doesn't harm either)
                         continue
                     if re.search(r"[\w.]+@[\w.]+", sentence):
                         # E-mail adresses
@@ -128,20 +126,27 @@ def test_clean_ya():
                         sentence = sentence[3:]
                     elif re.match(r".'\) ", sentence):
                         sentence = sentence[4:]
-                    colored, n_mistakes = get_hspell_correction(sentence)
-                    # if n_mistakes >= 1:
-                    #     print(colored)
                     
                     ntok = len(sentence.split())
                     if ntok < 3:
-                        # Too short sentences
+                        # Sentences is too short
                         continue
-                    
+
+                    sentence = detokenize(tokenize(sentence, autocorrect=True))
+
+                    colored, n_mistakes = get_hspell_mistakes(sentence)
+                    if n_mistakes >= 1:
+                        print(colored)
+
                     if n_mistakes == 0:
-                        sentences.add(sentence.capitalize())
+                        # Capitalize first letter
+                        sentence = sentence[0].upper() + sentence[1:]
+                        sentences.add(sentence)
+                        # if sentence.count('.') > 1:
+                        #     print(sentence)
                     
                     normalized = normalize_sentence(sentence)
-                    _, n_mistakes = get_hspell_correction(sentence)
+                    _, n_mistakes = get_hspell_mistakes(sentence)
                     if n_mistakes == 0:
                         sentences_norm.add(normalized)
 
@@ -149,19 +154,19 @@ def test_clean_ya():
         for sentence in sorted(sentences):
             fout.write(sentence + '\n')
 
-    with open("comparaison.txt", 'w') as fout:
-        for sentence in sorted(sentences):
-            normalized = normalize_sentence(sentence)
-            if len(sentence) != len(normalized):
-                fout.write(sentence + '\n')
-                fout.write(normalized + '\n\n')
+    # with open("comparaison.txt", 'w') as fout:
+    #     for sentence in sorted(sentences):
+    #         normalized = normalize_sentence(sentence)
+    #         if len(sentence) != len(normalized):
+    #             fout.write(sentence + '\n')
+    #             fout.write(normalized + '\n\n')
 
     n_kept = 0
-    # with open("ya_propr_norm.txt", 'w') as fout:
-    #     for sentence in sorted(sentences_norm):
-    #         if not re.search("[0-9]", sentence):
-    #             fout.write(sentence + '\n')
-    #             n_kept += 1
+    with open("ya_propr_norm.txt", 'w') as fout:
+        for sentence in sorted(sentences_norm):
+            if not re.search("[0-9]", sentence):
+                fout.write(sentence + '\n')
+                n_kept += 1
     
     print(f"Total sentences: {n_parsed}")
     print(f"Kept: {len(sentences)} ({len(sentences)/n_parsed:.2%})")
@@ -170,19 +175,14 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "hervez Garry Donnely « dizalc’h » ar c’hontre (Donnely zo ac’h. Ar ofisour (ag ar… PSNI, just a-walc’h !)  « n’eo ket anezhañ ». Sklaer evel daoulagad an naer. Garry Middleton, anezhañ kannad an DUP, kontre Derry, a c’houlenn ag e du « e vroudahe PSNI ». Chañs vat dezhañ !"
+    sentence = "4c'hm"
     # test_tokenize(sentence)
     # test_detokenize(sentence)
     # test_normalize(sentence)
     # test_wiki150()
     # test_sarmoniou()
+    # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
     # for s in split_sentence(sentence):
-    #     print(s)
+    #     print(s, end='')
     
-    # test_clean_ya()
-
-    s1 = "Iwerzhonad a-orin eo ar prezidant nevez (gant e vamm-gozh, hag a oa o chom gantañ ha gant e dud. Komzet e veze iwerzhoneg er gêr zoken) ha lorc'h ennañ."
-
-    r, p = extract_parenthesis_content(s1)
-    print(r, len(r))
-    print(p)
+    test_clean_ya()

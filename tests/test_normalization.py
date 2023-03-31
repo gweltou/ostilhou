@@ -15,24 +15,24 @@ def test_normalization():
         ("d'an 3 a viz Here", "d'an tri a viz Here"),
         ("tro dro da 85000 den e Mec'hiko", "tro dro da pemp ha pevar-ugent mil den e Mec'hiko"),
         ("12 000 euro", "daouzek mil euro"),
+        ("92 ki", "daouzek ki ha pevar-ugent"),
+        ("Ouzhpenn da 42 bemdez", "Ouzhpenn da daou ha daou-ugent bemdez"),
+        ("51 dre den", "unan hag hanter-kant dre den"),
         ("da lavaret eo 950km", "da lavaret eo nav c'hant hanter-kant kilometr"),
         ("72 m eo he uhelder keitat", "daouzek metr ha tri-ugent eo he uhelder keitat"),
         ("75m2 eo gorread an dachenn", "pemzek metr karrez ha tri-ugent eo gorread an dachenn"),
-        ("Un dachenn 5km²", "un dachenn pemp kilometr karrez"),
+        ("Un dachenn 5km²", "Un dachenn pemp kilometr karrez"),
         ("34% e 2010", "pevar ha tregont dre gant e daou vil dek"),
         ("35 % eus al loened", "pemp ha tregont dre gant eus al loened"),
         ("12e30, 11e35, 9e15, 8e45", "kreisteiz hanter, unnek eur pemp ha tregont, nav eur ha kard, nav eur nemet kard"),
         ("da 5e56 e roas an urzh", "da c'hwec'h eur nemet pevar e roas an urzh"),
-        ("kement mañ tout etre 2 eur ha 7eur abardaez", ""),
+        ("kement mañ tout etre 2 eur ha 7eur abardaez", "kement mañ tout etre div eur ha seizh eur abardaez"),
         ("Loeiz XVI", "Loeiz c'hwezek"),
         ("kemeret perzh er 7vet hag en 8vet kuzuliadegoù", "kemeret perzh er seizhvet hag en eizhvet kuzuliadegoù"),
         ("en XXIvet kantved", "en un warn-ugentvet kantved"),
         ("1 vloaz, 2 bloaz, 3 bloaz, 5 bloaz, 10 bloaz", "ur bloaz, daou vloaz, tri bloaz, pemp bloaz, dek vloaz"),
-        ("e 1982 e varvas", "e mil nav c'hant daou ha pevar-ugent e varvas"),
-        ("92 ki", "daouzek ki ha pevar-ugent"),
-        ("Ouzhpenn da 42 bemdez", "ouzhpenn da daou ha daou-ugent bemdez"),
-        ("51 dre den", "unan hag hanter-kant dre den"),
         ("d'an oad a 25 bloaz", "d'an oad a pemp bloaz warn-ugent"),
+        ("e 1982 e varvas", "e mil nav c'hant daou ha pevar-ugent e varvas"),
         ("1, 1 c'hazh, 21 loarenn", "unan, ur c'hazh, ul loarenn warn-ugent"),
         ("32 687 bit", "daou ha tregont mil c'hwec'h kant seizh bit ha pevar-ugent"),
         ("e 2021 ez eus ganet 32 065 babig, 1 072 muioc'h eget e 2020 +35 %", ""),
@@ -47,7 +47,7 @@ def test_normalization():
         ("da 1e g.m., pe da 2e gm.", "da un eur goude meren, pe da ziv eur goude meren"),
         ("d’ar Sadorn 1añ a viz Ebrel da 8e30 noz e france.tv ha da 0e15 war France 3 Breizh.", ""),
         ("1,5, 3,50 €, 1,001%", "unan virgulenn pemp, tri euro hanter-kant, unan virgulenn mann mann unan dre gant"),
-        ("13,1 km, 378 m a zinaou", "")
+        ("13,1 km, 378 m a zinaou", ""),
 
         # OPAB - Mozilla Common Voice
         ("Un 40 den bennak.", "un daou-ugent den bennak."),
@@ -70,7 +70,6 @@ def test_normalization():
 
         # OPAB - Aziliz
         ("HEULIAÑ AR PRODUIOÙ, SURENTEZ AR BOUED, LEC'H GWAREZET.", "heuliañ ar produioù, surentez ar boued, lec'h gwarezet."),
-
     ]
 
     for t, gt in test_cases:
@@ -85,6 +84,7 @@ def test_ordinal_normalization():
         if is_ordinal(t): print(norm_ordinal(t))
         elif is_roman_ordinal(t): print(norm_roman_ordinal(t))
         else: print("Not an ordinal", t)
+
 
 
 def test_mutations_articles():

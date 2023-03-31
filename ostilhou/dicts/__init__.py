@@ -5,7 +5,6 @@ import os
 
 # Proper nouns dictionary
 # with phonemes when name has a foreign or particular pronunciations
-# Beware, entries are lowercase
 
 proper_nouns = dict()
 _proper_nouns_phon_path = __file__.replace("__init__.py", "proper_nouns_phon.tsv")
@@ -15,12 +14,12 @@ with open(_proper_nouns_phon_path, 'r') as f:
         l = l.strip()
         if l.startswith('#') or not l: continue
         w, *pron = l.split(maxsplit=1)
-        pron = pron[0] if pron else ""
+        pron = pron if pron else []
         
-        if w.lower() in proper_nouns:
-            proper_nouns[w.lower()].append(pron)
+        if w in proper_nouns and pron:
+            proper_nouns[w].append(pron[0])
         else:
-            proper_nouns[w.lower()] = [pron]
+            proper_nouns[w] = pron
 
 
 
@@ -74,3 +73,17 @@ def get_acronyms_dict():
     return acronyms
 
 acronyms = get_acronyms_dict()
+
+
+
+# Common word mistakes
+
+corrected_tokens = dict()
+_corrected_tokens_path = __file__.replace("__init__.py", "corrected_tokens.tsv")
+with open(_corrected_tokens_path, 'r') as f:
+    for l in f.readlines():
+        l = l.strip()
+        if l.startswith('#') or not l: continue
+        k, v = l.split('\t')
+        v = v.split()
+        corrected_tokens[k] = v
