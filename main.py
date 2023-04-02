@@ -188,4 +188,5 @@ if __name__ == "__main__":
     # for s in split_sentence(sentence):
     #     print(s, end='')
     
-    test_clean_ya()
+    # test_clean_ya()
+    print(phonetize("EV"))

@@ -8,6 +8,7 @@ def test_metadata():
         ("{spk: abc def; gender:f} o komz emaon", "o komz emaon", {'speaker':'abc def', 'gender':'f'}),
         ("{spk:marc'harid; gender:f}", "", {'speaker': "marc'harid", 'gender': 'f'}),
         ("{c'h-ch d}", "", {'speaker': "c'h-ch d"}),
+        ("{anv-bihan familh; gender:f; accent:gwened}", "", {'speaker': "anv-bihan familh", 'gender': 'f', 'accent': 'gwened'}),
         ("\n{parser:no-lm}\n\n", "", {'parser': 'no-lm'}),
         ("{accent: gwenedeg, }", "", {'accent': 'gwenedeg'}),
         ("{mac'ha-rid le lagadeg}", "", {'speaker': "mac'ha-rid le lagadeg"}),

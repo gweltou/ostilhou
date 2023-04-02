@@ -150,6 +150,8 @@ def parse_data_file(split_filename):
                     pass
                 elif word in ("<NTT>", "<C'HOARZH>", "<UNK>"):
                     pass
+                elif word == "'":
+                    pass
                 # elif word in verbal_fillers:
                 #     pass
                 # elif is_acronym(word):
@@ -170,14 +172,16 @@ def parse_data_file(split_filename):
                 tokens = sent.split()
                 # Ignore if to many black-listed words in sentence
                 if n_stared / len(tokens) > 0.2:
-                    print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
+                    if args.verbose:
+                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
                     continue
                 # Remove starred words
                 tokens = [tok for tok in tokens if not tok.startswith('*')]
                 sent = ' '.join(tokens)
                 # Ignore if sentence is too short
                 if len(tokens) < LM_SENTENCE_MIN_WORDS:
-                    print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
+                    if args.verbose:
+                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
                     continue
                 data["corpus"].add(sent)
     
@@ -244,6 +248,7 @@ if __name__ == "__main__":
     parser.add_argument("--lm-corpus", help="path of a text file to build the language model")
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
     parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
+    parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
     args = parser.parse_args()
     print(args)
 
@@ -297,7 +302,6 @@ if __name__ == "__main__":
             print("Done.")
 
 
-
     if not args.dry_run:
 
         if not os.path.exists(SAVE_DIR):
@@ -326,12 +330,10 @@ if __name__ == "__main__":
                         cleaned = normalize_sentence(sentence, autocorrect=True)
                         cleaned = filter_out(cleaned.strip(), PUNCTUATION)
                         for word in cleaned.split():
-                            if word.lower() in corpora["train"]["lexicon"]:
+                            if word in corpora["train"]["lexicon"]:
                                 pass
-                            # elif word.lower() in proper_nouns:
-                            #     pass
-                            # elif is_acronym(word.upper()) and word.upper() in acronyms:
-                            #     pass
+                            elif word == "'":
+                                pass
                             else:
                                 corpora["train"]["lexicon"].add(word)
                         fout.write(cleaned + '\n')
