@@ -181,7 +181,7 @@ if __name__ == "__main__":
     # test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
-    test_normalize(sentence)
+    # test_normalize(sentence)
     # test_wiki150_noun_gender()
     # test_sarmoniou()
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
@@ -189,3 +189,5 @@ if __name__ == "__main__":
     #     print(s, end='')
     
     # test_clean_ya()
+
+    print(phonetize("Covid-19"))
