@@ -22,7 +22,7 @@ SI_UNITS = {
     'kg'    : ["kilo", "kilogramm"],
     't'     : ["tonenn"],
     'l'     : ["litr", "litrad"],
-    'cl'    : ["santiltr", "santilitrad"],
+    'cl'    : ["santilitr", "santilitrad"],
     'ml'    : ["mililitr", "mililitrad"],
     'cm'    : ["santimetr", "kantimetr"],
     'cm2'   : ["santimetr karrez", "kantimetr karrez"],

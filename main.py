@@ -177,11 +177,11 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "Qhi qe tu dis ?"
+    sentence = "pemzek cl laezh ha tri ugent"
     # test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
-    # test_normalize(sentence)
+    test_normalize(sentence)
     # test_wiki150()
     # test_sarmoniou()
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
@@ -189,4 +189,3 @@ if __name__ == "__main__":
     #     print(s, end='')
     
     # test_clean_ya()
-    print(phonetize("EV"))

@@ -208,7 +208,7 @@ def parse_data_file(split_filename):
         if speaker_ids[i] in speakers_gender:
             speaker_gender = speakers_gender[speaker_ids[i]]
         else:
-            print("unknown gender:", speaker_ids[i])
+            print(Fore.RED + "unknown gender:" + Fore.RESET, speaker_ids[i])
             speaker_gender = 'u'
         
         if speaker_gender == 'm':

@@ -61,6 +61,7 @@ doktorez
 doneier
 duplex
 eilveidi
+houmous
 ejiptologourez
 ekolojisted
 elektrik
@@ -183,6 +184,8 @@ sinadenn
 sistemek
 skalpel
 skampiola
+kamping
+c'hamping
 sklêrijennat
 skript
 statistikel
@@ -190,6 +193,7 @@ strategiezhioù
 strikt
 stummadurezh
 tabletennoù
+vilourel
 temperadur
 tempo
 termenaduriñ
@@ -197,6 +201,7 @@ termeniñ
 teuzar
 tierigoù
 tofou
+tretañ
 trio
 troiadur
 trug
