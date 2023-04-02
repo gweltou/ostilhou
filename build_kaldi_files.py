@@ -66,7 +66,10 @@ def parse_dataset(file_or_dir):
             "subdir_audiolen": {}   # Size (total audio length) for every sub-folders
             }
         
-        for filename in os.listdir(file_or_dir):
+        for filename in sorted(os.listdir(file_or_dir)):
+            if filename.startswith('.'):
+                # Skip hidden folders
+                continue
             if os.path.isdir(os.path.join(file_or_dir, filename)) or filename.endswith(".split"):
                 data_item = parse_dataset(os.path.join(file_or_dir, filename))
                 data["wavscp"].extend(data_item["wavscp"])
