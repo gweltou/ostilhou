@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 from .metadata import extract_metadata
-from ..dicts import proper_nouns
+from ..dicts import proper_nouns, acronyms
 
 
 # Graphemes to phonemes
@@ -198,7 +198,7 @@ with open(_lexicon_sub_path, 'r') as f:
 def phonetize(word: str) -> List[str]:
     """ Simple phonetizer
         Returns a string of phonemes representing the pronunciation
-        of a given word
+        of a single given word
     """
     
     word = word.strip()
@@ -216,13 +216,16 @@ def phonetize(word: str) -> List[str]:
             prop = new_prop
         return prop
 
-    if lowered in lexicon_sub:
-        alter = lexicon_add.get(word, [])
-        return lexicon_sub[word] + alter
-    
+    if word in acronyms:
+        return acronyms[word]
+
     if word in proper_nouns:
         if proper_nouns[word]:
             return proper_nouns[word]
+    
+    if lowered in lexicon_sub:
+        alter = lexicon_add.get(word, [])
+        return lexicon_sub[word] + alter
     
     if lowered in verbal_fillers:
         return [ verbal_fillers[lowered] ]
