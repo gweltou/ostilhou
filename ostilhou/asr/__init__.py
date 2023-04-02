@@ -14,7 +14,7 @@ w2f = {
     'añv.'  :   'AN',       # klAÑV {gouzañv ?}
     'b'     :   'B',
     'd'     :   'D',
-    'ch'    :   'CH',       # CHomm
+    'ch'    :   'CH',       # CHom
     "c'h"   :   'X',        # 
     'c'     :   'K',        # xxx GALLEG XXX
     'e'     :   'E',        # spEred
@@ -147,7 +147,7 @@ verbal_fillers = {
     'alors' :   'A L OH R',
     'allez' :   'A L E',
     'voilà' :   'V O A L A',
-    'pff'   :   'P F',
+    'pff'   :   'P F F',
     #'oh'    :   'O',
     #'ah'    :   'A',
 }
@@ -202,6 +202,7 @@ def phonetize(word: str) -> List[str]:
     """
     
     word = word.strip()
+    lowered = word.lower()
 
     if '-' in word:
         # Composed word with hyphen, treat every subword individually
@@ -215,13 +216,17 @@ def phonetize(word: str) -> List[str]:
             prop = new_prop
         return prop
 
-    if word.lower() in lexicon_sub:
+    if lowered in lexicon_sub:
         alter = lexicon_add.get(word, [])
         return lexicon_sub[word] + alter
     
     if word in proper_nouns:
         if proper_nouns[word]:
             return proper_nouns[word]
+    
+    if lowered in verbal_fillers:
+        return [ verbal_fillers[lowered] ]
+
     
     head = 0
     phon = []

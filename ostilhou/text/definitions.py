@@ -3,8 +3,8 @@ import re
 from ostilhou.dicts import proper_nouns, nouns_f, nouns_m
 
 
-LETTERS = "aâàbcdeêéèfghijklmnñoôprstuüùûvwyzç"
-PUNCTUATION = '.?!,‚;:«»“”"()/…'
+LETTERS = "aâàbcçdeêéèfghiïjklmnñoôpqrstuüùûvwxyz"
+PUNCTUATION = '.?!,‚;:«»“”"()[]/…–'
 OPENING_QUOTES = "«“"
 CLOSING_QUOTES = "»”"
 # CLOSING_PUNCT = {'»': '«', '”': '“', ')': '('}
@@ -31,11 +31,13 @@ SI_UNITS = {
     'm'     : ["metr", "metrad"],
     'm2'    : ["metr karrez", "metrad karrez"],
     'm²'    : ["metr karrez", "metrad karrez"],
-    'm3'    : ["metr diñs"],
+    'm3'    : ["metr diñs", "metrad diñs"],
+    'm³'    : ["metr diñs", "metrad diñs"],
     'km'    : ["kilometr", "kilometrad"],
     "c'hm"  : ["c'hilometr", "c'hilometrad"],
     'km2'   : ["kilometr karrez", "kilometrad karrez"],
     'km²'   : ["kilometr karrez", "kilometrad karrez"],
+    'km³'   : ["kilometr diñs", "kilometrad diñs"],
     'mn'    : ["munutenn"],
     '€'     : ['euro'],
     '$'     : ['dollar', 'dollar amerikan'],

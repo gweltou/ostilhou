@@ -1,19 +1,22 @@
 import re
+from colorama import Fore
 
 
 METADATA_PATTERN = re.compile(r'{\s*(.+?)\s*}')
-METADATA_UNIT_PATTERN = re.compile(r"\s*([\w\s:,_'-]+)\s*")
+METADATA_UNIT_PATTERN = re.compile(r"\s*([\w\s:,_'/.-]+)\s*")
 SPEAKER_NAME_PATTERN = re.compile(r"(?:spk\s*:\s*)?([\w '_-]+?)")
 SPEAKER_ID_PATTERN_DEPR = re.compile(r'([-\'\w]+):*([mf])*')
-KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'-]+?)\s*")
+KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'.:/-]+?)\s*")
 
 _VALID_PARAMS = {
+    "source", "source-audio",
     "speaker", "spk",
     "gender",
     "accent",
     "phon",
     "author",
     "parser",
+    "tags",
 }
 
 
@@ -57,7 +60,7 @@ def extract_metadata(sentence: str):
                                 metadata["gender"] = speaker_name_depr.group(2)
                             continue    
                         else:
-                            print(f"Wrong metadata: {unit.group(0)}")
+                            print(Fore.RED + f"Wrong metadata: {unit.group(0)}" + Fore.RESET)
 
         sentence = sentence[:start] + sentence[end:]
         match = METADATA_PATTERN.search(sentence)

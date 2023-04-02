@@ -30,6 +30,7 @@ substitutions = {
     "h.a." : ["hag all"],
     "km/h" : [],
     "c'hm" : ["c'hilometr", "c'hilometrad"],
+    "s.o"  : ["sellet ouzh"],
 }
 
 
@@ -291,7 +292,7 @@ norm_roman_ordinal = lambda s: ROMAN_ORDINALS[s] if s in ROMAN_ORDINALS else rom
 
 
 
-def normalize_sentence(sentence: str) -> str:
+def normalize_sentence(sentence: str, autocorrect=False) -> str:
     """
         Normalize a single sentence
         return: list of all possible normalization for the sentence
@@ -301,7 +302,7 @@ def normalize_sentence(sentence: str) -> str:
 
     propositions = []
     result = ""
-    return detokenize(normalize(tokenize(sentence)))
+    return detokenize(normalize(tokenize(sentence, autocorrect=autocorrect)))
 
 
 
@@ -315,8 +316,8 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
     hold_token = False
     for tok in token_stream:
         # A PROPER_NOUN can also be a WORD so test order is important
-        if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data.capitalize())
-        # elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
+        if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data.title())
+        elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
         elif tok.kind == Token.NUMBER:
             # hold_token = True
             tok.norm.append(num2txt(int(tok.data)))

@@ -2,12 +2,12 @@ import re
 from ostilhou import tokenize, detokenize
 from ostilhou.text import (
     strip_punct, filter_out,
-    split_sentence, extract_parenthesis_content,
+    split_sentences, extract_parenthesis_content,
     load_translation_dict, translate,
     normalize, normalize_sentence,
     pre_process, sentence_stats,
     )
-from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES, PATTERN_DOTTED_ACRONYM
+from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES, PATTERN_DOTTED_ACRONYM, PUNCTUATION
 from ostilhou.corpora import load_wikipedia_150k, load_sarmoniou
 from ostilhou.asr import phonetize
 from ostilhou.hspell import get_hspell_mistakes
@@ -92,7 +92,7 @@ def test_clean_ya():
             if line:
                 line = pre_process(line).replace('*', '').replace('OOO', '000')
                 line = filter_out(line, OPENING_QUOTES + CLOSING_QUOTES)
-                for sentence in split_sentence(line, end=''):
+                for sentence in split_sentences(line, end=''):
                     n_parsed += 1
 
                     # if re.search(PATTERN_DOTTED_ACRONYM, sentence):
@@ -137,18 +137,20 @@ def test_clean_ya():
                     colored, n_mistakes = get_hspell_mistakes(sentence)
                     if n_mistakes >= 1:
                         print(colored)
-
-                    if n_mistakes == 0:
+                    elif n_mistakes == 0:
                         # Capitalize first letter
-                        sentence = sentence[0].upper() + sentence[1:]
+                        # sentence = sentence[0].upper() + sentence[1:]
                         sentences.add(sentence)
-                        # if sentence.count('.') > 1:
-                        #     print(sentence)
                     
+                    # leave out inclusive words for now, as they can't be phonetized yet
+                    if '·' in sentence:
+                        continue
+
                     normalized = normalize_sentence(sentence)
-                    _, n_mistakes = get_hspell_mistakes(sentence)
+                    normalized = filter_out(normalized, PUNCTUATION + '<#>').replace('-', ' ')
+                    _, n_mistakes = get_hspell_mistakes(normalized)
                     if n_mistakes == 0:
-                        sentences_norm.add(normalized)
+                        sentences_norm.add(' '.join(normalized.split()))
 
     with open("ya_propr.txt", 'w') as fout:
         for sentence in sorted(sentences):
@@ -175,8 +177,9 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "4c'hm"
+    sentence = "Qhi qe tu dis ?"
     # test_tokenize(sentence)
+    # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
     # test_normalize(sentence)
     # test_wiki150()

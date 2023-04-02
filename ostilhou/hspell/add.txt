@@ -3,12 +3,12 @@ agar
 agav
 aktourez
 alemañ
-alemañ
 algoritm
 algoritmoù
 ambision
 anatomiezh
 aotomatek
+apero
 arkitektour
 artifisiel
 atersadenn
@@ -45,6 +45,7 @@ c'horonavirus
 c'hovid
 denien
 dianv
+dibleget
 didreuzet
 dielfennoù
 difeulz
@@ -58,7 +59,6 @@ diventelezh
 divigoù
 doktorez
 doneier
-dregant
 duplex
 eilveidi
 ejiptologourez
@@ -92,6 +92,7 @@ gourskrid
 grafik
 guzulikerien
 gwallvrudus
+haïku
 henejipt
 heñvelrevidi
 hibiskus
@@ -118,6 +119,7 @@ kentaidi
 kigezat
 klaviadiñ
 klaviadoù
+koko
 koñferañs
 koñferañsoù
 korona
@@ -128,6 +130,7 @@ lesbian
 lignezour
 lignezouriezh
 lisañs
+martolodez
 mikroboù
 mililitrad
 milourel
@@ -201,7 +204,6 @@ vejetarian
 venelour
 venelouriezh
 vengleuzerien
-vestronia
 vilajenn
 vitaminoù
 vousfentiñ

@@ -21,7 +21,7 @@ from ..dicts import acronyms, corrected_tokens
 
 # Regular words
 
-re_word = re.compile(r"(['-·" + LETTERS + r"]|c'h|ch)+", re.IGNORECASE)
+re_word = re.compile(r"['\-·" + LETTERS + r"]+", re.IGNORECASE)
 match_word = lambda s: re_word.fullmatch(s)
 is_word = lambda s: bool(match_word(s))
 
@@ -157,8 +157,10 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
     """ Parse a stream of raw tokens to find punctuation
     
         TODO:
-            words with a dot in the middle and more than 2 letters
+            * words with a dot in the middle and more than 2 letters
                 (ex: [...] fin miz Gouere.Laouen e oa [...])
+            * rak,tost
+
     """
 
     # Normalize punctuation option
@@ -250,7 +252,8 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
     """ It should be called after `parse_punctuation`
     
         TODO:
-            Slashed couple (ex: "Brezhoneg/Galleg")
+            * Brezhoneg/Galleg
+            * miz Gouere.Laouen e oa
     """
 
     # OPTIONS
@@ -275,7 +278,7 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
                         else:
                             tok.data = first
                         tok.flags.add(Flag.CORRECTED)
-                        buffer.extend(tokens[1:])
+                        buffer.extend([ Token(t, Token.RAW) for t in tokens[1:] ])
 
                 if tok.data in acronyms:
                     tok.kind = Token.ACRONYM
@@ -296,8 +299,11 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
 def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
     """ Look for various numeral forms: numbers, ordinals, units...
 
-        --parse_numerals depends on the prior parsing of parse_regular_words,
-        for the detections of roman numbers-- (not anymore)
+        TODO:
+            * 1,20
+            * €/miz
+            * +40 %
+            * d'ar Sul 10/10
     """
 
     # prev_token = None
@@ -368,7 +374,7 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
 
 
 
-def split_sentence(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
+def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
     """ Split a text (or list of text) according to its punctuation
         This function can be used independently
 
@@ -401,6 +407,10 @@ def split_sentence(text_or_gen: Union[str, Iterable[str]], **options: Any) -> It
 
 
 def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[Token]:
+    """
+        TODO:
+            * &
+    """
     # if options.pop('pre_process', True):
     #     sentence = pre_process(sentence)
     
@@ -443,11 +453,15 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
                 if punct_stack and punct_stack[-1] == '"':
                     punct_stack.pop()
                 prefix = '\xa0' if data == '»' else ''
-            elif data == '(':
-                punct_stack.append('(')
+            elif data in '([':
+                punct_stack.append(data)
                 prefix = ' '
-            elif data == ')':
+            elif data in ')':
                 if punct_stack and punct_stack[-1] == '(':
+                    punct_stack.pop()
+                prefix = ''
+            elif data in ']':
+                if punct_stack and punct_stack[-1] == '[':
                     punct_stack.pop()
                 prefix = ''
             elif data == '/…':

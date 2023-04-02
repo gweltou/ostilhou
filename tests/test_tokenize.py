@@ -1,6 +1,6 @@
 
 from ostilhou import tokenize, detokenize
-from ostilhou.text import split_sentence, normalize
+from ostilhou.text import split_sentences, normalize
 
 
 
@@ -21,7 +21,7 @@ def test_split_sentence():
     ]
 
     for t in test_cases:
-        sub_sentences = split_sentence(t[0])
+        sub_sentences = split_sentences(t[0])
         print(t[0])
         sub_sentences = list(sub_sentences)
         assert len(sub_sentences) == t[1]

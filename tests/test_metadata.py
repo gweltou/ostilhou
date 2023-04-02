@@ -12,6 +12,8 @@ def test_metadata():
         ("{accent: gwenedeg, }", "", {'accent': 'gwenedeg'}),
         ("{mac'ha-rid le lagadeg}", "", {'speaker': "mac'ha-rid le lagadeg"}),
         ("{accent:kerneveg, kemper}", "", {'accent': ['kerneveg', 'kemper']}),
+        ("{source-audio: http://www.radiobreizh.bzh/medias/19961031-Ar-melour-Pierre-Ollivier-RKB20180.mp3}",
+        "", {'source-audio': 'http://www.radiobreizh.bzh/medias/19961031-Ar-melour-Pierre-Ollivier-RKB20180.mp3'}),
     ]
 
     for t in test_cases:

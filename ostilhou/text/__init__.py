@@ -1,6 +1,6 @@
 from typing import List, Iterator, Any, Tuple
 from .definitions import LETTERS, PUNCTUATION
-from .tokenizer import Token, tokenize, detokenize, split_sentence, PUNCTUATION
+from .tokenizer import Token, tokenize, detokenize, split_sentences, PUNCTUATION
 from .normalizer import normalize, normalize_sentence
 from .inverse_normalizer import inverse_normalize_sentence
 import re
@@ -55,6 +55,29 @@ def pre_process(text: str) -> str:
     text = text.replace('ù', 'ù') # Another sneaky one (found in Ya! webpages)
     return text
 
+
+def fix_particles(text: str) -> str:
+    text = text.replace("d' ", "d'")
+    # text = text.replace("n' ", "n'")
+
+    text = text.replace("n'eus ", "n' eus ")
+    text = text.replace("n'int ", "n' int ")
+    text = text.replace("n'eo ", "n' eo ")
+    text = text.replace("n'hon ", "n' hon ")
+    text = text.replace("n'ez ", "n' ez ")
+    text = text.replace("n'em ", "n' em ")
+    text = text.replace("n'am ", "n' am ")
+    text = text.replace("n'en ", "n' en ")
+    text = text.replace("n'o ", "n' o ")
+    text = text.replace("n'on ", "n' on ")
+    text = text.replace("n'he ", "n' he ")
+    text = text.replace("n'edo ", "n' edo ")
+    text = text.replace("n'emañ ", "n' emañ ")
+    text = text.replace("n'anavezan ", "n' anavezan ")
+    text = text.replace("n'ouzer ", "n' ouzer ")
+    text = text.replace("n'ouzon ", "n' ouzon ")
+    # n'oc'h
+    # n'omp
 
 
 def sentence_stats(sentence: str) -> dict:

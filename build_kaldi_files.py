@@ -20,7 +20,8 @@ import numpy as np
 import re
 from math import floor, ceil
 from ostilhou import normalize_sentence
-from ostilhou.text import filter_out
+from ostilhou.text import filter_out, pre_process, split_sentences
+from ostilhou.text.definitions import PUNCTUATION
 from ostilhou.dicts import proper_nouns
 from ostilhou.audio import add_amb_random, AUDIO_AMB_FILES
 from ostilhou.asr import (
@@ -32,9 +33,7 @@ from ostilhou.asr import (
     phonemes,
     phonetize,
 )
-
-# Old library
-from libMySTT import acronyms, is_acronym, get_cleaned_sentence, split_line
+from colorama import Fore
 
 
 
@@ -47,7 +46,6 @@ UTTERANCES_MIN_LENGTH = 0 # exclude utterances shorter than this length (in seco
 # The augmented data will be put in a sister folder `augmented`, with the same
 # directory hierarchy as the original audio corpus.
 USE_DATA_AUGMENTATION = False    
-
 
 
 
@@ -96,7 +94,7 @@ def parse_data_file(split_filename):
         sys.exit(1)
     
     recording_id = os.path.basename(split_filename).split(os.path.extsep)[0]
-    print(f" * {split_filename[:-6]}")
+    print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
     text_filename = split_filename.replace('.split', '.txt')
     assert os.path.exists(text_filename), f"ERROR: no text file found for {recording_id}"
     wav_filename = split_filename.replace('.split', '.wav')
@@ -137,21 +135,20 @@ def parse_data_file(split_filename):
             if speaker_id not in speakers_gender:
                 # speakers_gender is a global variable
                 speakers_gender[speaker_id] = metadata["gender"]
-            
-        cleaned_sentence, _ = get_cleaned_sentence(sentence)     
-        if cleaned_sentence:
-            normalized = normalize_sentence(cleaned_sentence)
-            if len(normalized) != len(cleaned_sentence):
-                print(cleaned_sentence)
-                print(normalized)
-                print()
+        
+        cleaned = pre_process(sentence).replace('-', ' ')
+        if cleaned:
+            sent = normalize_sentence(cleaned, autocorrect=True)
+            sent = filter_out(sent, PUNCTUATION)
             speaker_ids.append(speaker_id)
-            sentences.append(normalized.replace('*', ''))
+            sentences.append(sent.replace('*', ''))
             
             # Add words to lexicon
-            for word in normalized.split():
+            for word in sent.split():
                 # Remove black-listed words (those beggining with '*')
                 if word.startswith('*'):
+                    pass
+                elif word in ("<NTT>", "<C'HOARZH>", "<UNK>"):
                     pass
                 # elif word in verbal_fillers:
                 #     pass
@@ -163,29 +160,33 @@ def parse_data_file(split_filename):
         
         # Add sentence to language model corpus
         if add_to_corpus and not replace_corpus:
-            for sub in split_line(sentence):
-                cleaned_sub, bl_score = get_cleaned_sentence(sub, rm_bl=True, rm_verbal_ticks=True)
-                if not cleaned_sub:
+            for sub in split_sentences(cleaned, end=''):
+                sent = normalize_sentence(sub, autocorrect=True)
+                sent = filter_out(sent, PUNCTUATION)
+                if not sent:
                     continue
+
+                n_stared = sent.count('*')
+                tokens = sent.split()
                 # Ignore if to many black-listed words in sentence
-                if bl_score > 0.2:
-                    print("rejected", sub)
+                if n_stared / len(tokens) > 0.2:
+                    print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
                     continue
+                # Remove starred words
+                tokens = [tok for tok in tokens if not tok.startswith('*')]
+                sent = ' '.join(tokens)
                 # Ignore if sentence is too short
-                if cleaned_sub.count(' ') < LM_SENTENCE_MIN_WORDS - 1:
-                    # print("corpus skip:", cleaned_sentence)
+                if len(tokens) < LM_SENTENCE_MIN_WORDS:
+                    print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
                     continue
-                data["corpus"].add(normalize_sentence(cleaned_sub))
+                data["corpus"].add(sent)
     
     if replace_corpus:
-        with open(substitute_corpus_filename, 'r') as f:
-            for sentence in f.readlines():
-                sentence = sentence.strip()
-                if not sentence or sentence.startswith('#'):
-                    continue
-                sentence, _ = extract_metadata(sentence)
-                sentence, _ = get_cleaned_sentence(sentence, rm_bl=True)
-                data["corpus"].add(sentence)
+        for sentence, _ in load_text_data(substitute_corpus_filename):
+            for sub in split_sentences(sentence):
+                sub = normalize_sentence(sub, autocorrect=True)
+                sub = filter_out(sub, PUNCTUATION)
+                data["corpus"].add(sub)
     
 
     ## PARSE SPLIT FILE
@@ -253,17 +254,7 @@ if __name__ == "__main__":
         print("`test` argument should be a directory containing aligned audio, text and split files")
         sys.exit(1)
     
-    # Add external speakers gender
     speakers_gender = {}
-    # for fname in spk2gender_files:
-    #     if os.path.exists(fname):
-    #         print(f"Adding speakers from '{fname}'")
-    #         with open(fname, 'r') as f:
-    #             for l in f.readlines():
-    #                 spk, gender = l.strip().split()
-    #                 speakers_gender[spk] = gender
-    #     else:
-    #         print(f"Couldn't find file '{fname}'")
     
     print("\n==== PARSING DATA ITEMS ====")
     corpora = { "train": parse_dataset(args.train) }
@@ -331,7 +322,9 @@ if __name__ == "__main__":
                 # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
                 with open(args.lm_corpus, 'r') as fr:
                     for sentence in fr.readlines():
-                        cleaned, _ = get_cleaned_sentence(sentence)
+                        # cleaned, _ = get_cleaned_sentence(sentence)
+                        cleaned = normalize_sentence(sentence, autocorrect=True)
+                        cleaned = filter_out(cleaned.strip(), PUNCTUATION)
                         for word in cleaned.split():
                             if word.lower() in corpora["train"]["lexicon"]:
                                 pass
@@ -342,24 +335,6 @@ if __name__ == "__main__":
                             else:
                                 corpora["train"]["lexicon"].add(word)
                         fout.write(cleaned + '\n')
-
-    
-    # lexicon_phon = set()
-    # for w in sorted(corpora["train"]["lexicon"]):
-    #     lexicon_phon.add(f"{w} {phonetize(w)}")
-    # with open(LEXICON_ADD_PATH, 'r') as f_in:
-    #     for l in f_in.readlines():
-    #         lexicon_phon.add(l.strip())
-    # for word in lexicon_add:
-    #     lexicon_phon.add(f"{word} {lexicon_add[word]}")
-    # for w in acronyms:
-    #     for pron in acronyms[w]:
-    #         lexicon_phon.add(f"{w} {pron}")
-    # for w in proper_nouns:
-    #     for pron in proper_nouns[w]:
-    #         lexicon_phon.add(f"{w.capitalize()} {pron}")
-    # for w in verbal_fillers:
-    #     lexicon_phon.add(f"{w} {verbal_fillers[w]}")
         
     
     if not args.dry_run:
@@ -375,7 +350,7 @@ if __name__ == "__main__":
             f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize(word):
-                    print(f"{word} {pron}\n")
+                    # print(f"{word} {pron}\n")
                     f_out.write(f"{word} {pron}\n")
         
         # silence_phones.txt

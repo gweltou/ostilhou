@@ -58,6 +58,7 @@ def get_hspell_mistakes(sentence: str) -> Tuple[str, int]:
             tok.data = Fore.YELLOW + tok.data + Fore.RESET
         elif tok.kind == Token.RAW:
             tok.data = Fore.BLACK + tok.data + Fore.RESET
+            n_mistakes += 1
         colored_tokens.append(tok)
     
     return detokenize(colored_tokens), n_mistakes
