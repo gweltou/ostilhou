@@ -142,9 +142,9 @@ def parse_data_file(split_filename):
         cleaned = pre_process(sentence)
         if cleaned:
             sent = normalize_sentence(cleaned, autocorrect=True)
+            sent = sent.replace('-', ' ').replace('/', ' ')
             sent = filter_out(sent, PUNCTUATION)
-            sent = sent.replace('-', ' ')
-            sentences.append(sent.replace('*', ''))
+            sentences.append(' '.join(sent.replace('*', '').split()))
             speaker_ids.append(speaker_id)
             
             # Add words to lexicon
@@ -168,8 +168,8 @@ def parse_data_file(split_filename):
         if add_to_corpus and not replace_corpus:
             for sub in split_sentences(cleaned, end=''):
                 sent = normalize_sentence(sub, autocorrect=True)
+                sent = sent.replace('-', ' ').replace('/', ' ')
                 sent = filter_out(sent, PUNCTUATION)
-                sent = sent.replace('-', ' ')
                 if not sent:
                     continue
 
@@ -182,22 +182,21 @@ def parse_data_file(split_filename):
                     continue
                 # Remove starred words
                 tokens = [tok for tok in tokens if not tok.startswith('*')]
-                sent = ' '.join(tokens)
                 # Ignore if sentence is too short
                 if len(tokens) < LM_SENTENCE_MIN_WORDS:
                     if args.verbose:
                         print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
                     continue
-                data["corpus"].add(sent)
+                data["corpus"].add(' '.join(tokens))
     
     if replace_corpus:
         for sentence, _ in load_text_data(substitute_corpus_filename):
             for sub in split_sentences(sentence):
                 sub = pre_process(sub)
                 sub = normalize_sentence(sub, autocorrect=True)
+                sub = sub.replace('-', ' ').replace('/', ' ')
                 sub = filter_out(sub, PUNCTUATION)
-                sub = sub.replace('-', ' ')
-                data["corpus"].add(sub)
+                data["corpus"].add(' '.join(sub.split()))
     
 
     ## PARSE SPLIT FILE
@@ -338,8 +337,8 @@ if __name__ == "__main__":
                             # cleaned, _ = get_cleaned_sentence(sentence)
                             cleaned = pre_process(sentence)
                             cleaned = normalize_sentence(cleaned.strip(), autocorrect=True)
+                            cleaned = cleaned.replace('-', ' ').replace('/', ' ')
                             cleaned = filter_out(cleaned, PUNCTUATION)
-                            cleaned = cleaned.replace('-', ' ')
                             for word in cleaned.split():
                                 if word in corpora["train"]["lexicon"]:
                                     pass

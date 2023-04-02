@@ -226,8 +226,8 @@ def phonetize(word: str) -> List[str]:
             return proper_nouns[word]
     
     if lowered in lexicon_sub:
-        alter = lexicon_add.get(word, [])
-        return lexicon_sub[word] + alter
+        alter = lexicon_add.get(lowered, [])
+        return lexicon_sub[lowered] + alter
     
     if lowered in verbal_fillers:
         return [ verbal_fillers[lowered] ]
