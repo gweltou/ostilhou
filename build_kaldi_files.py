@@ -193,6 +193,7 @@ def parse_data_file(split_filename):
     if replace_corpus:
         for sentence, _ in load_text_data(substitute_corpus_filename):
             for sub in split_sentences(sentence):
+                sub = pre_process(sub)
                 sub = normalize_sentence(sub, autocorrect=True)
                 sub = filter_out(sub, PUNCTUATION)
                 sub = sub.replace('-', ' ')
@@ -335,7 +336,8 @@ if __name__ == "__main__":
                     with open(lm_corpus_file, 'r') as fr:
                         for sentence in fr.readlines():
                             # cleaned, _ = get_cleaned_sentence(sentence)
-                            cleaned = normalize_sentence(sentence.strip(), autocorrect=True)
+                            cleaned = pre_process(sentence)
+                            cleaned = normalize_sentence(cleaned.strip(), autocorrect=True)
                             cleaned = filter_out(cleaned, PUNCTUATION)
                             cleaned = cleaned.replace('-', ' ')
                             for word in cleaned.split():

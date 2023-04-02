@@ -38,7 +38,7 @@ def extract_metadata(sentence: str):
             for unit in METADATA_UNIT_PATTERN.finditer(match.group(1)):
                 speaker_name = SPEAKER_NAME_PATTERN.fullmatch(unit.group(1))
                 if speaker_name:
-                    metadata["speaker"] = speaker_name.group(1)
+                    metadata["speaker"] = speaker_name.group(1).replace(' ', '_')
                     continue
                 
                 key_val = KEYVAL_PATTERN.fullmatch(unit.group(1))
@@ -47,7 +47,7 @@ def extract_metadata(sentence: str):
 
                     if key in _VALID_PARAMS:
                         if ',' in val:
-                            val = [v.strip() for v in val.split(',') if v.strip()]
+                            val = [v.strip().replace(' ', '_') for v in val.split(',') if v.strip()]
                             if len(val) == 1:
                                 val = val[0]
                         metadata[key_val.group(1)] = val
