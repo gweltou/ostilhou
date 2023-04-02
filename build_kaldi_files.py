@@ -248,7 +248,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("--train", help="train dataset directory", required=True)
     parser.add_argument("--test", help="train dataset directory")
-    parser.add_argument("--lm-corpus", help="path of a text file to build the language model")
+    parser.add_argument("--lm-corpus", nargs='+', help="path of a text file to build the language model")
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
     parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
     parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
@@ -327,19 +327,20 @@ if __name__ == "__main__":
             print("parsing and copying external corpus\n")
             with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a') as fout:
                 # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
-                with open(args.lm_corpus, 'r') as fr:
-                    for sentence in fr.readlines():
-                        # cleaned, _ = get_cleaned_sentence(sentence)
-                        cleaned = normalize_sentence(sentence, autocorrect=True)
-                        cleaned = filter_out(cleaned.strip(), PUNCTUATION)
-                        for word in cleaned.split():
-                            if word in corpora["train"]["lexicon"]:
-                                pass
-                            elif word == "'":
-                                pass
-                            else:
-                                corpora["train"]["lexicon"].add(word)
-                        fout.write(cleaned + '\n')
+                for lm_corpus_file in args.lm_corpus:
+                    with open(lm_corpus_file, 'r') as fr:
+                        for sentence in fr.readlines():
+                            # cleaned, _ = get_cleaned_sentence(sentence)
+                            cleaned = normalize_sentence(sentence, autocorrect=True)
+                            cleaned = filter_out(cleaned.strip(), PUNCTUATION)
+                            for word in cleaned.split():
+                                if word in corpora["train"]["lexicon"]:
+                                    pass
+                                elif word == "'":
+                                    pass
+                                else:
+                                    corpora["train"]["lexicon"].add(word)
+                            fout.write(cleaned + '\n')
         
     
     if not args.dry_run:

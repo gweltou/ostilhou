@@ -29,7 +29,7 @@ def test_normalize(sentence):
     print(detokenize(normalize(tokenize(sentence))))
 
 
-def test_wiki150():
+def test_wiki150_noun_gender():
     # Find male and female nouns by looking at the words following
     # the cardinals 'daou', 'tri', 'pevar' (for male nouns) and
     # 'div', 'teir', 'peder' (for female nouns)
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
     test_normalize(sentence)
-    # test_wiki150()
+    # test_wiki150_noun_gender()
     # test_sarmoniou()
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
     # for s in split_sentence(sentence):
