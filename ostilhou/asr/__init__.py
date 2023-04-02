@@ -42,6 +42,7 @@ w2f = {
     'ha.'   :   'A',
     'hag.'  :   'A G',
     'i'     :   'I',
+    'ï'     :   'I',
     'iñ'    :   'I N',      # bIÑs
     'iñv'   :   'I V',      # fIÑV {gwiñver ?}
     'iñ.'   :   'I',        # debrIÑ

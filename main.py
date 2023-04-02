@@ -15,7 +15,7 @@ from ostilhou.hspell import get_hspell_mistakes
 
 
 def test_tokenize(sentence):
-    for t in tokenize(sentence, norm_punct=True):
+    for t in tokenize(sentence, norm_punct=True, autocorrect=True):
         print(t, t.norm)
 
 
@@ -24,9 +24,9 @@ def test_detokenize(sentence):
 
 
 def test_normalize(sentence):
-    for token in tokenize(sentence):
+    for token in tokenize(sentence, autocorrect=True):
         print(token, token.norm)
-    print(detokenize(normalize(tokenize(sentence))))
+    print(normalize_sentence(sentence, autocorrect=True))
 
 
 def test_wiki150_noun_gender():
@@ -177,17 +177,16 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "pemzek cl laezh ha tri ugent"
-    # test_tokenize(sentence)
+    sentence = "Covid-19, covid-19"
+    test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
-    # test_normalize(sentence)
-    # test_wiki150_noun_gender()
-    # test_sarmoniou()
+    test_normalize(sentence)
+    # print(phonetize(s))
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
     # for s in split_sentence(sentence):
     #     print(s, end='')
     
+    # test_wiki150_noun_gender()
+    # test_sarmoniou()
     # test_clean_ya()
-
-    print(phonetize("Covid-19"))

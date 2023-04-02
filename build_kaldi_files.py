@@ -361,6 +361,8 @@ if __name__ == "__main__":
             f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n<C'HOARZH> LAU\n<NTT> SPN\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize(word):
+                    if not pron:
+                        print(Fore.RED + "ERROR empty pronunciation" + Fore.RESET, word)
                     # print(f"{word} {pron}\n")
                     f_out.write(f"{word} {pron}\n")
         

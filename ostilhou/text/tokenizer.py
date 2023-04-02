@@ -416,9 +416,9 @@ def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator
     
     token_stream = generate_raw_tokens(text_or_gen)
     token_stream = parse_punctuation(token_stream, **options)
+    token_stream = parse_regular_words(token_stream, **options)
     token_stream = parse_numerals(token_stream)
     # token_stream = parse_acronyms(token_stream)
-    token_stream = parse_regular_words(token_stream, **options)
     return token_stream
 
 
