@@ -27,7 +27,7 @@ The library comes with a few toy corpora from the public domain.
 Metadata
 
 Special tokens :
-<UNK>, <NTT>, <C'HOARZH>
+`<UNK>`, `<C'HOARZH>`, `<NTT>`
 
 Verbal fillers
 

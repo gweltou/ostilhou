@@ -139,12 +139,13 @@ def parse_data_file(split_filename):
                 # speakers_gender is a global variable
                 speakers_gender[speaker_id] = metadata["gender"]
         
-        cleaned = pre_process(sentence).replace('-', ' ')
+        cleaned = pre_process(sentence)
         if cleaned:
             sent = normalize_sentence(cleaned, autocorrect=True)
             sent = filter_out(sent, PUNCTUATION)
-            speaker_ids.append(speaker_id)
+            sent = sent.replace('-', ' ')
             sentences.append(sent.replace('*', ''))
+            speaker_ids.append(speaker_id)
             
             # Add words to lexicon
             for word in sent.split():
@@ -168,6 +169,7 @@ def parse_data_file(split_filename):
             for sub in split_sentences(cleaned, end=''):
                 sent = normalize_sentence(sub, autocorrect=True)
                 sent = filter_out(sent, PUNCTUATION)
+                sent = sent.replace('-', ' ')
                 if not sent:
                     continue
 
@@ -193,6 +195,7 @@ def parse_data_file(split_filename):
             for sub in split_sentences(sentence):
                 sub = normalize_sentence(sub, autocorrect=True)
                 sub = filter_out(sub, PUNCTUATION)
+                sub = sub.replace('-', ' ')
                 data["corpus"].add(sub)
     
 
@@ -315,7 +318,7 @@ if __name__ == "__main__":
             os.mkdir(dir_kaldi_local)
             
 
-        print("\n==== BUILDING KALDI ====")
+        print("\n==== BUILDING KALDI FILES ====")
         # Copy text from train utterances to language model corpus
         print(f"building file \'{os.path.join(dir_kaldi_local, 'corpus.txt')}\'")
         with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'w') as fout:
@@ -328,12 +331,13 @@ if __name__ == "__main__":
             with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a') as fout:
                 # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
                 for lm_corpus_file in args.lm_corpus:
-                    print(" *", lm_corpus_file)
+                    print(Fore.GREEN + f" * {lm_corpus_file}" + Fore.RESET)
                     with open(lm_corpus_file, 'r') as fr:
                         for sentence in fr.readlines():
                             # cleaned, _ = get_cleaned_sentence(sentence)
-                            cleaned = normalize_sentence(sentence, autocorrect=True)
-                            cleaned = filter_out(cleaned.strip(), PUNCTUATION)
+                            cleaned = normalize_sentence(sentence.strip(), autocorrect=True)
+                            cleaned = filter_out(cleaned, PUNCTUATION)
+                            cleaned = cleaned.replace('-', ' ')
                             for word in cleaned.split():
                                 if word in corpora["train"]["lexicon"]:
                                     pass
@@ -354,7 +358,7 @@ if __name__ == "__main__":
         print(f"building file \'{lexicon_path}\'")
 
         with open(lexicon_path, 'w') as f_out:
-            f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n")
+            f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n<C'HOARZH> LAU\n<NTT> SPN\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize(word):
                     # print(f"{word} {pron}\n")
@@ -364,7 +368,7 @@ if __name__ == "__main__":
         silence_phones_path  = os.path.join(dir_dict_nosp, "silence_phones.txt")
         print(f"building file \'{silence_phones_path}\'")
         with open(silence_phones_path, 'w') as f:
-            f.write(f'SIL\noov\nSPN\n')
+            f.write(f'SIL\noov\nSPN\nLAU\n')
         
 
         # nonsilence_phones.txt
