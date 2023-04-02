@@ -324,11 +324,11 @@ if __name__ == "__main__":
         
         # External text corpus will be added now
         if args.lm_corpus:
-            print("parsing and copying external corpora\n")
+            print("parsing and embedding external corpora :")
             with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a') as fout:
                 # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
                 for lm_corpus_file in args.lm_corpus:
-                    print("parsing", lm_corpus_file)
+                    print(" *", lm_corpus_file)
                     with open(lm_corpus_file, 'r') as fr:
                         for sentence in fr.readlines():
                             # cleaned, _ = get_cleaned_sentence(sentence)

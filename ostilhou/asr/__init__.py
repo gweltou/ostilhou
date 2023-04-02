@@ -66,7 +66,8 @@ w2f = {
     'orr'   :   'O R',      # gORRe
     'p'     :   'P',
     ".p'h"  :   'P',        # P'He
-    'qu'    :   'K',        # xxx GALLEG XXX
+    'qu'    :   'K',        # XXX GALLEG
+    'q'     :   'K',        # XXX GALLEG
     'r'     :   'R',
     'rr'    :   'R',
     's'     :   'S',
