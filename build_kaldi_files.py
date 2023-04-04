@@ -280,7 +280,8 @@ if __name__ == "__main__":
         if USE_DATA_AUGMENTATION:
             print("\n==== DATA AUGMENTATION ====")
             root = os.path.abspath(args.train)
-            augmented_rep = os.path.join(os.path.abspath(SAVE_DIR), "augmented")
+            # augmented_rep = os.path.join(os.path.abspath(SAVE_DIR), "augmented")
+            augmented_rep = os.path.join(root, "augmented")
             augmented_files = []
             for i, f in enumerate(corpora["train"]["wavscp"]):
                 recording_id = "aug_" + f[0]

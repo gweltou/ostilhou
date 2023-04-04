@@ -312,11 +312,10 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
         Bugs: the ordinal '3e' will be interpreted as a TIME token
     """
 
-    prev_tok = None
-    hold_token = False
+    # prev_tok = None
+    # hold_token = False
     for tok in token_stream:
-        # A PROPER_NOUN can also be a WORD so test order is important
-        if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data.title())
+        if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data)
         elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
         elif tok.kind == Token.NUMBER:
             # hold_token = True
@@ -335,9 +334,10 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
         elif tok.kind == Token.UNIT:
             tok.norm.append(SI_UNITS[tok.data][0])
 
-        if hold_token:
-            yield prev_tok
-        if not hold_token:
-            yield tok
-        hold_token = False
-        prev_tok = tok
+        # if hold_token:
+        #     yield prev_tok
+        # if not hold_token:
+        #     yield tok
+        # hold_token = False
+        # prev_tok = tok
+        yield tok

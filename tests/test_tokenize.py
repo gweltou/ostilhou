@@ -62,7 +62,7 @@ def test_norm_punct():
 
 
 def test_split_into_sentences():
-    count_sentences = lambda s: len(detokenize(tokenize(s), end_sentence='\n').split('\n'))-1
+    count_sentences = lambda s: len(detokenize(tokenize(s), end='\n').split('\n'))-1
 
     assert 2 == count_sentences("Demat. Mont a ra ?")
     assert 1 == count_sentences("\"N'eo ket gwir !\" a huchas heñ.")

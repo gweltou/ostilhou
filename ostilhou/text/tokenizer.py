@@ -121,11 +121,11 @@ class Token:
         UNKNOWN: "UNKNOWN",
     }
 
-    def __init__(self, data: str, kind: int):
+    def __init__(self, data: str, kind: int, *flags):
         self.data = data
         self.norm = []
         self.kind = kind
-        self.flags: Set[Flag] = set()
+        self.flags: Set[Flag] = set(flags)
     
     def __repr__(self):
         return f"Token({repr(self.data)}, {self.descr[self.kind]})"
@@ -140,6 +140,7 @@ class Flag:
     CORRECTED = 6
 
 
+
 def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Token]:
     """ Generate raw tokens by splitting strings on whitespaces """
     
@@ -151,6 +152,7 @@ def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Toke
     for sentence in text_or_gen:
         for s in sentence.split():
             yield Token(s, Token.RAW)
+
 
 
 def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
@@ -256,41 +258,21 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
             * miz Gouere.Laouen e oa
     """
 
-    # OPTIONS
-    # Autocorrection
-    autocorrect = options.pop('autocorrect', False)
+    # Arg options
 
     for tok in token_stream:
         if tok.kind == Token.RAW:
-            # We use a buffer to parse tokens generated from autocorrection
-            buffer = [tok]
-            while buffer:
-                tok = buffer.pop(0)
-                if autocorrect:
-                    lowered = tok.data.lower()
-                    if lowered in corrected_tokens:
-                        # We have a substitute word for this token
-                        iscap = tok.data[0].isupper()
-                        tokens = corrected_tokens[lowered]
-                        first = tokens[0]
-                        if iscap:
-                            tok.data = first[0].upper() + first[1:]
-                        else:
-                            tok.data = first
-                        tok.flags.add(Flag.CORRECTED)
-                        buffer.extend([ Token(t, Token.RAW) for t in tokens[1:] ])
-
-                if tok.data in acronyms:
-                    tok.kind = Token.ACRONYM
-                elif is_word(tok.data):
-                    # Token is a simple and well formed word
-                    if is_proper_noun(tok.data):
-                        tok.kind = Token.PROPER_NOUN
-                    else:
-                        tok.kind = Token.WORD
-                        if is_word_inclusive(tok.data):
-                            tok.flags.add(Flag.INCLUSIVE)
-                yield tok
+            if tok.data in acronyms:
+                tok.kind = Token.ACRONYM
+            elif is_word(tok.data):
+                # Token is a simple and well formed word
+                if is_proper_noun(tok.data):
+                    tok.kind = Token.PROPER_NOUN
+                else:
+                    tok.kind = Token.WORD
+                    if is_word_inclusive(tok.data):
+                        tok.flags.add(Flag.INCLUSIVE)
+            yield tok
         else:
             yield tok
 
@@ -298,6 +280,7 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
 
 def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
     """ Look for various numeral forms: numbers, ordinals, units...
+        It should be applied before `parse_regular_words` to accurately parse quantities
 
         TODO:
             * 1,20
@@ -374,35 +357,29 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
 
 
 
-def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
-    """ Split a text (or list of text) according to its punctuation
-        This function can be used independently
+def correct_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
+    """ Should be applied before `parse_regular_words` """
 
-        Options:
-            'end' : end the sentences with the given character 
-
-    """
-
-    end_line = options.pop("end", '\n')
-    # preserve_newline = options.pop("preserve_newline", False)
-
-    if isinstance(text_or_gen, str):
-        if not text_or_gen:
-            return
-        text_or_gen = [text_or_gen]
-    
-    token_stream = generate_raw_tokens(text_or_gen)
-    token_stream = parse_punctuation(token_stream)
-
-    current_sentence = []
     for tok in token_stream:
-        if tok.kind == Token.END_SENTENCE:
-            yield detokenize(current_sentence, **options) + end_line
-            current_sentence = []
+        if tok.kind == Token.RAW:
+            lowered = tok.data.lower()
+            if lowered in corrected_tokens:
+                # We have a substitute word for this token
+                iscap = tok.data[0].isupper()
+                substitutes = corrected_tokens[lowered]
+                first = substitutes[0]
+                if iscap:
+                    # Should we capitalize the whole "C'H" character ?
+                    tok.data = first[0].upper() + first[1:]
+                else:
+                    tok.data = first
+                tok.flags.add(Flag.CORRECTED)
+                yield tok
+                yield from [ Token(s, Token.RAW, Flag.CORRECTED) for s in substitutes[1:] ]
+            else:
+                yield tok
         else:
-            current_sentence.append(tok)
-    if current_sentence:
-        yield detokenize(current_sentence, **options) + end_line
+            yield tok
 
 
 
@@ -411,24 +388,28 @@ def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator
         TODO:
             * &
     """
-    # if options.pop('pre_process', True):
-    #     sentence = pre_process(sentence)
+
+    # Arg options
+    autocorrect = options.pop('autocorrect', False)
     
     token_stream = generate_raw_tokens(text_or_gen)
     token_stream = parse_punctuation(token_stream, **options)
-    token_stream = parse_regular_words(token_stream, **options)
+    if autocorrect:
+        token_stream = correct_tokens(token_stream)
     token_stream = parse_numerals(token_stream)
+    token_stream = parse_regular_words(token_stream, **options)
     # token_stream = parse_acronyms(token_stream)
+
     return token_stream
 
 
 
 def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
     # Parse options
-    end_sentence = options.pop('end_sentence', '')
+    end_sentence = options.pop('end', '')
 
     parts: List[str] = []
-    punct_stack = [] # Used to keep track of coupled punctuation (ex: quotes)
+    punct_stack = [] # Used to keep track of coupled punctuation (quotes and brackets)
 
     for tok in token_stream:
         data = tok.norm[0] if tok.norm else tok.data
@@ -493,3 +474,35 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
         ret = ''.join(parts)
         return ret
     return ''
+
+
+
+def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
+    """ Split a text (or list of text) according to its punctuation
+        This function can be used independently
+
+        Options:
+            'end' : end the sentences with the given character 
+
+    """
+
+    end_sentence = options.pop("end", '\n')
+    # preserve_newline = options.pop("preserve_newline", False)
+
+    if isinstance(text_or_gen, str):
+        if not text_or_gen:
+            return
+        text_or_gen = [text_or_gen]
+    
+    token_stream = generate_raw_tokens(text_or_gen)
+    token_stream = parse_punctuation(token_stream)
+
+    current_sentence = []
+    for tok in token_stream:
+        if tok.kind == Token.END_SENTENCE:
+            yield detokenize(current_sentence, **options) + end_sentence
+            current_sentence = []
+        else:
+            current_sentence.append(tok)
+    if current_sentence:
+        yield detokenize(current_sentence, **options) + end_sentence

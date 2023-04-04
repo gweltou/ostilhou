@@ -1,6 +1,5 @@
 import os
-# from ..asr import acr2f
-
+import typing
 
 
 # Proper nouns dictionary
@@ -28,14 +27,17 @@ with open(_proper_nouns_phon_path, 'r') as f:
 
 nouns_f = set()
 _nouns_f_path = __file__.replace("__init__.py", "noun_f.tsv")
+
 with open(_nouns_f_path, 'r') as f:
     for l in f.readlines():
         l = l.strip()
         if l.startswith('#') or not l: continue
         nouns_f.add(l)
 
+
 nouns_m = set()
 _nouns_m_path = __file__.replace("__init__.py", "noun_m.tsv")
+
 with open(_nouns_m_path, 'r') as f:
     for l in f.readlines():
         l = l.strip()
@@ -80,6 +82,7 @@ acronyms = get_acronyms_dict()
 
 corrected_tokens = dict()
 _corrected_tokens_path = __file__.replace("__init__.py", "corrected_tokens.tsv")
+
 with open(_corrected_tokens_path, 'r') as f:
     for l in f.readlines():
         l = l.strip()

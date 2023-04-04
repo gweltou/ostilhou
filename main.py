@@ -177,12 +177,12 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "Hacker"
+    sentence = "covid-19; 92 ki"
     test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
     test_normalize(sentence)
-    print(phonetize(sentence))
+    # print(phonetize(sentence))
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
     # for s in split_sentence(sentence):
     #     print(s, end='')

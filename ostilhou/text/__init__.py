@@ -28,17 +28,17 @@ def filter_out(text: str, chars: str) -> str:
 
 
 
-PATTERN_BETWEEN_PARENTHESIS = re.compile(r"\((.+?)\)")
+_PATTERN_BETWEEN_PARENTHESIS = re.compile(r"\((.+?)\)")
 
 def extract_parenthesis_content(txt: str) -> Tuple[str, str]:
     extracted = []
     remaining = txt
-    match = re.search(PATTERN_BETWEEN_PARENTHESIS, remaining)
+    match = re.search(_PATTERN_BETWEEN_PARENTHESIS, remaining)
     while match:
         extracted.append(match.group(1))
         start, end = match.span()
         remaining = remaining[:start] + remaining[end:]
-        match = re.search(PATTERN_BETWEEN_PARENTHESIS, remaining)
+        match = re.search(_PATTERN_BETWEEN_PARENTHESIS, remaining)
     return remaining, extracted
 
 
@@ -56,7 +56,7 @@ def pre_process(text: str) -> str:
     return text
 
 
-def fix_particles(text: str) -> str:
+def fix_clitic(text: str) -> str:
     text = text.replace("d' ", "d'")
     # text = text.replace("n' ", "n'")
 
