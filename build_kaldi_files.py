@@ -283,9 +283,9 @@ if __name__ == "__main__":
             augmented_rep = os.path.join(root, "augmented")
             augmented_files = []
             for i, f in enumerate(corpora["train"]["wavscp"]):
-                recording_id = "aug_" + f[0]
+                recording_id = f[0] + "_aug"
                 utterance_id = corpora["train"]["text"][i][0]
-                utterance_id = "aug_" + utterance_id
+                utterance_id = utterance_id + "_aug"
                 text = corpora["train"]["text"][i][1]
                 corpora["train"]["text"].append((utterance_id, text))
                 seg = corpora["train"]["segments"][i].split('\t')
