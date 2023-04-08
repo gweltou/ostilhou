@@ -6,8 +6,7 @@
  Build necessary files to train a model with Kaldi toolkit
  All generated files are written in the `data` directory
 
- Usage :
-    
+ Usage : ./build_kaldi_files.py -h
  
  Author:  Gweltaz Duval-Guennoc
 """
@@ -45,7 +44,7 @@ UTTERANCES_MIN_LENGTH = 0 # exclude utterances shorter than this length (in seco
 # If True, duplicates the whole train dataset, adding various audio noises.
 # The augmented data will be put in a sister folder `augmented`, with the same
 # directory hierarchy as the original audio corpus.
-USE_DATA_AUGMENTATION = False    
+USE_DATA_AUGMENTATION = True    
 
 
 

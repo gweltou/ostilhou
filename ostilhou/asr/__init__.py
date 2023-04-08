@@ -1,6 +1,7 @@
 from typing import Tuple, List, Dict
-from .metadata import extract_metadata
 from ..dicts import proper_nouns, acronyms
+from .metadata import extract_metadata
+from .recognizer import transcribe_segment
 
 
 # Graphemes to phonemes

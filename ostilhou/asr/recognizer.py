@@ -48,6 +48,8 @@ with open(_postproc_sub_path, 'r') as f:
 
 
 def sentence_post_process(text: str) -> str:
+    """ Add hyphens back to composite words and inverse-normalize text """
+
     if not text:
         return ''
     
