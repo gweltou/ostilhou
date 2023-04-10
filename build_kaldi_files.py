@@ -283,9 +283,15 @@ if __name__ == "__main__":
             augmented_rep = os.path.join(root, "augmented")
             augmented_files = []
             for i, f in enumerate(corpora["train"]["wavscp"]):
-                recording_id = f[0] + "_aug"
+                recording_id = f[0] + "_AUG"
                 utterance_id = corpora["train"]["text"][i][0]
-                utterance_id = utterance_id + "_aug"
+                # Utterance_id should not be postfixed with anything,
+                # lest Kaldi goes back and forth between the original and augmented audio file
+                # when extracting features for every utterance
+                # 
+                utterance_id = utterance_id.rsplit('-', maxsplit=1)
+                utterance_id = utterance_id[0] + "_AUG_" + utterance_id[1]
+                print(utterance_id)
                 text = corpora["train"]["text"][i][1]
                 corpora["train"]["text"].append((utterance_id, text))
                 seg = corpora["train"]["segments"][i].split('\t')
