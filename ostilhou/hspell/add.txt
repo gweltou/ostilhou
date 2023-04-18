@@ -33,6 +33,7 @@ bratikourez
 bruzuniñ
 buheziñ
 c'hameraioù
+c'hamping
 c'henfinañ
 c'henitervez
 c'henrneveureg
@@ -61,7 +62,6 @@ doktorez
 doneier
 duplex
 eilveidi
-houmous
 ejiptologourez
 ekolojisted
 elektrik
@@ -102,6 +102,7 @@ holenegezh
 holenegezh
 homo
 homofobek
+houmous
 immunizet
 industriel
 industriezh
@@ -110,6 +111,7 @@ isspesad
 isspesadoù
 itrikerezh
 kakaouetez
+kamping
 kantilitrad
 kardio
 kayak
@@ -184,8 +186,6 @@ sinadenn
 sistemek
 skalpel
 skampiola
-kamping
-c'hamping
 sklêrijennat
 skript
 statistikel
@@ -193,7 +193,6 @@ strategiezhioù
 strikt
 stummadurezh
 tabletennoù
-vilourel
 temperadur
 tempo
 termenaduriñ
@@ -210,6 +209,7 @@ venelour
 venelouriezh
 vengleuzerien
 vilajenn
+vilourel
 vitaminoù
 vousfentiñ
 whisky

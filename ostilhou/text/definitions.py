@@ -1,6 +1,6 @@
 from typing import List
 import re
-from ostilhou.dicts import proper_nouns, nouns_f, nouns_m
+from ..dicts import proper_nouns, nouns_f, nouns_m
 
 
 LETTERS = "aâàbcçdeêéèfghiïjklmnñoôpqrstuüùûvwxyz"

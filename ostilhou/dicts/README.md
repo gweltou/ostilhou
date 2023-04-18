@@ -2,7 +2,9 @@
 
 Composed proper nouns (including an hyphen) should be put split before adding them to this list.
 
-Ex: Marie-Françoise -> Marie M A R I, Françoise F R AN S O A Z
+Ex: Marie-Françoise -> 
+	Françoise F R AN S O A Z
+	Marie M A R I
 
 ## Files 'noun_f.tsv' and 'noun_m.tsv'
 

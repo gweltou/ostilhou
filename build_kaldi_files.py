@@ -288,7 +288,6 @@ if __name__ == "__main__":
                 # Utterance_id should not be postfixed with anything,
                 # lest Kaldi goes back and forth between the original and augmented audio file
                 # when extracting features for every utterance
-                # 
                 utterance_id = utterance_id.rsplit('-', maxsplit=1)
                 utterance_id = utterance_id[0] + "_AUG_" + utterance_id[1]
                 print(utterance_id)

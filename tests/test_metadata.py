@@ -1,4 +1,4 @@
-from ostilhou.asr.metadata import extract_metadata
+from ostilhou.asr.dataformat import extract_metadata
 
 
 def test_metadata():

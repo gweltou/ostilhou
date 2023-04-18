@@ -1,9 +1,11 @@
 from typing import List, Iterator, Any, Tuple
-from .definitions import LETTERS, PUNCTUATION
-from .tokenizer import Token, tokenize, detokenize, split_sentences, PUNCTUATION
-from .normalizer import normalize, normalize_sentence
-from .inverse_normalizer import inverse_normalize_sentence
 import re
+from .definitions import LETTERS, PUNCTUATION
+from .tokenizer import Token, tokenize, detokenize, split_sentences
+from .normalizer import normalize, normalize_sentence
+from .inverse_normalizer import inverse_normalize_sentence, inverse_normalize_vosk
+from ..utils import read_file_drop_comments
+
 
 
 
@@ -56,6 +58,7 @@ def pre_process(text: str) -> str:
     return text
 
 
+
 def fix_clitic(text: str) -> str:
     text = text.replace("d' ", "d'")
     # text = text.replace("n' ", "n'")
@@ -78,6 +81,7 @@ def fix_clitic(text: str) -> str:
     text = text.replace("n'ouzon ", "n' ouzon ")
     # n'oc'h
     # n'omp
+
 
 
 def sentence_stats(sentence: str) -> dict:
@@ -107,6 +111,7 @@ def sentence_stats(sentence: str) -> dict:
             stats["other"] += 1
     
     return stats
+
 
 
 def load_translation_dict(path: str) -> dict:

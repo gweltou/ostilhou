@@ -23,5 +23,6 @@ def load_sarmoniou():
     corpus_path = __file__.replace("__init__.py", "sarmonioù_an_aotroù_quere.txt")
     corpus = load_corpus(corpus_path)
     corpus = corpus[31:-365] # Strip header and footnotes
+    # Mapping to correct encoding errors
     mapping = {146: 8217, 151: 8212, 156: 230, 148: 8221}
-    return [line.translate(mapping) for line in corpus]
+    return [line.translate(mapping) for line in corpus if line not in (".NFO", ".NTO", ".NHO", ".NPO")]

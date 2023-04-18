@@ -1,6 +1,8 @@
 import os
+# from typing import List
 from vosk import Model, KaldiRecognizer, SetLogLevel
-
+from .post_processing import apply_post_process_dict_text
+from ..text.inverse_normalizer import inverse_normalize_vosk
 
 
 
@@ -19,7 +21,7 @@ def load_vosk():
 
 
 
-def transcribe_segment(segment):
+def transcribe_segment(segment, normalize=False):
     if not _vosk_loaded:
         load_vosk()
     
@@ -31,37 +33,26 @@ def transcribe_segment(segment):
         i += 4000
     recognizer.AcceptWaveform(segment[i:])
     text = eval(recognizer.FinalResult())["text"]
-    return sentence_post_process(text)
+    return apply_post_process_dict_text(text)
 
 
 
-_postproc_sub = dict()
-_postproc_sub_path = os.path.join(os.path.split(__file__)[0], "postproc_sub.tsv")
 
-with open(_postproc_sub_path, 'r') as f:
-    for l in f.readlines():
-        l = l.strip()
-        if l and not l.startswith('#'):
-            k, v = l.split('\t')
-            _postproc_sub[k] = v
+# def sentence_post_process(text: str) -> str:
+#     """ Add hyphens back to composite words and inverse-normalize text """
 
-
-
-def sentence_post_process(text: str) -> str:
-    """ Add hyphens back to composite words and inverse-normalize text """
-
-    if not text:
-        return ''
+#     if not text:
+#         return ''
     
-    # web adresses
-    if "HTTP" in text or "WWW" in text:
-        text = text.replace("pik", '.')
-        text = text.replace(' ', '')
-        return text.lower()
+#     # web adresses
+#     if "HTTP" in text or "WWW" in text:
+#         text = text.replace("pik", '.')
+#         text = text.replace(' ', '')
+#         return text.lower()
     
-    for sub in _postproc_sub:
-        text = text.replace(sub, _postproc_sub[sub])
+#     for sub in _postproc_sub:
+#         text = text.replace(sub, _postproc_sub[sub])
     
-    splitted = text.split(maxsplit=1)
-    splitted[0] = splitted[0].capitalize()
-    return ' '.join(splitted)
+#     splitted = text.split(maxsplit=1)
+#     splitted[0] = splitted[0].capitalize()
+#     return ' '.join(splitted)

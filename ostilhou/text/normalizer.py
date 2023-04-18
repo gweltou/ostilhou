@@ -50,6 +50,7 @@ def solve_mutation_number(number: int, noun: str) -> str:
         return noun
 
 
+
 def solve_mutation_article(article: str, noun: str) -> List[str]:
     """ ar, an, al, un, ur, ul
         Correct the article and change the noun's first letter

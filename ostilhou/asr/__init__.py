@@ -1,7 +1,7 @@
 from typing import Tuple, List, Dict
-from ..dicts import proper_nouns, acronyms
-from .metadata import extract_metadata
+from .dataformat import extract_metadata, load_segments_data, load_text_data
 from .recognizer import transcribe_segment
+from ..dicts import proper_nouns, acronyms
 
 
 # Graphemes to phonemes
@@ -169,6 +169,7 @@ for val in list(w2f.values()) + list(acr2f.values()) + list(verbal_fillers.value
 
 lexicon_add: Dict[str, List[str]] = dict()
 _lexicon_add_path = __file__.replace("__init__.py", "lexicon_add.tsv")
+
 with open(_lexicon_add_path, 'r') as f:
     for l in f.readlines():
         w, phon = l.strip().split(maxsplit=1)
@@ -176,6 +177,7 @@ with open(_lexicon_add_path, 'r') as f:
             lexicon_add[w].append(phon)
         else:
             lexicon_add[w] = [phon]
+
 
 
 # Lexicon_sub contains hardcoded pronunciations for (mostly) foreign words and
@@ -188,6 +190,7 @@ with open(_lexicon_add_path, 'r') as f:
 
 lexicon_sub: Dict[str, List[str]] = dict()
 _lexicon_sub_path = __file__.replace("__init__.py", "lexicon_sub.tsv")
+
 with open(_lexicon_sub_path, 'r') as f:
     for l in f.readlines():
         w, phon = l.strip().split(maxsplit=1)
@@ -258,69 +261,3 @@ def phonetize(word: str) -> List[str]:
     
     variants = lexicon_add.get(word, [])
     return [pron] + variants
-
-
-
-Segment = Tuple[int, int]
-
-def load_segments_data(split_filename: str) -> Tuple[List[Segment], str]:
-    """ Load audio segments delimiters from a `.split` file
-        Return a list of segments and a header string
-    """
-
-    segments = []
-    header = ""
-    first = True
-    with open(split_filename, 'r') as f:
-        for l in f.readlines():
-            l = l.strip()
-            if l:
-                if first and l.startswith('#'):
-                    header = l
-                else:
-                    t = l.split()
-                    start = int(t[0])
-                    stop = int(t[1])
-                    segments.append((start, stop))
-                first = False
-    
-    return segments, header
-
-
-
-def load_text_data(filename) -> List[Tuple[str, Dict]]:
-    """ return list of sentences with metadata
-
-        Return
-        ------
-            list of tuple (text sentences, metadata)
-    """
-    utterances = []
-    with open(filename, 'r') as f:
-        current_speaker = 'unknown'
-        current_gender = 'unknown'
-        no_lm = False
-        for l in f.readlines():
-            l = l.strip()
-            if l and not l.startswith('#'):
-                # Extract speaker id and other metadata
-                l, metadata = extract_metadata(l)
-                if "speaker" in metadata:
-                    current_speaker = metadata["speaker"]
-                else:
-                    metadata["speaker"] = current_speaker
-                
-                if "gender" in metadata:
-                    current_gender = metadata["gender"]
-                else:
-                    metadata["gender"] = current_gender
-                
-                if "parser" in metadata:
-                    if "no-lm" in metadata["parser"]: no_lm = True
-                    elif "add-lm" in metadata["parser"]: no_lm = False
-                else:
-                    if no_lm:
-                        metadata["parser"] = ["no-lm"]
-                if l:
-                    utterances.append((l, metadata))
-    return utterances

@@ -10,6 +10,7 @@ ostilhou/dicts/gwenedeg_peurunvan.tsv
 ostilhou/hspell/add.txt
 ostilhou/asr/lexicon_add.tsv
 ostilhou/asr/lexicon_sub.tsv
+ostilhou/asr/postproc_sub.tsv
 "
 
 for file in $FILES
