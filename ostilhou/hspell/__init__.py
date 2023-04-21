@@ -36,7 +36,7 @@ def get_hspell_mistakes(sentence: str) -> Tuple[str, int]:
     colored_tokens = []
     # colored = ""
 
-    for tok in tokenize(sentence):
+    for tok in tokenize(sentence, autocorrect=True):
         if tok.kind == Token.WORD:
             if tok.data.lower() in lexicon_sub:
                 tok.data = Fore.YELLOW + tok.data + Fore.RESET

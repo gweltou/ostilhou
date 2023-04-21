@@ -53,7 +53,7 @@ def play_segment_text(idx, song, segments, utterances, speed):
     
     if idx < len(utterances):
         sent = pre_process(utterances[idx][0])
-        sent = normalize_sentence(sent, autocorrect=True)
+        sent = normalize_sentence(sent)
         correction, _ = get_hspell_mistakes(sent)
         print(f'{{{utterances[idx][1].get("speaker", "unkwnown")}}} {correction}')
     seg = song[segments[idx][0]:segments[idx][1]]

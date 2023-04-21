@@ -10,7 +10,7 @@ token_value = {
     "daou" : 2, "zaou" : 2, "div" : 2,
     "tri" : 3, "teir" : 3,
     "pevar" : 4, "peder" : 4,
-    "pemp" : 5,
+    "pemp" : 5, "bemp" : 5,
     "c'hwec'h" : 6,
     "seizh" : 7,
     "eizh" : 8,
@@ -38,7 +38,7 @@ token_value = {
 
 # A star character represents any noun
 numtok_chain = {
-	'[': ['zero', 'unan', 'un', 'ul', 'ur', 'daou', 'zaou', 'div', 'tri', 'teir', 'pevar', 'peder', 'pemp', "c'hwec'h", 'seizh', 'eizh', 'nav', 'dek', 'unnek', 'daouzek', 'trizek', 'pevarzek', 'pemzek', "c'hwezek", 'seitek', "triwec'h", 'naontek', 'ugent', 'tregont', 'kant', 'mil', 'hanter'],
+	'[': ['zero', 'unan', 'un', 'ul', 'ur', 'daou', 'zaou', 'div', 'tri', 'teir', 'pevar', 'peder', 'pemp', "bemp", "c'hwec'h", 'seizh', 'eizh', 'nav', 'dek', 'unnek', 'daouzek', 'trizek', 'pevarzek', 'pemzek', "c'hwezek", 'seitek', "triwec'h", 'naontek', 'ugent', 'tregont', 'kant', 'mil', 'hanter'],
 	'zero': [']'],
 	'unan': [']', 'warn', 'ha', 'hag'],
 	'ur': ["c'hant", 'mil', 'milion', 'miliard', '*'],
@@ -52,6 +52,7 @@ numtok_chain = {
 	'pevar': [']', 'warn', 'ha', 'hag', 'ugent', "c'hant", 'mil', 'milion', '*'],
     'peder': [']', 'warn', 'ha', 'hag', '*'],
 	'pemp': [']', 'warn', 'ha', 'hag', 'kant', 'mil', 'milion', '*'],
+    'bemp': [']', 'warn', 'ha', 'hag', 'kant', 'mil', 'milion', '*'],
 	"c'hwec'h": [']', 'warn', 'ha', 'hag', 'kant', 'mil', 'milion', '*'],
 	'seizh': [']', 'warn', 'ha', 'hag', 'kant', 'mil', 'milion', '*'],
 	'eizh': [']', 'warn', 'ha', 'hag', 'kant', 'mil', 'milion', '*'],

@@ -15,6 +15,7 @@ from .definitions import (
     PUNCTUATION, LETTERS, SI_UNITS,
     OPENING_QUOTES, CLOSING_QUOTES,
 )
+from .utils import capitalize
 from ..dicts import acronyms, corrected_tokens
 
 
@@ -360,22 +361,40 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
 def correct_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
     """ Should be applied before `parse_regular_words` """
 
+    def get_susbitution(word: str) -> List[str]:
+        lowered = word.lower()
+        if lowered in corrected_tokens:
+            # Check if the first letter is capitalized
+            i = 0
+            while lowered[i] not in LETTERS: i += 1
+            iscap = word[i].isupper()
+            substitutes = corrected_tokens[lowered]
+            first = substitutes[0]
+            if iscap:
+                # Should we capitalize the whole "C'H" character ?
+                first = capitalize(first)
+            return [first] + substitutes[1:]
+        else:
+            return []
+
+
     for tok in token_stream:
         if tok.kind == Token.RAW:
             lowered = tok.data.lower()
-            if lowered in corrected_tokens:
-                # We have a substitute word for this token
-                iscap = tok.data[0].isupper()
-                substitutes = corrected_tokens[lowered]
-                first = substitutes[0]
-                if iscap:
-                    # Should we capitalize the whole "C'H" character ?
-                    tok.data = first[0].upper() + first[1:]
+            substitutes = get_susbitution(tok.data)
+            if substitutes:
+                # We must keep the prepended apostrophe (there could be a substitution rule for it)
+                yield from [ Token(s, Token.RAW, Flag.CORRECTED) for s in substitutes ]
+            elif lowered.startswith("'") and lowered[1:] not in ('n', 'm', 'z'):
+                # Remove prepended apostrophies
+                # Check if there is a susbstitution rule for the remaining word
+                substitutes = get_susbitution(tok.data[1:])
+                if substitutes:
+                    yield from [ Token(s, Token.RAW, Flag.CORRECTED) for s in substitutes ]
                 else:
-                    tok.data = first
-                tok.flags.add(Flag.CORRECTED)
-                yield tok
-                yield from [ Token(s, Token.RAW, Flag.CORRECTED) for s in substitutes[1:] ]
+                    # Pass the word without the apostrophe
+                    tok.data = tok.data[1:]
+                    yield tok
             else:
                 yield tok
         else:
@@ -407,6 +426,7 @@ def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator
 def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
     # Parse options
     end_sentence = options.pop('end', '')
+    # colored = options.pop("colored", False)
 
     parts: List[str] = []
     punct_stack = [] # Used to keep track of coupled punctuation (quotes and brackets)
