@@ -1,5 +1,7 @@
 abalamour	A B L AN M
 abalamour	B L AN M
+ac'hanout	E X AN V T
+ac'hanta	X AN N T A
 aet E D
 all	A R A L
 all	EH L
@@ -10,7 +12,6 @@ anezhañ N AN
 anezhañ N EN
 anezhe N E
 anezhe N EH
-bennak B OE N A K E T
 anezhe N EU
 anezhi N EH I
 arc'hant A R G A N T
@@ -21,10 +22,12 @@ aze A H E
 barradoù B A R A J OU
 bemdez	B AN M D E
 bemdez B EH M D E
+bennak B OE N A K E T
 bep	B OH P
 bepred B A P R EH T
 bepred B OH P OE T
 bepred B O P R EH T
+betek	B EH K E T
 betek B E K OE T
 betek	B E T A
 betek 	B E T A K
@@ -39,21 +42,27 @@ bleuñv B L EU N
 bloavezhioù B L O A V E CH OU
 bravoc'h B R A W OH X
 bremañ	B R O M A N
-buhez B U H E
+brenañ	B R E N O
 buan	B U N
+buhez B U H E
 chistr CH I S T
+c'hlezioù	X L E I OU
 c'hoadoù X O A J OU
 chomont CH O M A I N T
 c'houlenn X OU L
+c'hounez	X O N E A
 c'hwec'h F EH X
+c'hwezhañ	X W E I O
 c'hwi F I
 da D OE
 dalv	D A L A
-gav	G A W A
+dalvez	D A L V E A
 debret D R E B E T
+debriñ	D I B I
 deiz	D E
 deoc'h D OH X
 deuet D EU T
+deus	D EU
 devezh D EH R V E Z
 devezhioù D EH R V E CH OU
 dezhañ	T AN
@@ -62,7 +71,9 @@ digarez D I G A R E
 diouzh D A X
 d'ober D OH R
 d'oe D O E
+eas	H EH S
 ebet B E T
+ebeul	EU B EU L
 e	I N
 emaint	M A I N T
 emañ M A
@@ -72,19 +83,21 @@ emaoc'h M OH X
 emaomp M A ON M P
 emaon M A ON N
 emaout M A OU T
-emezi M EH I
 emezañ	M AN
+emezañ	M EN
+emezi M EH I
 eñ E ON
 eñ	I AN
 eno	E N A
 eo E
-erru	A R U
-erru	A R I
 erru	A I
+erru	A R I
+erru	A R U
+erruas	A R I A S
 erruet	A R U E T
 erruout	A R I OU T
-evel	V EH L
 evel	EH R
+evel	V EH L
 evidoc'h V I D OH X
 evidon V I D ON N
 evidon	W I D I M
@@ -93,9 +106,14 @@ evito V I T E
 evito V I T O
 evit V I T
 ezhomm E M
+ezhomm H E M
 faktour	F A K T EU R
 gallout G A L
 gant G AN N
+gavas	G A V EH S
+gav	G A W A
+gavout	G A D
+gêr	I E R
 goare O A R E
 gouezet G OU I E T
 goulennet	G OU L T
@@ -114,6 +132,7 @@ hemañ H E M
 hennezh H EN Z
 hentoù H E N CH OU
 hini	A I N
+hini	N I
 hiziv H I OU
 hiziv H I R I E
 hiziv H I R I O
@@ -127,15 +146,20 @@ ivez U W EH
 kachimant K A I M AN N
 kaer K E R
 karantez	K A R AN N T E
+kavas	K A V EH S
+kavout	K A D
 koadoù	K O A J OU
 krampouezh K R AN M P OU Z
 kreñv K R EN ON
 kriz K R I
+lavaras	L A R A S
+lavare	L A R E
+lavare	L A R EH
+lavaret	L A R E T
+lavar	L A R
+lavaro	L A R O
 lazhañ L A X AN
 lazhet L A X E T
-lavaret	L A R E T
-lavare	L A R E
-lavaras	L A R A S
 le L EU
 loen L ON N
 lojañ	L ON J AN
@@ -152,6 +176,7 @@ melezour M I L OU R
 menez M E N E
 menez	M I N
 mennozh M E N O
+nadoz	N A D OU
 nemetken M E K E N
 nemet M E T
 n'eo N E
@@ -162,6 +187,7 @@ neuze N OE N
 neuze	N OE Z EH N
 nevez N E V E
 noz	N O S
+oa	E V A
 oa O E
 ober	G O B OE R
 ober H OH R
@@ -179,16 +205,18 @@ petra P E R A
 pevar	P EH R
 pezhioù	P E CH OU
 pradoù P R A J OU
+prenañ	P R E N O
 prenester P R E N E CH EH R
+prenestr	P OE R N E S T
 puhez P U H E
 reont R A I N T
+roet	R EH I T
 romantoù R O M AN N CH OU
 ruz R U
 sachit CH A CH I T
 sav S A V
 seblantoù	S E B L AN J OU
 se	H EH
-roet	R EH I T
 selaou CH I L A OU
 selaouent CH I L A OU EH N T
 selaouet CH I L A OU E T
@@ -198,6 +226,7 @@ sizhunvezh S U N V E Z
 soñjoù CH ON J OU
 straedoù S T R E J OU
 sukr CH U K R
+teufe	T EU CH E
 teu	T A
 to T OU
 unan EU N
@@ -215,10 +244,15 @@ vije V I CH E
 vioù EU I OU
 vuhez V U H E
 walc'h W A L A X
-warc'hoazh V A R X O A Z
+warc'hoazh A X O A
+warc'hoazh A X O A S
+warc'hoazh V A R X O A S
 war V A R
 welet V E L E T
 wenodenn W E N O J EH N
+werzhan	V EH R J O
 wirionez V I R I ON E
 yeo G E O
 zae H A E
+zebriñ	Z I B I
+'z	H

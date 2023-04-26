@@ -25,7 +25,7 @@ from pydub.silence import detect_nonsilent
 from pydub.playback import _play_with_simpleaudio
 from pyrubberband import time_stretch
 #import librosa
-from libMySTT import get_player_name, get_audiofile_info, convert_to_wav
+# from libMySTT import get_player_name, get_audiofile_info, convert_to_wav
 from libMySTT import prompt_acronym_phon, extract_acronyms, ACRONYM_PATH
 from libMySTT import splitToEafFile, eafToSplitFile
 
@@ -33,6 +33,7 @@ from ostilhou.asr import load_text_data, load_segments_data, transcribe_segment
 from ostilhou.hspell import get_hspell_mistakes
 from ostilhou.text import pre_process, normalize_sentence
 from ostilhou.dicts import acronyms
+from ostilhou.audio import get_player_name, get_audiofile_info, convert_to_wav
 
 
 

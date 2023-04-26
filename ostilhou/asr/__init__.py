@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 from .dataformat import extract_metadata, load_segments_data, load_text_data
-from .recognizer import transcribe_segment
+from .recognizer import transcribe_segment, transcribe_file, transcribe_file_timecode
 from ..dicts import proper_nouns, acronyms
 
 

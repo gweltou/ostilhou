@@ -40,17 +40,12 @@ SAVE_DIR = "data"
 LM_SENTENCE_MIN_WORDS = 3 # Min number of words for a sentence to be added to the LM
 UTTERANCES_MIN_LENGTH = 0 # exclude utterances shorter than this length (in seconds)
 
-# AUDIO DATA AUGMENTATION
-# If True, duplicates the whole train dataset, adding various audio noises.
-# The augmented data will be put in a sister folder `augmented`, with the same
-# directory hierarchy as the original audio corpus.
-USE_DATA_AUGMENTATION = True    
 
 
 
-def parse_dataset(file_or_dir):
+def parse_dataset(file_or_dir, args):
     if file_or_dir.endswith(".split"):   # Single data item
-        return parse_data_file(file_or_dir)
+        return parse_data_file(file_or_dir, args)
     elif os.path.isdir(file_or_dir):
         data = {
             "path": file_or_dir,
@@ -70,7 +65,7 @@ def parse_dataset(file_or_dir):
                 # Skip hidden folders
                 continue
             if os.path.isdir(os.path.join(file_or_dir, filename)) or filename.endswith(".split"):
-                data_item = parse_dataset(os.path.join(file_or_dir, filename))
+                data_item = parse_dataset(os.path.join(file_or_dir, filename), args)
                 data["wavscp"].extend(data_item["wavscp"])
                 data["utt2spk"].extend(data_item["utt2spk"])
                 data["segments"].extend(data_item["segments"])
@@ -89,7 +84,7 @@ def parse_dataset(file_or_dir):
     
 
 
-def parse_data_file(split_filename):
+def parse_data_file(split_filename, args):
     # Kaldi doensn't like whitespaces in file path
     if ' ' in split_filename:
         print("ERROR: whitespaces in path", split_filename)
@@ -164,7 +159,7 @@ def parse_data_file(split_filename):
                 else: data["lexicon"].add(word)
         
         # Add sentence to language model corpus
-        if add_to_corpus and not replace_corpus:
+        if add_to_corpus and not replace_corpus and not args.no_lm:
             for sub in split_sentences(cleaned, end=''):
                 sent = normalize_sentence(sub, autocorrect=True)
                 sent = sent.replace('-', ' ').replace('/', ' ')
@@ -188,7 +183,7 @@ def parse_data_file(split_filename):
                     continue
                 data["corpus"].add(' '.join(tokens))
     
-    if replace_corpus:
+    if replace_corpus and not args.no_lm:
         for sentence, _ in load_text_data(substitute_corpus_filename):
             for sub in split_sentences(sentence):
                 sub = pre_process(sub)
@@ -251,6 +246,8 @@ if __name__ == "__main__":
     parser.add_argument("--train", help="train dataset directory", required=True)
     parser.add_argument("--test", help="train dataset directory")
     parser.add_argument("--lm-corpus", nargs='+', help="path of a text file to build the language model")
+    parser.add_argument("-n", "--no-lm", help="do not copy utterances to language model", action="store_true")
+    parser.add_argument("-a", "--augment", help="duplicate audio data with added noise", action="store_true")
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
     parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
     parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
@@ -267,50 +264,52 @@ if __name__ == "__main__":
     speakers_gender = {}
     
     print("\n==== PARSING DATA ITEMS ====")
-    corpora = { "train": parse_dataset(args.train) }
-    if args.test: corpora["test"] = parse_dataset(args.test)
+    corpora = { "train": parse_dataset(args.train, args) }
+    if args.test: corpora["test"] = parse_dataset(args.test, args)
 
 
     ####################################
     ####     DATA AUGMENTATION      ####
     ####################################
 
-    if not args.dry_run:
-        if USE_DATA_AUGMENTATION:
-            print("\n==== DATA AUGMENTATION ====")
-            root = os.path.abspath(args.train)
-            # augmented_rep = os.path.join(os.path.abspath(SAVE_DIR), "augmented")
-            augmented_rep = os.path.join(root, "augmented")
-            augmented_files = []
-            for i, f in enumerate(corpora["train"]["wavscp"]):
-                recording_id = f[0] + "_AUG"
-                utterance_id = corpora["train"]["text"][i][0]
-                # Utterance_id should not be postfixed with anything,
-                # lest Kaldi goes back and forth between the original and augmented audio file
-                # when extracting features for every utterance
-                utterance_id = utterance_id.rsplit('-', maxsplit=1)
-                utterance_id = utterance_id[0] + "_AUG_" + utterance_id[1]
-                print(utterance_id)
-                text = corpora["train"]["text"][i][1]
-                corpora["train"]["text"].append((utterance_id, text))
-                seg = corpora["train"]["segments"][i].split('\t')
-                corpora["train"]["segments"].append(f"{utterance_id}\t{recording_id}\t{seg[2]}\t{seg[3]}")
-                utt2spk = corpora["train"]["utt2spk"][i].split('\t')
-                corpora["train"]["utt2spk"].append(f"{utterance_id}\t{utt2spk[1]}")
+    if not args.dry_run and args.augment:
+        print("\n==== DATA AUGMENTATION ====")
+        # If True, duplicates the whole train dataset, adding various audio noises.
+        # The augmented data will be put in a sister folder `augmented`, with the same
+        # directory hierarchy as the original audio corpus.
 
-                original_audio = f[1]
-                rep, filename = os.path.split(original_audio)
-                rep = rep.replace(root, augmented_rep)
-                output_filename = os.path.join(rep, filename)
-                augmented_files.append( (recording_id, output_filename) )
-                if os.path.exists(output_filename):
-                    continue
-                if not os.path.exists(rep):
-                    os.makedirs(rep)
-                add_amb_random(original_audio, output_filename)
+        root = os.path.abspath(args.train)
+        # augmented_rep = os.path.join(os.path.abspath(SAVE_DIR), "augmented")
+        augmented_rep = os.path.join(root, "augmented")
+        augmented_files = []
+        for i, f in enumerate(corpora["train"]["wavscp"]):
+            recording_id = f[0] + "_AUG"
+            utterance_id = corpora["train"]["text"][i][0]
+            # Utterance_id should not be postfixed with anything,
+            # lest Kaldi goes back and forth between the original and augmented audio file
+            # when extracting features for every utterance
+            utterance_id = utterance_id.rsplit('-', maxsplit=1)
+            utterance_id = utterance_id[0] + "_AUG_" + utterance_id[1]
+            text = corpora["train"]["text"][i][1]
+            corpora["train"]["text"].append((utterance_id, text))
+            seg = corpora["train"]["segments"][i].split('\t')
+            corpora["train"]["segments"].append(f"{utterance_id}\t{recording_id}\t{seg[2]}\t{seg[3]}")
+            utt2spk = corpora["train"]["utt2spk"][i].split('\t')
+            corpora["train"]["utt2spk"].append(f"{utterance_id}\t{utt2spk[1]}")
 
-            corpora["train"]["wavscp"].extend(augmented_files)
-            print("Done.")
+            original_audio = f[1]
+            rep, filename = os.path.split(original_audio)
+            rep = rep.replace(root, augmented_rep)
+            output_filename = os.path.join(rep, filename)
+            augmented_files.append( (recording_id, output_filename) )
+            if os.path.exists(output_filename):
+                continue
+            if not os.path.exists(rep):
+                os.makedirs(rep)
+            add_amb_random(original_audio, output_filename)
+
+        corpora["train"]["wavscp"].extend(augmented_files)
+        print("Done.")
 
 
     if not args.dry_run:
@@ -327,8 +326,11 @@ if __name__ == "__main__":
         # Copy text from train utterances to language model corpus
         print(f"building file \'{os.path.join(dir_kaldi_local, 'corpus.txt')}\'")
         with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'w') as fout:
+            n = 0
             for l in corpora["train"]["corpus"]:
                 fout.write(f"{l}\n")
+                n += 1
+            print(f" {n} sentences added")
         
         # External text corpus will be added now
         if args.lm_corpus:
@@ -337,6 +339,7 @@ if __name__ == "__main__":
                 # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
                 for lm_corpus_file in args.lm_corpus:
                     print(Fore.GREEN + f" * {lm_corpus_file}" + Fore.RESET)
+                    n = 0
                     with open(lm_corpus_file, 'r') as fr:
                         for sentence in fr.readlines():
                             # cleaned, _ = get_cleaned_sentence(sentence)
@@ -352,6 +355,8 @@ if __name__ == "__main__":
                                 else:
                                     corpora["train"]["lexicon"].add(word)
                             fout.write(cleaned + '\n')
+                            n += 1
+                    print(f" {n} sentences added")
         
     
     if not args.dry_run:

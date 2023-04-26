@@ -5,11 +5,13 @@ from ostilhou.text import (
     split_sentences, extract_parenthesis_content,
     load_translation_dict, translate,
     normalize, normalize_sentence,
+    inverse_normalize_sentence, inverse_normalize_vosk,
     pre_process, sentence_stats,
     )
 from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES, PATTERN_DOTTED_ACRONYM, PUNCTUATION
 from ostilhou.corpora import load_wikipedia_150k, load_sarmoniou
 from ostilhou.asr import phonetize
+from ostilhou.asr.post_processing import post_process_vosk
 from ostilhou.hspell import get_hspell_mistakes
 
 
@@ -27,6 +29,7 @@ def test_normalize(sentence):
     for token in tokenize(sentence, autocorrect=True):
         print(token, token.norm)
     print(normalize_sentence(sentence, autocorrect=True))
+
 
 
 def test_wiki150_noun_gender():
@@ -67,11 +70,12 @@ def test_wiki150_noun_gender():
             f.write(f"{noun}\n")
 
 
+
 def test_sarmoniou():
     sarmoniou = load_sarmoniou()
 
     # Using a translation dictionary to replace words with their modern form
-    td = load_translation_dict("talbr/dicts/sarmonioù_peurunvan.tsv")
+    td = load_translation_dict("ostilhou/dicts/sarmonioù_peurunvan.tsv")
 
     # with open("sarmonioù.txt", 'w') as f:
     #     for line in sarmoniou:
@@ -86,7 +90,7 @@ def test_clean_ya():
     sentences = set()
     sentences_norm = set()
     n_parsed = 0
-    #with open("ostilhou/corpora/wikipedia-br-150k.txt", 'r') as fin:
+    # with open("ostilhou/corpora/wikipedia-br-150k.txt", 'r') as fin:
     with open("ya_dump.txt", 'r') as fin:
         for line in fin.readlines():
             if line:
@@ -177,16 +181,16 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "covid-19; 92 ki"
-    test_tokenize(sentence)
+    sentence = "un den"
+    # test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
-    test_normalize(sentence)
+    # test_normalize(sentence)
     # print(phonetize(sentence))
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
     # for s in split_sentence(sentence):
     #     print(s, end='')
     
     # test_wiki150_noun_gender()
-    # test_sarmoniou()
+    test_sarmoniou()
     # test_clean_ya()

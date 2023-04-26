@@ -1,7 +1,10 @@
 import os
-# from typing import List
+from typing import List
 from vosk import Model, KaldiRecognizer, SetLogLevel
-from .post_processing import apply_post_process_dict_text
+from pydub import AudioSegment
+import subprocess
+import json
+from .post_processing import apply_post_process_dict_text, post_process_text, post_process_vosk
 from ..text.inverse_normalizer import inverse_normalize_vosk
 
 
@@ -21,7 +24,7 @@ def load_vosk():
 
 
 
-def transcribe_segment(segment, normalize=False):
+def transcribe_segment(segment: AudioSegment, normalize=False) -> str:
     if not _vosk_loaded:
         load_vosk()
     
@@ -36,6 +39,66 @@ def transcribe_segment(segment, normalize=False):
     return apply_post_process_dict_text(text)
 
 
+
+
+def transcribe_file(filepath: str, normalize=False) -> List[str]:
+
+    def format_output(result, normalize=False):
+        sentence = eval(result)["text"]
+        sentence = post_process_text(sentence, normalize)
+        return sentence
+
+    if not _vosk_loaded:
+        load_vosk()
+    
+    text = []
+
+    with subprocess.Popen(["ffmpeg", "-loglevel", "quiet", "-i",
+                                filepath,
+                                "-ar", "16000" , "-ac", "1", "-f", "s16le", "-"],
+                                stdout=subprocess.PIPE) as process:
+
+        while True:
+            data = process.stdout.read(4000)
+            if len(data) == 0:
+                break
+            if recognizer.AcceptWaveform(data):
+                text.append(format_output(recognizer.Result(), normalize))
+        text.append(format_output(recognizer.FinalResult(), normalize))
+    
+    return text
+
+
+def transcribe_file_timecode(filepath: str, normalize=False, post_proc=False) -> List[str]:
+
+    def format_output(result, normalize=False) -> List[dict]:
+        jres = json.loads(result)
+        if not "result" in jres:
+            return []
+        words = jres["result"]
+        if post_proc:
+            words = post_process_vosk(words, normalize)
+        return words
+
+    if not _vosk_loaded:
+        load_vosk()
+    
+    tokens = []
+
+    with subprocess.Popen(["ffmpeg", "-loglevel", "quiet", "-i",
+                                filepath,
+                                "-ar", "16000" , "-ac", "1", "-f", "s16le", "-"],
+                                stdout=subprocess.PIPE) as process:
+
+        while True:
+            data = process.stdout.read(4000)
+            if len(data) == 0:
+                break
+            if recognizer.AcceptWaveform(data):
+                tokens.extend(format_output(recognizer.Result(), normalize))
+        tokens.extend(format_output(recognizer.FinalResult(), normalize))
+    
+    return tokens
 
 
 # def sentence_post_process(text: str) -> str:

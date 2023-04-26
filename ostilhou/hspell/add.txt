@@ -18,7 +18,9 @@ atmosferel
 azoniad
 azonoù
 balbouzerezh
+b'an
 bandemiezh
+b'ar
 bazhigoù
 benelour
 benlazhioù
@@ -47,11 +49,10 @@ c'hovid
 denien
 dianv
 dibleget
-b'an
-b'ar
 didreuzet
 dielfennoù
 difeulz
+digourdi
 dilaoskadennoù
 diñsad
 disleksek

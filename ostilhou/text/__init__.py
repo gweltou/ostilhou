@@ -3,6 +3,7 @@ from .tokenizer import Token, tokenize, detokenize, split_sentences
 from .normalizer import normalize, normalize_sentence
 from .inverse_normalizer import inverse_normalize_sentence, inverse_normalize_vosk
 from .utils import *
+from ..utils import read_file_drop_comments
 
 
 def load_translation_dict(path: str) -> dict:
@@ -16,6 +17,25 @@ def load_translation_dict(path: str) -> dict:
             else:
                 translation_dict[line] = ""
     return translation_dict
+
+
+
+def reverse_translation_dict(path: str, newpath: str) -> None:
+    reversed = dict()
+    for line in read_file_drop_comments(path):
+        line = pre_process(line)
+        if '\t' in line:
+            key, val = line.split('\t')
+            if ' ' in key or ' ' in val:
+                print("no spaces allowed in translation dictionaries")
+                continue
+            if val in reversed:
+                reversed[val] += ", {}".format(key)
+            else:
+                reversed[val] = key
+    with open(newpath, 'w') as f:
+        for k in sorted(reversed):
+            f.write(f"{k}\t{reversed[k]}\n")
 
 
 
