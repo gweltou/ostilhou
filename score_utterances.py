@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Score every utterance of every data item in a giver folder
+    Score every utterance of every data item in a given folder
 """
 
 
@@ -10,8 +10,8 @@ import sys
 import argparse
 import os
 
-from ostilhou import list_files_with_extension
-from ostilhou.text import pre_process, filter_out, PUNCTUATION
+from ostilhou.utils import list_files_with_extension
+from ostilhou.text import pre_process, filter_out, normalize_sentence, PUNCTUATION
 from ostilhou.asr import load_segments_data, load_text_data
 from ostilhou.asr.recognizer import transcribe_segment
 from ostilhou.audio import load_audiofile, get_segment
@@ -23,12 +23,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Score every utterance of every data item in a giver folder")
     parser.add_argument("data_folder", metavar='FOLDER', help="Folder containing data files")
     parser.add_argument("-u", "--per-utterance", help="Calculate WER and CER score per utterance", action="store_true")
+    # parser.add_argument("-he", "--higher", help="Keeps only over a given CER", default=1.0)
     args = parser.parse_args()
 
     all_references = []
     all_hypothesis = []
 
-    print(args.data_folder)
+    # print(args.data_folder)
     split_files = list_files_with_extension('.split', args.data_folder)
     for split_file in sorted(split_files):
         basename, _ = os.path.splitext(split_file)
@@ -40,10 +41,11 @@ if __name__ == "__main__":
         _, basename = os.path.split(basename)
         references = []
         hypothesis = []
-        print("==== " + basename + " ====")
+        # print("# ==== " + basename + " ====")
         for i in range(len(segments)):
             # sentence, _ = get_cleaned_sentence(utterances[i][0])
             sentence = filter_out(utterances[i][0], PUNCTUATION + '*')
+            sentence = normalize_sentence(sentence, autocorrect=True)
             sentence = pre_process(sentence).replace('-', ' ').lower()
             transcription = transcribe_segment(get_segment(i, song, segments))
             transcription = transcription.replace('-', ' ').lower()
@@ -53,15 +55,11 @@ if __name__ == "__main__":
                 continue
             score_wer = wer(sentence, transcription)
             score_cer = cer(sentence, transcription)
-            if score_cer >= 0.2 or score_wer > 0.4:
-            # if score_cer >= 0.4 and score_wer > 0.6:
-                print(i+1, "\twer:", round(score_wer, 2), "cer:", round(score_cer, 2))
-                print("GT", sentence)
-                print("->", transcription)
-                print(flush=False)
-        print(len(references), "utterances")
-        print("WER:", wer(references, hypothesis))
-        print("CER:", cer(references, hypothesis))
+            if not transcription:
+                transcription = '-'
+            #if score_cer >= 0.2 or score_wer > 0.4:
+            # if score_cer >= 1.0:
+            print(f"{basename}.{i:03}\t{round(score_wer, 2)}\t{round(score_cer, 2)}\t{sentence}\t{transcription}")
         all_references.extend(references)
         all_hypothesis.extend(hypothesis)
 

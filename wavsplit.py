@@ -86,7 +86,7 @@ if __name__ == "__main__":
                     description = 'Audio file converter, splitter and text alignment')
     parser.add_argument('filename')
     # parser.add_argument('-o', '--overwrite', action='store_true', help="Overwrite split file (if present)")
-    parser.add_argument('-t', '--thresh', type=float, default=-62, metavar="DB", help="Silence intensity threshold (in decibels)")      # option that takes a value
+    parser.add_argument('-t', '--thresh', type=float, default=-62, metavar="DB", help="Silence intensity threshold (in decibels)")
     parser.add_argument('-d', '--dur', type=int, default=400, metavar="MS", help="Silence minimum duration (in millisecs)")
     parser.add_argument('-s', '--transcribe', action='store_true', help="Automatic transcription")
     args = parser.parse_args()

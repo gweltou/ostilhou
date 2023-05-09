@@ -21,6 +21,10 @@ def get_segment(i, song, segments):
     return seg
 
 
+def play_segment(i, song, segments, speed):
+    play_with_ffplay(get_segment(i, song, segments), speed)
+
+
 
 _AMB_REP = os.path.join(os.path.split(os.path.abspath(__file__))[0], "amb")
 AUDIO_AMB_FILES = [os.path.abspath(os.path.join(_AMB_REP, f))
@@ -66,7 +70,6 @@ def play_with_ffplay(seg, speed=1.0):
         p = subprocess.Popen(
             [player, "-nodisp", "-autoexit", "-loglevel", "quiet", "-af", f"atempo={speed}", f.name],
         )
-        print(p)
         p.wait()
 
 
@@ -107,6 +110,7 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
         if verbose:
             print(f"AUDIO_CONV: Removing {src}")
         os.remove(src)
+
 
 
 def convert_to_mp3(src, dst, verbose=True):

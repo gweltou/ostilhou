@@ -102,32 +102,32 @@ w2f = {
 # Single letters phonemes (used for acronyms)
 
 acr2f = {
-    'A' :   'A',
-    'B' :   'B E',
-    'C' :   'S E',
-    'D' :   'D E',
-    'E' :   'EU',
-    'F' :   'EH F',
-    'G' :   'J E',
-    'H' :   'A CH',
-    'I' :   'I',
-    'J' :   'J I',
-    'K' :   'K A',
-    'L' :   'EH L',
-    'M' :   'EH M',
-    'N' :   'EH N',
-    'O' :   'O',
-    'P' :   'P E',
-    'Q' :   'K U',
-    'R' :   'EH R',
-    'S' :   'EH S',
-    'T' :   'T E',
-    'U' :   'U',
-    'V' :   'V E',
-    'W' :   'OU E',
-    'X' :   'I K S',
-    
-    'Z' :   'Z EH D',
+    'A' : ['A'],
+    'B' : ['B E'],
+    'C' : ['S E'],
+    'D' : ['D E'],
+    'E' : ['EU', 'E'],
+    'F' : ['EH F'],
+    'G' : ['J E'],
+    'H' : ['A CH'],
+    'I' : ['I'],
+    'J' : ['J I'],
+    'K' : ['K A', 'K OE'],
+    'L' : ['EH L'],
+    'M' : ['EH M'],
+    'N' : ['EH N'],
+    'O' : ['O'],
+    'P' : ['P E', 'P OE'],
+    'Q' : ['K U'],
+    'R' : ['EH R'],
+    'S' : ['EH S'],
+    'T' : ['T E', 'T OE'],
+    'U' : ['U'],
+    'V' : ['V E'],
+    'W' : ['W E', 'W OE'],
+    'X' : ['I K S'],
+    'Y' : ['YE'],
+    'Z' : ['Z EH D', 'Z OE'],
 }
 
 
@@ -157,7 +157,7 @@ verbal_fillers = {
 
 
 phonemes = set()
-for val in list(w2f.values()) + list(acr2f.values()) + list(verbal_fillers.values()):
+for val in list(w2f.values()) + list(verbal_fillers.values()) + [t for sub in acr2f.values() for t in sub]  :
     for tok in val.split():
         phonemes.add(tok)
 
@@ -204,7 +204,9 @@ with open(_lexicon_sub_path, 'r') as f:
 def phonetize(word: str) -> List[str]:
     """ Simple phonetizer
         Returns a string of phonemes representing the pronunciation
-        of a single given word
+        of a single given word.
+        All words must be given lowercase, except acronyms
+        Numbers can't be phonetized.
     """
     
     word = word.strip()
@@ -224,6 +226,9 @@ def phonetize(word: str) -> List[str]:
 
     if word in acronyms:
         return acronyms[word]
+    
+    if word in acr2f:
+        return acr2f[word]
 
     if word in proper_nouns:
         if proper_nouns[word]:

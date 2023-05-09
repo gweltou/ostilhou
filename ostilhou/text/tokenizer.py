@@ -424,6 +424,7 @@ def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator
 
 
 def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
+    
     # Parse options
     end_sentence = options.pop('end', '')
     # colored = options.pop("colored", False)

@@ -69,22 +69,25 @@ def transcribe_file(filepath: str, normalize=False) -> List[str]:
     return text
 
 
-def transcribe_file_timecode(filepath: str, normalize=False, post_proc=False) -> List[str]:
+def transcribe_file_timecode(filepath: str, normalize=False) -> List[str]:
+    """ Return list of infered words with associated timecodes (vosk format)
+
+        Parameters
+            normalized (boolean): inverse-normalize sentences
+    """
 
     def format_output(result, normalize=False) -> List[dict]:
         jres = json.loads(result)
         if not "result" in jres:
             return []
         words = jres["result"]
-        if post_proc:
-            words = post_process_vosk(words, normalize)
+        words = post_process_vosk(words, normalize)
         return words
 
     if not _vosk_loaded:
         load_vosk()
-    
-    tokens = []
 
+    tokens = []
     with subprocess.Popen(["ffmpeg", "-loglevel", "quiet", "-i",
                                 filepath,
                                 "-ar", "16000" , "-ac", "1", "-f", "s16le", "-"],
