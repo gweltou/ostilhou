@@ -63,7 +63,7 @@ if __name__ == "__main__":
         all_references.extend(references)
         all_hypothesis.extend(hypothesis)
 
-    print("====== OVERALL ======")
-    print(len(all_references), "utterances")
-    print("WER:", wer(all_references, all_hypothesis))
-    print("CER:", cer(all_references, all_hypothesis))
+    print("====== OVERALL ======", file=sys.stderr)
+    print(len(all_references), "utterances", file=sys.stderr)
+    print("WER:", wer(all_references, all_hypothesis), file=sys.stderr)
+    print("CER:", cer(all_references, all_hypothesis), file=sys.stderr)
