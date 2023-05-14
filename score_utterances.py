@@ -20,7 +20,7 @@ from jiwer import wer, cer
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Score every utterance of every data item in a giver folder")
+    parser = argparse.ArgumentParser(description="Score every utterance of every data item in a given folder")
     parser.add_argument("data_folder", metavar='FOLDER', help="Folder containing data files")
     parser.add_argument("-u", "--per-utterance", help="Calculate WER and CER score per utterance", action="store_true")
     # parser.add_argument("-he", "--higher", help="Keeps only over a given CER", default=1.0)

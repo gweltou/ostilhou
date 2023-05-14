@@ -10,14 +10,15 @@ from ..text.inverse_normalizer import inverse_normalize_vosk
 
 
 _vosk_loaded = False
-ROOT = ""
+ROOT = __file__
 
 def load_vosk():
     global recognizer
     global _vosk_loaded
 
     SetLogLevel(-1)
-    model = Model(os.path.normpath(os.path.join(ROOT, "../models/current")))
+    model_path = os.path.normpath(os.path.join(ROOT, "../../../../models/current"))
+    model = Model(model_path)
     recognizer = KaldiRecognizer(model, 16000)
     recognizer.SetWords(True)
     _vosk_loaded = True
@@ -63,8 +64,12 @@ def transcribe_file(filepath: str, normalize=False) -> List[str]:
             if len(data) == 0:
                 break
             if recognizer.AcceptWaveform(data):
-                text.append(format_output(recognizer.Result(), normalize))
-        text.append(format_output(recognizer.FinalResult(), normalize))
+                result = format_output(recognizer.Result(), normalize)
+                if result:
+                    text.append(result)
+        result = format_output(recognizer.FinalResult(), normalize)
+        if result:
+            text.append(result)
     
     return text
 
