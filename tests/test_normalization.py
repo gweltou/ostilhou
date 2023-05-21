@@ -13,6 +13,7 @@ def test_normalization():
     test_cases = [
         # Mine
         ("d'an 3 a viz Here", "d'an tri a viz Here"),
+        ("1 skouerenn", "ur skouerenn"),
         ("tro dro da 85000 den e Mec'hiko", "tro dro da pemp ha pevar-ugent mil den e Mec'hiko"),
         ("12 000 euro", "daouzek mil euro"),
         ("92 ki", "daouzek ki ha pevar-ugent"),

@@ -16,7 +16,7 @@ test_cases = [
     ("pemp kazh ha c'hwec'h pesk", "5 kazh ha 6 pesk"),
     ("daou gorn-boud warn-ugent", "22 gorn-boud"),
     ("ar c'hoant da zaou vil daou ha tregont", "ar c'hoant da 2032"),
-    ("kant den hag hanter-kant a oa", "150 den a oa"),
+    ("kant hanter-kant den a oa", "150 den a oa"),
     ("div blac'h kozh ha daou-ugent", "42 blac'h kozh"),
     ("div blac'h kozh ha daou-ugent kazh du", "2 blac'h kozh ha 42 kazh du"),
     ("div blac'h kozh ha daou-ugent aet d'an anaon", "42 blac'h kozh aet d'an anaon"),

@@ -150,7 +150,7 @@ def norm_number_noun(number: int, noun: str) -> str:
 
 num_units = ["", "unan", "daou", "tri", "pevar", "pemp", "c'hwec'h", "seizh", "eizh", "nav",
              "dek", "unnek", "daouzek", "trizek", "pevarzek", "pemzek", "c'hwezek", "seitek", "triwec'h", "naontek", "ugent"]
-num_units_f = ["", "un", "div", "teir", "peder"]
+num_units_f = ["", "unan", "div", "teir", "peder"]
 num_tens = ["", "", "ugent", "tregont", "daou-ugent", "hanter-kant", "tri-ugent", "dek ha tri-ugent", "pevar-ugent", "dek ha pevar-ugent"]
 
 

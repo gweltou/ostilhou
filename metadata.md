@@ -68,9 +68,9 @@ Word scope.
 
 Parser commands.
 
-`no-lm`/`add-lm`
+`{parser: no-lm/add-lm}`
 
-Sentence scope.
+Sentence scope. Applies until another `{parser: no-lm/add-lm}` is found or end of document is reached.
 
 Exclude/add sentence to language model training dataset. Defaults to `add-lm` (add).
 

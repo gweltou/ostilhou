@@ -1,10 +1,7 @@
 numpy
-matplotlib
 pytz
 vosk
-simpleaudio
-pyrubberband
 pydub
 colorama
 cyhunspell
-jiwer==3.0.1
+jiwer

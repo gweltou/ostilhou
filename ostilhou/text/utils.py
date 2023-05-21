@@ -72,10 +72,12 @@ def pre_process(text: str) -> str:
 
 
 def fix_clitic(text: str) -> str:
+    """ Do not use ! """
+    
     text = text.replace("d' ", "d'")
     # text = text.replace("n' ", "n'")
 
-    text = text.replace("n'eus ", "n' eus ")
+    text = text.replace("n'eus ", "'n eus ")
     text = text.replace("n'int ", "n' int ")
     text = text.replace("n'eo ", "n' eo ")
     text = text.replace("n'hon ", "n' hon ")

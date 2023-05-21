@@ -10,14 +10,20 @@ from ..text.inverse_normalizer import inverse_normalize_vosk
 
 
 _vosk_loaded = False
-ROOT = __file__
+MODEL_DIR = os.path.abspath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    '..', '..', '..', 'models'))
+DEFAULT_MODEL = os.path.join(MODEL_DIR, "current")
 
-def load_vosk():
+
+
+def load_vosk(path: str = DEFAULT_MODEL) -> None:
     global recognizer
     global _vosk_loaded
 
     SetLogLevel(-1)
-    model_path = os.path.normpath(os.path.join(ROOT, "../../../../models/current"))
+    model_path = os.path.normpath(path)
+    # print("Loading model", model_path)
     model = Model(model_path)
     recognizer = KaldiRecognizer(model, 16000)
     recognizer.SetWords(True)
@@ -38,7 +44,6 @@ def transcribe_segment(segment: AudioSegment, normalize=False) -> str:
     recognizer.AcceptWaveform(segment[i:])
     text = eval(recognizer.FinalResult())["text"]
     return apply_post_process_dict_text(text)
-
 
 
 
@@ -72,6 +77,7 @@ def transcribe_file(filepath: str, normalize=False) -> List[str]:
             text.append(result)
     
     return text
+
 
 
 def transcribe_file_timecode(filepath: str, normalize=False) -> List[str]:
