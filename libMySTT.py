@@ -26,7 +26,6 @@ from xml.dom import minidom
 import datetime, pytz
 
 from ostilhou.asr import (
-    sentence_post_process,
     lexicon_sub,
     verbal_fillers,
     acr2f,
@@ -525,19 +524,6 @@ def load_vosk():
 
 
 
-def transcribe_segment(segment):
-    if not vosk_loaded:
-        load_vosk()
-    # seg = song[segments[idx][0]:segments[idx][1]]
-    segment = segment.get_array_of_samples().tobytes()
-    i = 0
-    while i + 4000 < len(segment):
-        recognizer.AcceptWaveform(segment[i:i+4000])
-        i += 4000
-    recognizer.AcceptWaveform(segment[i:])
-    text = eval(recognizer.FinalResult())["text"]
-    return sentence_post_process(text)
-
 
 ################################################################################
 ################################################################################
@@ -669,17 +655,6 @@ def concatenate_audiofiles(file_list, out_filename, remove=False):
 ################################################################################
 ################################################################################
 
-
-def list_files_with_extension(ext, rep, recursive=True):
-    file_list = []
-    if os.path.isdir(rep):
-        for filename in os.listdir(rep):
-            filename = os.path.join(rep, filename)
-            if os.path.isdir(filename) and recursive:
-                file_list.extend(list_files_with_extension(ext, filename))
-            elif os.path.splitext(filename)[1] == ext:
-                file_list.append(filename)
-    return file_list
 
 
 

@@ -2,6 +2,18 @@
 
 Kinda like CSS for metadata integration in text corpuses.
 
+## Header
+
+```
+{source: url_to_text_data}
+{source-audio: url_to_audio}
+{author: author_of_transcription, other_author...}
+{licence: }
+{tags: tag1, tag2, tag3...}
+{parser: no-lm/add-lm}	# Exclude or include text to language model
+
+```
+
 ## Speaker name
 
 `{spk:marc'harid lagadeg}`
@@ -24,7 +36,7 @@ Global scope.
 
 The speaker gender attribute applies to the current speaker. As such it should be be put on the same line as the speaker name metadata, or on a subsequent line where the speaker name still applies.
 
-It is enough to specify the speaker's gender only once. It like be taken into account for the whole document and even accros documents when parsing a corpus.
+It is enough to specify the speaker's gender only once. It will be taken into account for the whole document and even accros documents when parsing a corpus.
 
 Different attribute can be chained in the same metadata with the `;` character :
 
@@ -55,14 +67,6 @@ Document scope.
 Transcriber metadata applies until another `author` property is found or end of document is reached.
 
 Names are case-insensitive.
-
-## Phon
-
-Add a pronunciation to the dictionary.
-
-Word scope.
-
-`{phon: B OU R D O N EH}`
 
 ## Parser
 

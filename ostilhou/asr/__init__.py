@@ -1,6 +1,7 @@
 from typing import Tuple, List, Dict
 from .dataformat import extract_metadata, load_segments_data, load_text_data
 from .recognizer import transcribe_segment, transcribe_file, transcribe_file_timecode
+from .post_processing import verbal_fillers
 from ..dicts import proper_nouns, acronyms
 
 
@@ -130,30 +131,6 @@ acr2f = {
     'Z' : ['Z EH D', 'Z OE'],
 }
 
-
-# Verbal fillers with phonetization
-
-verbal_fillers = {
-    'euh'   :   'OE',
-    'euhm'  :   'OE M',
-    'beñ'   :   'B EN',
-    'eba'   :   'E B A',
-    'ebeñ'  :   'E B EN',
-    'kwa'   :   'K W A',
-    'hañ'   :   'H AN',
-    'heñ'   :   'EN',
-    'boñ'   :   'B ON',
-    'bah'   :   'B A',
-    'feñ'   :   'F EN',
-    'enfin' :   'AN F EN',
-    'tiens' :   'T I EN',
-    'alors' :   'A L OH R',
-    'allez' :   'A L E',
-    'voilà' :   'V O A L A',
-    'pff'   :   'P F F',
-    #'oh'    :   'O',
-    #'ah'    :   'A',
-}
 
 
 phonemes = set()

@@ -100,28 +100,29 @@ def fix_clitic(text: str) -> str:
 
 def sentence_stats(sentence: str) -> dict:
     """ Get statistics about a string """
-
-    stats = {
-        "letter": 0,
-        "decimal": 0,
-        "upper": 0,
-        "punct": 0,
-        "blank": 0,
-        "other": 0,
-    }
-
+    
+    letter = 0
+    decimal = 0
+    upper = 0
+    punct = 0
+    blank = 0
+    other = 0
+    
     for c in sentence:
         if c.lower() in LETTERS or c in "'-":
-            stats["letter"] += 1
+            letter += 1
             if c.isupper():
-                stats["upper"] += 1
+                upper += 1
         elif c.isdecimal():
-            stats["decimal"] += 1
+            decimal += 1
         elif c.isspace():
-            stats["blank"] += 1
+            blank += 1
         elif c in PUNCTUATION:
-            stats["punct"] += 1
+            punct += 1
         else:
-            stats["other"] += 1
+            other += 1
+        
+        sentence = filter_out(sentence, PUNCTUATION)
     
-    return stats
+    return {"letter": letter, "decimal": decimal, "upper": upper, "punct": punct,
+            "blank": blank, "other": other, "words": len(sentence.split())}

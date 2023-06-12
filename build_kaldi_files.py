@@ -18,6 +18,10 @@ import argparse
 import numpy as np
 import re
 from math import floor, ceil
+
+from hashlib import md5
+from colorama import Fore
+
 from ostilhou import normalize_sentence
 from ostilhou.text import filter_out, pre_process, split_sentences
 from ostilhou.text.definitions import PUNCTUATION
@@ -32,7 +36,6 @@ from ostilhou.asr import (
     phonemes,
     phonetize,
 )
-from colorama import Fore
 
 
 
@@ -42,14 +45,13 @@ UTTERANCES_MIN_LENGTH = 0 # exclude utterances shorter than this length (in seco
 
 
 
-
 def parse_dataset(file_or_dir, args):
     if file_or_dir.endswith(".split"):   # Single data item
         return parse_data_file(file_or_dir, args)
     elif os.path.isdir(file_or_dir):
         data = {
             "path": file_or_dir,
-            "wavscp": [],       # Wave filenames
+            "wavscp": dict(),       # Wave filenames
             "utt2spk": [],      # Utterance to speakers
             "segments": [],     # Time segments
             "text": [],         # Utterances text
@@ -66,7 +68,7 @@ def parse_dataset(file_or_dir, args):
                 continue
             if os.path.isdir(os.path.join(file_or_dir, filename)) or filename.endswith(".split"):
                 data_item = parse_dataset(os.path.join(file_or_dir, filename), args)
-                data["wavscp"].extend(data_item["wavscp"])
+                data["wavscp"].update(data_item["wavscp"])
                 data["utt2spk"].extend(data_item["utt2spk"])
                 data["segments"].extend(data_item["segments"])
                 data["text"].extend(data_item["text"])
@@ -90,18 +92,19 @@ def parse_data_file(split_filename, args):
         print("ERROR: whitespaces in path", split_filename)
         sys.exit(1)
     
-    recording_id = os.path.basename(split_filename).split(os.path.extsep)[0]
+    # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
     print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
     text_filename = split_filename.replace('.split', '.txt')
-    assert os.path.exists(text_filename), f"ERROR: no text file found for {recording_id}"
-    wav_filename = split_filename.replace('.split', '.wav')
-    assert os.path.exists(wav_filename), f"ERROR: no wave file found for {recording_id}"
+    assert os.path.exists(text_filename), f"ERROR: no text file found for {split_filename}"
+    wav_filename = os.path.abspath(split_filename.replace('.split', '.wav'))
+    assert os.path.exists(wav_filename), f"ERROR: no wave file found for {split_filename}"
+    recording_id = md5(wav_filename.encode("utf8")).hexdigest()
     
     substitute_corpus_filename = split_filename.replace('.split', '.cor')
     replace_corpus = os.path.exists(substitute_corpus_filename)
     
     data = {
-        "wavscp": [],       # Wave filenames
+        "wavscp": {recording_id: wav_filename},   # Wave filenames
         "utt2spk": [],      # Utterance to speakers
         "segments": [],     # Time segments
         "text": [],         # Utterances text
@@ -146,7 +149,7 @@ def parse_data_file(split_filename, args):
                 # Remove black-listed words (those beggining with '*')
                 if word.startswith('*'):
                     pass
-                elif word in ("<NTT>", "<C'HOARZH>", "<UNK>"):
+                elif word in ("<NTT>", "<C'HOARZH>", "<UNK>", "<HUM>"):
                     pass
                 elif word == "'":
                     pass
@@ -216,7 +219,6 @@ def parse_data_file(split_filename, args):
         elif speaker_gender == 'f':
             data["audio_length"]['f'] += stop - start
         
-        data["wavscp"].append( (recording_id, os.path.abspath(wav_filename)) )
         utterance_id = f"{speaker_ids[i]}-{recording_id}-{floor(100*start):0>7}_{ceil(100*stop):0>7}"
         data["text"].append((utterance_id, sentences[i]))
         data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(stop*100)/100}\n")
@@ -273,6 +275,9 @@ if __name__ == "__main__":
     ####################################
 
     if not args.dry_run and args.augment:
+        print("TO FIX !")
+        sys.exit(1)
+
         print("\n==== DATA AUGMENTATION ====")
         # If True, duplicates the whole train dataset, adding various audio noises.
         # The augmented data will be put in a sister folder `augmented`, with the same
@@ -281,11 +286,14 @@ if __name__ == "__main__":
         root = os.path.abspath(args.train)
         # augmented_rep = os.path.join(os.path.abspath(SAVE_DIR), "augmented")
         augmented_rep = os.path.join(root, "augmented")
-        augmented_files = []
-        for i, f in enumerate(corpora["train"]["wavscp"]):
-            recording_id = f[0] + "_AUG"
+        augmented_files = dict()
+        
+        new_rec_id = dict()
+
+        for (rec_id, original_audio) in corpora["train"]["wavscp"].items():
+            recording_id = rec_id + "_AUG"
             utterance_id = corpora["train"]["text"][i][0]
-            # Utterance_id should not be postfixed with anything,
+            # utterance_id should not be postfixed with anything,
             # lest Kaldi goes back and forth between the original and augmented audio file
             # when extracting features for every utterance
             utterance_id = utterance_id.rsplit('-', maxsplit=1)
@@ -297,18 +305,17 @@ if __name__ == "__main__":
             utt2spk = corpora["train"]["utt2spk"][i].split('\t')
             corpora["train"]["utt2spk"].append(f"{utterance_id}\t{utt2spk[1]}")
 
-            original_audio = f[1]
             rep, filename = os.path.split(original_audio)
             rep = rep.replace(root, augmented_rep)
             output_filename = os.path.join(rep, filename)
-            augmented_files.append( (recording_id, output_filename) )
+            augmented_files[recording_id] = output_filename
             if os.path.exists(output_filename):
                 continue
             if not os.path.exists(rep):
                 os.makedirs(rep)
             add_amb_random(original_audio, output_filename)
 
-        corpora["train"]["wavscp"].extend(augmented_files)
+        corpora["train"]["wavscp"].update(augmented_files)
         print("Done.")
 
 
@@ -369,7 +376,7 @@ if __name__ == "__main__":
         print(f"building file \'{lexicon_path}\'")
 
         with open(lexicon_path, 'w') as f_out:
-            f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n<C'HOARZH> LAU\n<NTT> SPN\n")
+            f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n<C'HOARZH> LAU\n<NTT> SPN\n<HUM> SPN\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize(word):
                     if not pron:
@@ -421,7 +428,7 @@ if __name__ == "__main__":
             fname = os.path.join(save_dir, 'utt2spk')
             print(f"building file \'{fname}\'")
             with open(fname, 'w') as f:
-                f.writelines(corpora[corpus_name]["utt2spk"])
+                f.writelines(sorted(corpora[corpus_name]["utt2spk"]))
             
             # Build 'spk2gender'
             fname = os.path.join(save_dir, 'spk2gender')
@@ -434,7 +441,7 @@ if __name__ == "__main__":
             fname = os.path.join(save_dir, 'wav.scp')
             print(f"building file \'{fname}\'")
             with open(fname, 'w') as f:
-                for rec_id, wav_filename in corpora[corpus_name]["wavscp"]:
+                for rec_id, wav_filename in sorted(corpora[corpus_name]["wavscp"].items()):
                     f.write(f"{rec_id}\t{wav_filename}\n")
         
     
@@ -467,10 +474,11 @@ if __name__ == "__main__":
 
         plt.figure(figsize = (8, 8))
 
-        keys, val = zip(*corpora["train"]["subdir_audiolen"].items())
-        keys = list(map(lambda x: x.replace('_', ' '), keys))
         total_audio_length = corpora["train"]["audio_length"]["f"] + corpora["train"]["audio_length"]["m"]
-
+        keys, val = zip(*corpora["train"]["subdir_audiolen"].items())
+        keys = [ k.replace('_', ' ') if v/total_audio_length>0.02 else ''
+                 for k,v in corpora["train"]["subdir_audiolen"].items() ]
+        
         def labelfn(pct):
             if pct > 2:
                 return f"{sec2hms(total_audio_length*pct/100)}"

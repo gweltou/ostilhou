@@ -1,9 +1,12 @@
-import os
 from typing import List
-from vosk import Model, KaldiRecognizer, SetLogLevel
-from pydub import AudioSegment
+import os
+import sys
 import subprocess
 import json
+
+from vosk import Model, KaldiRecognizer, SetLogLevel
+from pydub import AudioSegment
+
 from .post_processing import apply_post_process_dict_text, post_process_text, post_process_vosk
 from ..text.inverse_normalizer import inverse_normalize_vosk
 
@@ -23,7 +26,7 @@ def load_vosk(path: str = DEFAULT_MODEL) -> None:
 
     SetLogLevel(-1)
     model_path = os.path.normpath(path)
-    # print("Loading model", model_path)
+    print("Loading vosk model", model_path, file=sys.stderr)
     model = Model(model_path)
     recognizer = KaldiRecognizer(model, 16000)
     recognizer.SetWords(True)
@@ -80,7 +83,7 @@ def transcribe_file(filepath: str, normalize=False) -> List[str]:
 
 
 
-def transcribe_file_timecode(filepath: str, normalize=False) -> List[str]:
+def transcribe_file_timecode(filepath: str, normalize=False) -> List[dict]:
     """ Return list of infered words with associated timecodes (vosk format)
 
         Parameters

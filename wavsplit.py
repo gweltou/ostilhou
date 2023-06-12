@@ -37,8 +37,6 @@ from ostilhou.audio import get_player_name, get_audiofile_info, convert_to_wav
 
 
 
-DELETE_SILENT_UTTERANCES = True
-
 
 RESIZE_PATTERN = re.compile(r"([s|e])([-|\+])(\d+)")
 SPLIT_PATTERN = re.compile(r"c([0-9\.]+)")
@@ -89,6 +87,8 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--thresh', type=float, default=-62, metavar="DB", help="Silence intensity threshold (in decibels)")
     parser.add_argument('-d', '--dur', type=int, default=400, metavar="MS", help="Silence minimum duration (in millisecs)")
     parser.add_argument('-s', '--transcribe', action='store_true', help="Automatic transcription")
+    parser.add_argument('--keep-sil', action='store_true', help="Keep silent utterances")
+
     args = parser.parse_args()
     print(args)
 
@@ -119,29 +119,9 @@ if __name__ == "__main__":
             or fileinfo["bits_per_sample"] != 16:
 
             convert_to_wav(args.filename, wav_filename)
-            # src = args.filename
-            # if os.path.abspath(src) == os.path.abspath(wav_filename):
-            #     # Rename existing audio file
-            #     rep, filename = os.path.split(src)
-            #     basename, ext = os.path.splitext(filename)
-            #     new_name = basename + "_orig" + ext
-            #     new_src = os.path.join(rep, new_name)
-            #     print(f"WARNING: renaming {filename} to {new_name}")
-            #     os.rename(src, new_src)
-            #     src = new_src
-            # if convert_to_wav(src, wav_filename) != -1:
-            #     print("Conversion done")
-            # else:
-            #     print("Could not convert audio file")
-            #     sys.exit(1)
     else:
         # Audio file is not PCM
         convert_to_wav(args.filename, wav_filename)
-        # if convert_to_wav(args.filename, wav_filename) != -1:
-        #     print("Conversion done")
-        # else:
-        #     print("Could not convert audio file")
-        #     sys.exit(1)
     
     song = AudioSegment.from_wav(wav_filename)
 
@@ -167,19 +147,11 @@ if __name__ == "__main__":
             do_split = False
 
     if split_header:
-                print(f'Header found: "{split_header}"')
+        print(f'Header found: "{split_header}"')
 
     if do_split:
         print("spliting wave file")
-        #y, sr = librosa.load(wav_filename)
-        #print("file loaded")
-        #silence_min_len = 400
-        # We need to forward a bit after stop
-        # Librosa.effects.split returns start and stop in samples number
-        #segments = [(floor(1000*start/sr), ceil(1000*(stop+8000)/sr)) \
-        #             for start, stop in librosa.effects.split(y, frame_length=8000, top_db=39)]
-        
-        # Using pydub instead
+        # Using pydub
         segments = detect_nonsilent(song, min_silence_len=args.dur, silence_thresh=args.thresh)
         
         # Including silences at head and tail of segments
@@ -208,16 +180,16 @@ if __name__ == "__main__":
         if do_transcribe:
             print("Transcribing...")
             sentences = [transcribe_segment(song[seg[0]-200:seg[1]+200]) for seg in segments]
-            if DELETE_SILENT_UTTERANCES:
+            if not args.keep_sil:
                 print("Deleting silent utterances...")
                 seg_keepers = []
                 sent_keepers = []
                 for i, seg in enumerate(segments):
-                    if sentences[i]:
+                    if sentences[i] not in ('-', ''):
                         seg_keepers.append(seg)
-                        sent_keepers.append(seg)
+                        sent_keepers.append(sentences[i])
                 segments = seg_keepers
-                sententences = sent_keepers
+                sentences = sent_keepers
                 save_segments(segments, split_header, split_filename)
                 
             with open(text_filename, 'w') as fw:

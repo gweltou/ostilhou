@@ -27,7 +27,6 @@ def test_inverse_normalization():
 
     def should_be(s1: str, s2: str) -> None:
         normalized = inverse_normalize_sentence(s1, min_num=4)
-        print(normalized)
         assert s2 == normalized
 
     for query, expected in test_cases:
@@ -44,7 +43,6 @@ def test_inverse_normalization_vosk():
         for i in range(len(tokens)-1):
             assert tokens[i]["start"] < tokens[i+1]["start"]
         normalized = ' '.join( [t["word"] for t in tokens] )
-        print(normalized)
         assert s2 == normalized
 
     for query, expected in test_cases:

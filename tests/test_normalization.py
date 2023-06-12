@@ -36,6 +36,7 @@ def test_normalization():
         ("e 1982 e varvas", "e mil nav c'hant daou ha pevar-ugent e varvas"),
         ("1, 1 c'hazh, 21 loarenn", "unan, ur c'hazh, ul loarenn warn-ugent"),
         ("32 687 bit", "daou ha tregont mil c'hwec'h kant seizh bit ha pevar-ugent"),
+        ("Bichon bihan en doa strobinellet 2.500 den.", "Bichon bihan en doa strobinellet daou vil pemp kant den."),
         ("e 2021 ez eus ganet 32 065 babig, 1 072 muioc'h eget e 2020 +35 %", ""),
         ("9 400 en Il-ha-Gwilen +09 % ouzhpenn 3 800 er Morbihan +05% ouzhpenn 500 en aodoù an Arvor", ""),
         ("klask ar 500 000€ a vo ezhomm", "klask ar pemp kant mil euro a vo ezhomm"),
