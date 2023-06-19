@@ -9,6 +9,7 @@ import datetime, pytz
 from colorama import Fore
 
 from ..utils import read_file_drop_comments
+from ..audio import convert_to_mp3
 
 
 
@@ -119,7 +120,11 @@ def splitToEafFile(split_filename, type="wav"):
     header.appendChild(media_descriptor)
 
     time_order = doc.createElement('TIME_ORDER')
+    last_t = 0
     for i, (s, e) in enumerate(segments):
+        if s < last_t:
+            s = last_t
+        last_t = s
         time_slot = doc.createElement('TIME_SLOT')
         time_slot.setAttribute('TIME_SLOT_ID', f'ts{2*i+1}')
         time_slot.setAttribute('TIME_VALUE', str(s))

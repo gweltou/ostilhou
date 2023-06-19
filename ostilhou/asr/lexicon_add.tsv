@@ -21,6 +21,7 @@ avaloù	A W L OU
 avat H A T
 aze A E
 aze A H E
+azezet	A J E E T
 barradoù B A R A J OU
 bemdez	B AN M D E
 bemdez B EH M D E
@@ -58,6 +59,8 @@ c'houzout	X OU T
 c'hwec'h F EH X
 c'hwezhañ	X W E I O
 c'hwi F I
+c'hwec'h    F EH X
+c'hwezek    F E Z E K
 da D OE
 dalc'hmat	D EH X M A D
 dalv	D A L A
@@ -67,7 +70,6 @@ debriñ	D I B I
 deiz	D E
 deoc'h D OH X
 deomp	D I M P
-eomp	H AN M P
 deuet D EU T
 deus	D EU
 devezh D EH R V E Z
@@ -82,9 +84,9 @@ d'oe D O E
 eas	H EH S
 ebet B E T
 ebeul	EU B EU L
-e	I N
 echu	A CH U
 echuiñ	A CH U I
+e	I N
 emaint	M A I N T
 emañ M A
 emañ M AN
@@ -96,11 +98,11 @@ emaout M A OU T
 emezañ	M AN
 emezañ	M EN
 emezi M EH I
-azezet	A J E E T
 eñ E ON
 eñ	I AN
 eno	E N A
 eo E
+eomp	H AN M P
 erru	A I
 erru	A R I
 erru	A R U
@@ -124,7 +126,6 @@ gant	G A
 gant G AN N
 gavas	G A V EH S
 gav	G A W A
-louet	L OU D
 gavout	G A D
 gêr	I E R
 goare O A R E
@@ -155,7 +156,7 @@ honnezh H OU Z
 houmañ H OU M
 ivez I E
 ivez I V E
-ivez OE
+#ivez OE
 ivez U W EH
 kachimant K A I M AN N
 kaer K E R
@@ -167,20 +168,24 @@ koadoù	K O A J OU
 krampouezh K R AN M P OU Z
 kreñv K R EN ON
 kriz K R I
+labour	L A B OU R A
+laosket	L E S K E T
+laosket	L O S K E T
 lavaras	L A R A S
 lavare	L A R E
 lavare	L A R EH
 lavaret	L A R E T
-lavar	L A R
-lavaro	L A R O
 lavarfe	L A R CH E
 lavarfe	L A R F E
+lavar	L A R
+lavaro	L A R O
 lazhañ L A X AN
 lazhet L A X E T
 le L EU
 loen L ON N
 lojañ	L ON J AN
 lojet	L ON J E T
+louet	L OU D
 maezioù M E CH OU
 ma M EU
 marteze M A R S EH
@@ -194,6 +199,7 @@ melezour M I L OU R
 menez M E N E
 menez	M I N
 mennozh M E N O
+met M E
 nadoz	N A D OU
 nemetken M E K E N
 nemet M E T

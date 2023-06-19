@@ -4,6 +4,7 @@ import os.path
 from random import choice
 from pydub import AudioSegment
 from pydub.utils import get_player_name
+from pydub.generators import WhiteNoise
 from tempfile import NamedTemporaryFile
 import subprocess
 import json
@@ -46,6 +47,14 @@ def add_amb_random(voice_file, output_file):
     print("Exporting to", output_file)
     combined.export(output_file, format='wav', parameters=['-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000'])
 
+
+def add_whitenoise(voice_file, output_file, gain=-20):
+    voice = AudioSegment.from_file(voice_file)
+    noise = WhiteNoise().to_audio_segment(duration=len(voice))
+    noise += gain
+    combined = voice.overlay(noise)
+    print("Exporting to", output_file)
+    combined.export(output_file, format='wav', parameters=['-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000'])
 
 
 def get_audiofile_info(filename):

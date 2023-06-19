@@ -25,7 +25,7 @@ def load_vosk(path: str = DEFAULT_MODEL) -> None:
     global _vosk_loaded
 
     SetLogLevel(-1)
-    model_path = os.path.normpath(path)
+    model_path = os.path.normpath(path or DEFAULT_MODEL)
     print("Loading vosk model", model_path, file=sys.stderr)
     model = Model(model_path)
     recognizer = KaldiRecognizer(model, 16000)

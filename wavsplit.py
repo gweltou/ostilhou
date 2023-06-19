@@ -29,7 +29,7 @@ from pyrubberband import time_stretch
 from libMySTT import prompt_acronym_phon, extract_acronyms, ACRONYM_PATH
 from libMySTT import splitToEafFile, eafToSplitFile
 
-from ostilhou.asr import load_text_data, load_segments_data, transcribe_segment
+from ostilhou.asr import load_vosk, load_text_data, load_segments_data, transcribe_segment
 from ostilhou.hspell import get_hspell_mistakes
 from ostilhou.text import pre_process, normalize_sentence
 from ostilhou.dicts import acronyms
@@ -40,6 +40,15 @@ from ostilhou.audio import get_player_name, get_audiofile_info, convert_to_wav
 
 RESIZE_PATTERN = re.compile(r"([s|e])([-|\+])(\d+)")
 SPLIT_PATTERN = re.compile(r"c([0-9\.]+)")
+
+text_header = \
+"""
+{source: }
+{source-audio: }
+{author: }
+{licence: }
+{tags: }\n\n\n\n
+"""
 
 play_process = None
 
@@ -87,6 +96,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--thresh', type=float, default=-62, metavar="DB", help="Silence intensity threshold (in decibels)")
     parser.add_argument('-d', '--dur', type=int, default=400, metavar="MS", help="Silence minimum duration (in millisecs)")
     parser.add_argument('-s', '--transcribe', action='store_true', help="Automatic transcription")
+    parser.add_argument("-m", "--model", help="Vosk model to use for decoding", metavar='MODEL_PATH')
     parser.add_argument('--keep-sil', action='store_true', help="Keep silent utterances")
 
     args = parser.parse_args()
@@ -178,8 +188,14 @@ if __name__ == "__main__":
                     do_transcribe = False
                     break
         if do_transcribe:
+            if args.model:
+                load_vosk(args.model)
+            
             print("Transcribing...")
-            sentences = [transcribe_segment(song[seg[0]-200:seg[1]+200]) for seg in segments]
+            t_min, t_max = 0, segments[-1][1]
+            sentences = [
+            	transcribe_segment(song[max(t_min, seg[0]-200):min(t_max, seg[1]+200)]) for seg in segments
+            	]
             if not args.keep_sil:
                 print("Deleting silent utterances...")
                 seg_keepers = []
@@ -193,13 +209,13 @@ if __name__ == "__main__":
                 save_segments(segments, split_header, split_filename)
                 
             with open(text_filename, 'w') as fw:
-                fw.write('#\n' * 4 + '\n' * 6)  # Text file split_header
+                fw.write(text_header)  # Text file split_header
                 for s in sentences: fw.write(f"{s if s else '-'}\n")
     else:
         # Create empty text file if it doesn't exist
         if not os.path.exists(text_filename):
             with open(text_filename, 'w') as fw:
-                fw.write('#\n' * 4 + '\n' * 6)  # Text file split_header
+                fw.write(text_header)  # Text file split_header
     utterances = load_text_data(text_filename)
 
 

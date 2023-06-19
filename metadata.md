@@ -16,7 +16,7 @@ Kinda like CSS for metadata integration in text corpuses.
 
 ## Speaker name
 
-`{spk:marc'harid lagadeg}`
+`{spk: marc'harid lagadeg}`
 
 Sentence scope.
 
@@ -30,7 +30,7 @@ Names are case-insensitive.
 
 ## Speaker gender
 
-`{gender:f/m}`
+`{gender: f/m}`
 
 Global scope.
 
@@ -40,11 +40,11 @@ It is enough to specify the speaker's gender only once. It will be taken into ac
 
 Different attribute can be chained in the same metadata with the `;` character :
 
-`{spk:marc'harid lagadeg; gender:f}`
+`{spk: marc'harid lagadeg; gender: f}`
 
 ## Accent
 
-`{accent:gwenedeg}`
+`{accent: gwenedeg}`
 
 Sentence scope.
 
@@ -54,13 +54,13 @@ Possible values : gwened(eg), leon(eg), treger(ieg), kerne(veg), gwenrann(eg), g
 
 You can specify a list of values for an attribute, by separating them with a comma `,` :
 
-`{accent:kerneveg, kemper}`
+`{accent: kerneveg, kemper}`
 
 ## Authors
 
 Names of people and software responsible for transcribing the text (in order if possible)
 
-`{author:vosk-br, katell lagadeg, yann kloareg}`
+`{author: vosk-br, katell lagadeg, yann kloareg}`
 
 Document scope.
 
@@ -77,4 +77,3 @@ Parser commands.
 Sentence scope. Applies until another `{parser: no-lm/add-lm}` is found or end of document is reached.
 
 Exclude/add sentence to language model training dataset. Defaults to `add-lm` (add).
-

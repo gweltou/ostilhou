@@ -202,7 +202,9 @@ skript
 statistikel
 strikt
 stummadurezh
+surtoud
 tabletennoù
+tañvan
 temperadur
 tempo
 termenaduriñ
@@ -214,6 +216,7 @@ tretañ
 trio
 troiadur
 trug
+vanilhenn
 vejetarian
 venelour
 venelouriezh
