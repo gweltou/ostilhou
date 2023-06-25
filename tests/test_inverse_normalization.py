@@ -17,6 +17,8 @@ test_cases = [
     ("daou gorn-boud warn-ugent", "22 gorn-boud"),
     ("ar c'hoant da zaou vil daou ha tregont", "ar c'hoant da 2032"),
     ("kant hanter-kant den a oa", "150 den a oa"),
+    ("evit gwir ez eus bet meur a zevezh ar bardelloù e Pariz mil pemp kant eizh ha pevar-ugent mil c'hwec'h kant eizh ha daou-ugent mil eizh kant tregont...",
+        "evit gwir ez eus bet meur a zevezh ar bardelloù e Pariz 1588 1648 1830..."),
     ("div blac'h kozh ha daou-ugent", "42 blac'h kozh"),
     ("div blac'h kozh ha daou-ugent kazh du", "2 blac'h kozh ha 42 kazh du"),
     ("div blac'h kozh ha daou-ugent aet d'an anaon", "42 blac'h kozh aet d'an anaon"),

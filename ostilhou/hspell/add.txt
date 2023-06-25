@@ -200,6 +200,7 @@ skampiola
 sklêrijennat
 skript
 statistikel
+stereotip
 strikt
 stummadurezh
 surtoud

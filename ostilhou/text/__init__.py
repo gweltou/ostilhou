@@ -46,7 +46,7 @@ def reverse_translation_dict(path: str, newpath: str) -> None:
 
 
 def correct_sentence(sentence: str) -> str:
-    return detokenize(tokenize(sentence, autcorrect=True))
+    return detokenize(tokenize(sentence, autocorrect=True))
 
 
 

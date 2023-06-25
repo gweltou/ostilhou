@@ -10,6 +10,7 @@ from ..dicts import proper_nouns, acronyms
 w2f = {
     'a'     :   'A',
     'â'     :   'A',        # lÂret
+    'à'     :   'A',        # diàr (gwennedeg)
     'añ'    :   'AN',
     'an'    :   'AN N',
     'amm'   :   'AN M',     # liAMM
@@ -22,6 +23,7 @@ w2f = {
     'e'     :   'E',        # spEred
     'ê'     :   'E',        # gÊr
     'é'     :   'E',        # xxx GALLEG XXX
+    'è'     :   'EH',       # galleg / gwennedeg
     "ec'h"  :   'EH X',     # nec'h
     'ei'    :   'EY',       # kEIn      # could replace with (EH I) maybe ?
     'eiñ'   :   'EY',       # savetEIÑ

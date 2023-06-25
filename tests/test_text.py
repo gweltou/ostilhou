@@ -1,4 +1,4 @@
-from ostilhou.text import extract_parenthesis_content, capitalize
+from ostilhou.text import extract_parenthesis_content, capitalize, correct_sentence
 from ostilhou.text.definitions import is_proper_noun
 
 
@@ -24,3 +24,7 @@ def test_capitalize():
     should_be("demat Yann-Fañch", "Demat Yann-Fañch")
     should_be("'vit se", "'Vit se")
     should_be("«ya!»", "«Ya!»")
+
+
+def test_correct_sentence():
+    assert correct_sentence("covid-19") == "Covid 19"

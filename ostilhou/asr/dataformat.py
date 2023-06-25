@@ -75,6 +75,17 @@ def load_text_data(filename) -> List[Tuple[str, Dict]]:
     return utterances
 
 
+def get_text_header(filename) -> Dict:
+    s=set()
+    metadata = dict()
+    for l in read_file_drop_comments(filename):
+        l, md = extract_metadata(l)
+        metadata.update(md)
+        if l:
+            # Stop a first sentence
+            break
+    return metadata
+
 
 def splitToEafFile(split_filename, type="wav"):
     """ Convert wav + txt + split files to a eaf (Elan) file """
@@ -306,10 +317,8 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
                     key, val = key_val.group(1), key_val.group(2)
 
                     if key in _VALID_PARAMS:
-                        if ',' in val:
+                        if key in ("tags", "author", "accent"):
                             val = [v.strip().replace(' ', '_') for v in val.split(',') if v.strip()]
-                            if len(val) == 1:
-                                val = val[0]
                         metadata[key_val.group(1)] = val
 
                     else:

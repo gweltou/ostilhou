@@ -46,8 +46,8 @@ SI_UNITS = {
     }
 
 # A percentage or a number followed by a unit
-
-re_unit_number = re.compile(r"(\d+)([\w%€$']+)", re.IGNORECASE)
+# re_unit_number = re.compile(r"(\d+)([\w%€$']+)", re.IGNORECASE)
+re_unit_number = re.compile(r"(\d{1,3}(?:\.\d\d\d)+|\d+)([\w%€$']+)", re.IGNORECASE)
 match_unit_number = lambda s: re_unit_number.fullmatch(s)
 def is_unit_number(s):
     match = match_unit_number(s)

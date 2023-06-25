@@ -274,49 +274,49 @@ if __name__ == "__main__":
     ####     DATA AUGMENTATION      ####
     ####################################
 
-    if not args.dry_run and args.augment:
-        print("TO FIX !")
-        sys.exit(1)
+    # if not args.dry_run and args.augment:
+    #     print("TO FIX !")
+    #     sys.exit(1)
 
-        print("\n==== DATA AUGMENTATION ====")
-        # If True, duplicates the whole train dataset, adding various audio noises.
-        # The augmented data will be put in a sister folder `augmented`, with the same
-        # directory hierarchy as the original audio corpus.
+    #     print("\n==== DATA AUGMENTATION ====")
+    #     # If True, duplicates the whole train dataset, adding various audio noises.
+    #     # The augmented data will be put in a sister folder `augmented`, with the same
+    #     # directory hierarchy as the original audio corpus.
 
-        root = os.path.abspath(args.train)
-        # augmented_rep = os.path.join(os.path.abspath(SAVE_DIR), "augmented")
-        augmented_rep = os.path.join(root, "augmented")
-        augmented_files = dict()
+    #     root = os.path.abspath(args.train)
+    #     # augmented_rep = os.path.join(os.path.abspath(SAVE_DIR), "augmented")
+    #     augmented_rep = os.path.join(root, "augmented")
+    #     augmented_files = dict()
         
-        new_rec_id = dict()
+    #     new_rec_id = dict()
 
-        for (rec_id, original_audio) in corpora["train"]["wavscp"].items():
-            recording_id = rec_id + "_AUG"
-            utterance_id = corpora["train"]["text"][i][0]
-            # utterance_id should not be postfixed with anything,
-            # lest Kaldi goes back and forth between the original and augmented audio file
-            # when extracting features for every utterance
-            utterance_id = utterance_id.rsplit('-', maxsplit=1)
-            utterance_id = utterance_id[0] + "_AUG_" + utterance_id[1]
-            text = corpora["train"]["text"][i][1]
-            corpora["train"]["text"].append((utterance_id, text))
-            seg = corpora["train"]["segments"][i].split('\t')
-            corpora["train"]["segments"].append(f"{utterance_id}\t{recording_id}\t{seg[2]}\t{seg[3]}")
-            utt2spk = corpora["train"]["utt2spk"][i].split('\t')
-            corpora["train"]["utt2spk"].append(f"{utterance_id}\t{utt2spk[1]}")
+    #     for (rec_id, original_audio) in corpora["train"]["wavscp"].items():
+    #         recording_id = rec_id + "_AUG"
+    #         utterance_id = corpora["train"]["text"][i][0]
+    #         # utterance_id should not be postfixed with anything,
+    #         # lest Kaldi goes back and forth between the original and augmented audio file
+    #         # when extracting features for every utterance
+    #         utterance_id = utterance_id.rsplit('-', maxsplit=1)
+    #         utterance_id = utterance_id[0] + "_AUG_" + utterance_id[1]
+    #         text = corpora["train"]["text"][i][1]
+    #         corpora["train"]["text"].append((utterance_id, text))
+    #         seg = corpora["train"]["segments"][i].split('\t')
+    #         corpora["train"]["segments"].append(f"{utterance_id}\t{recording_id}\t{seg[2]}\t{seg[3]}")
+    #         utt2spk = corpora["train"]["utt2spk"][i].split('\t')
+    #         corpora["train"]["utt2spk"].append(f"{utterance_id}\t{utt2spk[1]}")
 
-            rep, filename = os.path.split(original_audio)
-            rep = rep.replace(root, augmented_rep)
-            output_filename = os.path.join(rep, filename)
-            augmented_files[recording_id] = output_filename
-            if os.path.exists(output_filename):
-                continue
-            if not os.path.exists(rep):
-                os.makedirs(rep)
-            add_amb_random(original_audio, output_filename)
+    #         rep, filename = os.path.split(original_audio)
+    #         rep = rep.replace(root, augmented_rep)
+    #         output_filename = os.path.join(rep, filename)
+    #         augmented_files[recording_id] = output_filename
+    #         if os.path.exists(output_filename):
+    #             continue
+    #         if not os.path.exists(rep):
+    #             os.makedirs(rep)
+    #         add_amb_random(original_audio, output_filename)
 
-        corpora["train"]["wavscp"].update(augmented_files)
-        print("Done.")
+    #     corpora["train"]["wavscp"].update(augmented_files)
+    #     print("Done.")
 
 
     if not args.dry_run:
@@ -349,11 +349,10 @@ if __name__ == "__main__":
                     n = 0
                     with open(lm_corpus_file, 'r') as fr:
                         for sentence in fr.readlines():
-                            # cleaned, _ = get_cleaned_sentence(sentence)
                             cleaned = pre_process(sentence)
                             cleaned = normalize_sentence(cleaned.strip(), autocorrect=True)
                             cleaned = cleaned.replace('-', ' ').replace('/', ' ')
-                            cleaned = filter_out(cleaned, PUNCTUATION)
+                            cleaned = filter_out(cleaned, PUNCTUATION+'{}')
                             for word in cleaned.split():
                                 if word in corpora["train"]["lexicon"]:
                                     pass

@@ -181,17 +181,18 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = """C'hoariet en deus evit Stade Rennais Football Club etre 1973 ha 1977 hag e 1978-1979. Unan eus ar c'hoarierien wellañ bet gwelet e klub Roazhon e oa. Pelé en deus lavaret diwar e benn : « Kavet 'm eus an hini a dapo ma flas. Laurent Pokou e anv. »."""
+    sentence = "e Pariz 1588 1648 1830..."
     # test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
-    # test_normalize(sentence)
+    test_normalize(sentence)
     # print(phonetize(sentence))
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
-    for s in split_sentences(sentence):
-        print(s, end='')
+    # for s in split_sentences(sentence):
+    #     print(s, end='')
     
     # test_wiki150_noun_gender()
     # test_sarmoniou()
     # test_clean_ya()
     # post_process_text("Evel se mañ")
+    # print(phonetize("traoù"))

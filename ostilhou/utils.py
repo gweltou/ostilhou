@@ -3,7 +3,13 @@ import os
 
 
 
-def list_files_with_extension(ext, rep, recursive=True) -> List[str]:
+def list_files_with_extension(ext: str, rep, recursive=True) -> List[str]:
+    """
+        Parameters
+        ----------
+            ext : str
+                file extension, including the dot
+    """
     file_list = []
     if os.path.isdir(rep):
         for filename in os.listdir(rep):

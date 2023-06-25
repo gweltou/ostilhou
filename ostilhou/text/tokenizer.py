@@ -303,7 +303,17 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
     for tok in token_stream:
         if tok.kind == Token.RAW:
             if tok.data.isdecimal():
-                num_concat += tok.data
+                if not num_concat and len(tok.data) < 4:
+                    num_concat += tok.data
+                elif num_concat and len(tok.data) == 3:
+                    num_concat += tok.data                    
+                else:
+                    # An full number
+                    tok.kind = Token.NUMBER
+            elif re.fullmatch(r"\d{1,3}(\.\d\d\d)+", tok.data):
+                # A big number with dotted thousands (i.e: 12.000.000)
+                tok.data = tok.data.replace('.', '')
+                tok.kind = Token.NUMBER
             else:
                 if is_roman_number(tok.data):
                     tok.kind = Token.ROMAN_NUMBER
@@ -317,6 +327,7 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                 elif is_unit_number(tok.data):
                     # ex: "10m2"
                     number, unit = match_unit_number(tok.data).groups()
+                    number = number.replace('.', '')
                     tok.kind = Token.QUANTITY
                     tok.data = f"{num_concat}{number}{unit}"
                     tok.number = num_concat + number
@@ -333,7 +344,6 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                         num_concat = ""
                     elif tok.data not in ('l', 'm', 't', 'g'):
                         tok.kind = Token.UNIT
-                # elif num_concat and tok.data.lower() in nouns:
                 elif num_concat and is_noun(tok.data):
                     # ex: "32 bloaz"
                     tok.kind = Token.QUANTITY
@@ -359,7 +369,6 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
 
         if not num_concat:
             yield tok
-            # prev_token = tok
     
     if num_concat:
         yield(Token(num_concat, Token.NUMBER))
