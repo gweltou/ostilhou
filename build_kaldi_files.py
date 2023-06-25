@@ -140,6 +140,7 @@ def parse_data_file(split_filename, args):
         if cleaned:
             sent = normalize_sentence(cleaned, autocorrect=True)
             sent = sent.replace('-', ' ').replace('/', ' ')
+            sent = sent.replace('\xa0', ' ')
             sent = filter_out(sent, PUNCTUATION)
             sentences.append(' '.join(sent.replace('*', '').split()))
             speaker_ids.append(speaker_id)
@@ -166,6 +167,7 @@ def parse_data_file(split_filename, args):
             for sub in split_sentences(cleaned, end=''):
                 sent = normalize_sentence(sub, autocorrect=True)
                 sent = sent.replace('-', ' ').replace('/', ' ')
+                sent = sent.replace('\xa0', ' ')
                 sent = filter_out(sent, PUNCTUATION)
                 if not sent:
                     continue
@@ -192,6 +194,7 @@ def parse_data_file(split_filename, args):
                 sub = pre_process(sub)
                 sub = normalize_sentence(sub, autocorrect=True)
                 sub = sub.replace('-', ' ').replace('/', ' ')
+                sub = sub.replace('\xa0', ' ')
                 sub = filter_out(sub, PUNCTUATION)
                 data["corpus"].add(' '.join(sub.split()))
     
@@ -352,6 +355,7 @@ if __name__ == "__main__":
                             cleaned = pre_process(sentence)
                             cleaned = normalize_sentence(cleaned.strip(), autocorrect=True)
                             cleaned = cleaned.replace('-', ' ').replace('/', ' ')
+                            cleaned = cleaned.replace('\xa0', ' ')
                             cleaned = filter_out(cleaned, PUNCTUATION+'{}')
                             for word in cleaned.split():
                                 if word in corpora["train"]["lexicon"]:
