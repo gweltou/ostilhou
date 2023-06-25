@@ -263,7 +263,7 @@ if __name__ == "__main__":
         print("`test` argument should be a directory containing aligned audio, text and split files")
         sys.exit(1)
     
-    speakers_gender = {}
+    speakers_gender = {"unknown": "u"}
     
     print("\n==== PARSING DATA ITEMS ====")
     corpora = { "train": parse_dataset(args.train, args) }
