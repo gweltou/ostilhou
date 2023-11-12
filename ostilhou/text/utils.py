@@ -16,7 +16,7 @@ def strip_punct(word: str) -> str:
 
 
 
-def filter_out(text: str, chars: str) -> str:
+def filter_out_chars(text: str, chars: str) -> str:
     """ Remove characters from a string """
 
     filtered_text = ""
@@ -58,6 +58,8 @@ def extract_parenthesis_content(txt: str) -> Tuple[str, str]:
 
 
 def pre_process(text: str) -> str:
+    """ Correct ambiguous quote characters, tilde and such """
+
     text = text.replace('‘', "'")
     text = text.replace('’', "'")
     text = text.replace('ʼ', "'")
@@ -71,35 +73,34 @@ def pre_process(text: str) -> str:
 
 
 
-def fix_clitic(text: str) -> str:
-    """ Do not use ! """
+# def fix_clitic(text: str) -> str:
+#     """ Do not use ! """
     
-    text = text.replace("d' ", "d'")
-    # text = text.replace("n' ", "n'")
+#     text = text.replace("d' ", "d'")
+#     # text = text.replace("n' ", "n'")
 
-    text = text.replace("n'eus ", "'n eus ")
-    text = text.replace("n'int ", "n' int ")
-    text = text.replace("n'eo ", "n' eo ")
-    text = text.replace("n'hon ", "n' hon ")
-    text = text.replace("n'ez ", "n' ez ")
-    text = text.replace("n'em ", "n' em ")
-    text = text.replace("n'am ", "n' am ")
-    text = text.replace("n'en ", "n' en ")
-    text = text.replace("n'o ", "n' o ")
-    text = text.replace("n'on ", "n' on ")
-    text = text.replace("n'he ", "n' he ")
-    text = text.replace("n'edo ", "n' edo ")
-    text = text.replace("n'emañ ", "n' emañ ")
-    text = text.replace("n'anavezan ", "n' anavezan ")
-    text = text.replace("n'ouzer ", "n' ouzer ")
-    text = text.replace("n'ouzon ", "n' ouzon ")
-    # n'oc'h
-    # n'omp
-
+#     text = text.replace("n'eus ", "'n eus ")
+#     text = text.replace("n'int ", "n' int ")
+#     text = text.replace("n'eo ", "n' eo ")
+#     text = text.replace("n'hon ", "n' hon ")
+#     text = text.replace("n'ez ", "n' ez ")
+#     text = text.replace("n'em ", "n' em ")
+#     text = text.replace("n'am ", "n' am ")
+#     text = text.replace("n'en ", "n' en ")
+#     text = text.replace("n'o ", "n' o ")
+#     text = text.replace("n'on ", "n' on ")
+#     text = text.replace("n'he ", "n' he ")
+#     text = text.replace("n'edo ", "n' edo ")
+#     text = text.replace("n'emañ ", "n' emañ ")
+#     text = text.replace("n'anavezan ", "n' anavezan ")
+#     text = text.replace("n'ouzer ", "n' ouzer ")
+#     text = text.replace("n'ouzon ", "n' ouzon ")
+#     # n'oc'h
+#     # n'omp
 
 
 def sentence_stats(sentence: str) -> dict:
-    """ Get statistics about a string """
+    """ Get statistics about a text """
     
     letter = 0
     decimal = 0
@@ -122,7 +123,7 @@ def sentence_stats(sentence: str) -> dict:
         else:
             other += 1
         
-        sentence = filter_out(sentence, PUNCTUATION)
+        sentence = filter_out_chars(sentence, PUNCTUATION)
     
     return {"letter": letter, "decimal": decimal, "upper": upper, "punct": punct,
             "blank": blank, "other": other, "words": len(sentence.split())}

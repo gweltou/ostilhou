@@ -25,6 +25,7 @@ SI_UNITS = {
     'cl'    : ["santilitr", "santilitrad"],
     'ml'    : ["mililitr", "mililitrad"],
     'cm'    : ["santimetr", "kantimetr"],
+    'sm'    : ["santimetr"],
     'cm2'   : ["santimetr karrez", "kantimetr karrez"],
     'cm²'   : ["santimetr karrez", "kantimetr karrez"],
     'cm3'   : ["santimetr diñs", "kantimetr diñs"],

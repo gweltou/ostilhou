@@ -1,9 +1,9 @@
 import re
 from ostilhou import tokenize, detokenize
 from ostilhou.text import (
-    strip_punct, filter_out,
+    strip_punct, filter_out_chars,
     split_sentences, extract_parenthesis_content,
-    load_translation_dict, translate,
+    load_translation_dict, translate, reverse_translation_dict,
     normalize, normalize_sentence,
     inverse_normalize_sentence, inverse_normalize_vosk,
     pre_process, sentence_stats,
@@ -95,7 +95,7 @@ def test_clean_ya():
         for line in fin.readlines():
             if line:
                 line = pre_process(line).replace('*', '').replace('OOO', '000')
-                line = filter_out(line, OPENING_QUOTES + CLOSING_QUOTES)
+                line = filter_out_chars(line, OPENING_QUOTES + CLOSING_QUOTES)
                 for sentence in split_sentences(line, end=''):
                     n_parsed += 1
 
@@ -151,7 +151,7 @@ def test_clean_ya():
                         continue
 
                     normalized = normalize_sentence(sentence)
-                    normalized = filter_out(normalized, PUNCTUATION + '<#>').replace('-', ' ')
+                    normalized = filter_out_chars(normalized, PUNCTUATION + '<#>').replace('-', ' ')
                     _, n_mistakes = get_hspell_mistakes(normalized)
                     if n_mistakes == 0:
                         sentences_norm.add(' '.join(normalized.split()))
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     # test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
-    test_normalize(sentence)
+    # test_normalize(sentence)
     # print(phonetize(sentence))
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
     # for s in split_sentences(sentence):
@@ -196,3 +196,5 @@ if __name__ == "__main__":
     # test_clean_ya()
     # post_process_text("Evel se mañ")
     # print(phonetize("traoù"))
+
+    reverse_translation_dict("./ostilhou/dicts/sarmonioù_peurunvan.tsv", "./puv_leoneg2.tsv")

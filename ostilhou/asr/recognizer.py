@@ -7,8 +7,8 @@ import json
 from vosk import Model, KaldiRecognizer, SetLogLevel
 from pydub import AudioSegment
 
-from .post_processing import apply_post_process_dict_text, post_process_text, post_process_vosk
-from ..text.inverse_normalizer import inverse_normalize_vosk
+from .post_processing import apply_post_process_dict_text, post_process_text, post_process_timecoded
+from ..text.inverse_normalizer import inverse_normalize_timecoded
 
 
 
@@ -34,28 +34,53 @@ def load_vosk(path: str = DEFAULT_MODEL) -> None:
 
 
 
-def transcribe_segment(segment: AudioSegment, normalize=False) -> str:
+def transcribe_segment(segment: AudioSegment) -> str:
+    """ Transcribe a short AudioSegment """
     if not _vosk_loaded:
         load_vosk()
     
-    # seg = song[segments[idx][0]:segments[idx][1]]
-    segment = segment.get_array_of_samples().tobytes()
+    data = segment.raw_data
+    text = []
     i = 0
-    while i + 4000 < len(segment):
-        recognizer.AcceptWaveform(segment[i:i+4000])
+    while i + 4000 < len(data):
+        if recognizer.AcceptWaveform(data[i:i+4000]):
+            text.append(json.loads(recognizer.Result())["text"])
         i += 4000
-    recognizer.AcceptWaveform(segment[i:])
-    text = eval(recognizer.FinalResult())["text"]
-    return apply_post_process_dict_text(text)
+    recognizer.AcceptWaveform(data[i:])
+    text.append(json.loads(recognizer.FinalResult())["text"])
+
+    return text
+
+
+
+def transcribe_segment_timecoded(segment: AudioSegment) -> List[dict]:
+    if not _vosk_loaded:
+        load_vosk()
+    
+    data = segment.get_array_of_samples().tobytes()
+    timecoded_text = []
+    i = 0
+    while i + 4000 < len(data):
+        if recognizer.AcceptWaveform(data[i:i+4000]):
+            result = json.loads(recognizer.Result())
+            if "result" in result:
+                timecoded_text.extend(result["result"])
+        i += 4000
+    recognizer.AcceptWaveform(data[i:])
+    result = json.loads(recognizer.FinalResult())
+    if "result" in result:
+        timecoded_text.extend(result["result"])
+    return timecoded_text
 
 
 
 def transcribe_file(filepath: str, normalize=False) -> List[str]:
-
-    def format_output(result, normalize=False):
-        sentence = eval(result)["text"]
+    def format_output(sentence, normalize=False):
         sentence = post_process_text(sentence, normalize)
         return sentence
+    
+    if not os.path.exists(filepath):
+        print("Couldn't find {}".format(filepath), file=sys.stderr)
 
     if not _vosk_loaded:
         load_vosk()
@@ -72,10 +97,12 @@ def transcribe_file(filepath: str, normalize=False) -> List[str]:
             if len(data) == 0:
                 break
             if recognizer.AcceptWaveform(data):
-                result = format_output(recognizer.Result(), normalize)
+                sentence = json.loads(recognizer.Result())["text"]
+                result = format_output(sentence, normalize)
                 if result:
                     text.append(result)
-        result = format_output(recognizer.FinalResult(), normalize)
+        sentence = json.loads(recognizer.FinalResult())["text"]
+        result = format_output(sentence, normalize)
         if result:
             text.append(result)
     
@@ -83,7 +110,7 @@ def transcribe_file(filepath: str, normalize=False) -> List[str]:
 
 
 
-def transcribe_file_timecode(filepath: str, normalize=False) -> List[dict]:
+def transcribe_file_timecoded(filepath: str, normalize=False) -> List[dict]:
     """ Return list of infered words with associated timecodes (vosk format)
 
         Parameters
@@ -95,7 +122,7 @@ def transcribe_file_timecode(filepath: str, normalize=False) -> List[dict]:
         if not "result" in jres:
             return []
         words = jres["result"]
-        words = post_process_vosk(words, normalize)
+        words = post_process_timecoded(words, normalize)
         return words
 
     if not _vosk_loaded:
@@ -117,22 +144,3 @@ def transcribe_file_timecode(filepath: str, normalize=False) -> List[dict]:
     
     return tokens
 
-
-# def sentence_post_process(text: str) -> str:
-#     """ Add hyphens back to composite words and inverse-normalize text """
-
-#     if not text:
-#         return ''
-    
-#     # web adresses
-#     if "HTTP" in text or "WWW" in text:
-#         text = text.replace("pik", '.')
-#         text = text.replace(' ', '')
-#         return text.lower()
-    
-#     for sub in _postproc_sub:
-#         text = text.replace(sub, _postproc_sub[sub])
-    
-#     splitted = text.split(maxsplit=1)
-#     splitted[0] = splitted[0].capitalize()
-#     return ' '.join(splitted)

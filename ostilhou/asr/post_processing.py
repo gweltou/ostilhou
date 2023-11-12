@@ -1,6 +1,6 @@
 import os
 from typing import List, Optional
-from ..text.inverse_normalizer import inverse_normalize_sentence, inverse_normalize_vosk
+from ..text.inverse_normalizer import inverse_normalize_sentence, inverse_normalize_timecoded
 from ..text.definitions import is_noun
 from ..utils import read_file_drop_comments
 
@@ -13,7 +13,7 @@ verbal_fillers = {
     'euhm'  :   'OE M',
     'beñ'   :   'B EN',
     'beh'   :   'B E',
-    'eba'   :   'E B A',
+    'ebah'   :   'E B A',
     'ebeñ'  :   'E B EN',
     'kwa'   :   'K W A',
     'hañ'   :   'H AN',
@@ -27,7 +27,8 @@ verbal_fillers = {
     'allez' :   'A L E',
     'voilà' :   'V O A L A',
     'pff'   :   'P F F',
-    'mais'  :   'M EH'
+    'mais'  :   'M EH',
+    'hmm'   :   'M M',
     #'oh'    :   'O',
     #'ah'    :   'A',
 }
@@ -68,6 +69,7 @@ _inorm_units_dict = load_postproc_dict(_inorm_units_dict_path)
 
 
 def post_process_text(sentence: str, normalize=False, keep_fillers=False) -> str:
+    """ Apply post-processing on raw text """
     sentence = apply_post_process_dict_text(sentence, _postproc_dict)
     
     # Add hyphens for "-se" and "-mañ"
@@ -92,12 +94,13 @@ def post_process_text(sentence: str, normalize=False, keep_fillers=False) -> str
 
 
 
-def post_process_vosk(
+def post_process_timecoded(
         tokens: List[dict],
         normalize=False,
         keep_fillers=True) -> List[dict]:
+    """ Apply post-processing on Vosk formatted result (keeping timecodes) """
     
-    tokens = apply_post_process_dict_vosk(tokens, _postproc_dict)
+    tokens = apply_post_process_dict_timecoded(tokens, _postproc_dict)
 
     # Add hyphens for "-se" and "-mañ"
     parsed = []
@@ -120,8 +123,8 @@ def post_process_vosk(
     tokens = parsed
 
     if normalize:
-        tokens = apply_post_process_dict_vosk(tokens, _inorm_units_dict)
-        tokens = inverse_normalize_vosk(tokens)
+        tokens = apply_post_process_dict_timecoded(tokens, _inorm_units_dict)
+        tokens = inverse_normalize_timecoded(tokens)
     return tokens
 
 
@@ -158,7 +161,7 @@ def apply_post_process_dict_text(sentence: str, ngram_dicts: List[dict]=_postpro
 
 
 
-def apply_post_process_dict_vosk(tokens: List[dict], ngram_dicts: List[dict]=_postproc_dict) -> List[dict]:
+def apply_post_process_dict_timecoded(tokens: List[dict], ngram_dicts: List[dict]=_postproc_dict) -> List[dict]:
 
     def check_ngram(n: int):
         ngram = tuple( [ t["word"].lower() for t in tokens[idx:idx+n] ] )
@@ -192,3 +195,24 @@ def apply_post_process_dict_vosk(tokens: List[dict], ngram_dicts: List[dict]=_po
         idx += 1
 
     return translated
+
+
+
+# def sentence_post_process(text: str) -> str:
+#     """ Add hyphens back to composite words and inverse-normalize text """
+
+#     if not text:
+#         return ''
+    
+#     # web adresses
+#     if "HTTP" in text or "WWW" in text:
+#         text = text.replace("pik", '.')
+#         text = text.replace(' ', '')
+#         return text.lower()
+    
+#     for sub in _postproc_sub:
+#         text = text.replace(sub, _postproc_sub[sub])
+    
+#     splitted = text.split(maxsplit=1)
+#     splitted[0] = splitted[0].capitalize()
+#     return ' '.join(splitted)

@@ -26,28 +26,27 @@ from pydub.playback import _play_with_simpleaudio
 from pyrubberband import time_stretch
 #import librosa
 # from libMySTT import get_player_name, get_audiofile_info, convert_to_wav
-from libMySTT import prompt_acronym_phon, extract_acronyms, ACRONYM_PATH
-from libMySTT import splitToEafFile, eafToSplitFile
+from ostilhou.utils import splitToEafFile, eafToSplitFile
 
 from ostilhou.asr import load_vosk, load_text_data, load_segments_data, transcribe_segment
 from ostilhou.hspell import get_hspell_mistakes
-from ostilhou.text import pre_process, normalize_sentence
+from ostilhou.text import pre_process, normalize_sentence, strip_punct
 from ostilhou.dicts import acronyms
-from ostilhou.audio import get_player_name, get_audiofile_info, convert_to_wav
+from ostilhou.audio import get_audiofile_info, convert_to_wav, split_to_segments
 
 
 
+ACRONYM_PATH = "/home/gweltaz/Documents/STT/ostilhoù/ostilhou/dicts/acronyms.tsv"
 
 RESIZE_PATTERN = re.compile(r"([s|e])([-|\+])(\d+)")
 SPLIT_PATTERN = re.compile(r"c([0-9\.]+)")
 
-text_header = \
-"""
-{source: }
+textfile_header = \
+"""{source: }
 {source-audio: }
 {author: }
 {licence: }
-{tags: }\n\n\n\n
+{tags: }\n\n\n\n\n\n
 """
 
 play_process = None
@@ -75,10 +74,8 @@ def play_segment_text(idx, song, segments, utterances, speed):
 
 
 
-def save_segments(segments, header, filename):
+def save_segments(segments, filename):
     with open(filename, 'w') as f:
-        if header:
-            f.write(header + '\n')
         for _, s in enumerate(segments):
             start = int(s[0])
             stop =  int(s[1])
@@ -86,15 +83,92 @@ def save_segments(segments, header, filename):
     print('split file saved')
 
 
+def is_acronym(word):
+    if len(word) == 1 and word in "BCDFGHIJKLPQRSTVXYZ":
+        return True
 
-if __name__ == "__main__":
+    if len(word) < 2:
+        return False
+    
+    valid = False
+    for l in word:
+        if l in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+            valid = True
+            continue
+        if l not in "-0123456789":
+            return False
+    return valid
+
+
+def extract_acronyms(text):
+    return  #TODO
+
+    extracted = set()
+    #for w in tokenize(text, post_proc=False):
+    for w in text.split():
+        w = strip_punct(w)
+        # Remove black-listed words (beggining with '*')
+        if w.startswith('*'):
+            continue
+        if is_acronym(w):
+            extracted.add(w)
+    
+    return list(extracted)
+
+
+def prompt_acronym_phon(w, song, segments, idx):
+    """
+        w: Acronym
+        i: segment number in audiofile (from 'split' file) 
+    """
+    
+    return  #TODO
+
+    guess = ' '.join([acr2f[l] for l in w if l in acr2f])
+    print(f"Phonetic proposition for '{w}' : {guess}")
+    while True:
+        answer = input("Press 'y' to validate, 'l' to listen, 'x' to skip or write a different prononciation: ").strip().upper()
+        if not answer:
+            continue
+        if answer == 'X':
+            return None
+        if answer == 'Y':
+            return guess
+        if answer == 'L':
+            play_segment(idx, song, segments, 1.5)
+            continue
+        valid = True
+        for phoneme in answer.split():
+            if phoneme not in phonemes:
+                print("Error : phoneme not in", ' '.join(phonemes))
+                valid = False
+        if valid :
+            return answer
+
+
+# def split_segments(song: AudioSegment, min_silence_len, silence_thresh):
+    
+#     segments = detect_nonsilent(song, min_silence_len, silence_thresh)
+    
+#     # Including silences at head and tail of segments
+#     if len(segments) >= 2:
+#         segments[0] = (segments[0][0], segments[0][1] + args.dur)
+#         segments[-1] = (segments[-1][0] - args.dur, segments[-1][1])
+#         for i in range(1, len(segments)-1):
+#             segments[i] = (segments[i][0] - args.dur, segments[i][1] + args.dur)
+    
+#     return segments
+
+
+
+def main():
     parser = argparse.ArgumentParser(
-                    prog = 'Wavesplit',
+                    prog = 'Wavsplit',
                     description = 'Audio file converter, splitter and text alignment')
     parser.add_argument('filename')
     # parser.add_argument('-o', '--overwrite', action='store_true', help="Overwrite split file (if present)")
-    parser.add_argument('-t', '--thresh', type=float, default=-62, metavar="DB", help="Silence intensity threshold (in decibels)")
-    parser.add_argument('-d', '--dur', type=int, default=400, metavar="MS", help="Silence minimum duration (in millisecs)")
+    # parser.add_argument('-t', '--thresh', type=float, default=-62, metavar="DB", help="Silence intensity threshold (in decibels)")
+    # parser.add_argument('-d', '--dur', type=int, default=400, metavar="MS", help="Silence minimum duration (in millisecs)")
     parser.add_argument('-s', '--transcribe', action='store_true', help="Automatic transcription")
     parser.add_argument("-m", "--model", help="Vosk model to use for decoding", metavar='MODEL_PATH')
     parser.add_argument('--keep-sil', action='store_true', help="Keep silent utterances")
@@ -105,8 +179,7 @@ if __name__ == "__main__":
     if args.filename.endswith(".eaf"):
         eafToSplitFile(args.filename)
 
-
-    PLAYER = get_player_name()
+    # PLAYER = get_player_name()
     
     rep, filename = os.path.split(os.path.abspath(args.filename))
     # Removing special characters from filename
@@ -136,43 +209,18 @@ if __name__ == "__main__":
     song = AudioSegment.from_wav(wav_filename)
 
     segments = []
-    split_header = ""
     do_split = True
 
     if os.path.exists(split_filename):
         print("Split file already exists.")
-        if args.thresh != -62 or args.dur != 400:
-            # Split args present
-            while True:
-                a = input("Overwrite (y/n)? ")
-                if a == 'y':
-                    break
-                if a == 'n':
-                    segments, split_header = load_segments_data(split_filename)
-                    do_split = False
-                    break
-        else:
-            # Load split file
-            segments, split_header = load_segments_data(split_filename)
-            do_split = False
+        segments, _ = load_segments_data(split_filename)
+        do_split = False
 
-    if split_header:
-        print(f'Header found: "{split_header}"')
 
     if do_split:
         print("spliting wave file")
-        # Using pydub
-        segments = detect_nonsilent(song, min_silence_len=args.dur, silence_thresh=args.thresh)
-        
-        # Including silences at head and tail of segments
-        if len(segments) >= 2:
-            segments[0] = (segments[0][0], segments[0][1] + args.dur)
-            segments[-1] = (segments[-1][0] - args.dur, segments[-1][1])
-            for i in range(1, len(segments)-1):
-                segments[i] = (segments[i][0] - args.dur, segments[i][1] + args.dur)
-        
-        split_header = f"# -t {args.thresh} -d {args.dur}"
-        save_segments(segments, split_header, split_filename)
+        segments = split_to_segments(song, max_length=20, min_length=2)
+        save_segments(segments, split_filename)
     
 
     if args.transcribe:
@@ -193,6 +241,7 @@ if __name__ == "__main__":
             
             print("Transcribing...")
             t_min, t_max = 0, segments[-1][1]
+            print(segments)
             sentences = [
             	transcribe_segment(song[max(t_min, seg[0]-200):min(t_max, seg[1]+200)]) for seg in segments
             	]
@@ -206,16 +255,16 @@ if __name__ == "__main__":
                         sent_keepers.append(sentences[i])
                 segments = seg_keepers
                 sentences = sent_keepers
-                save_segments(segments, split_header, split_filename)
+                save_segments(segments, split_filename)
                 
             with open(text_filename, 'w') as fw:
-                fw.write(text_header)  # Text file split_header
+                fw.write(textfile_header)  # Text file split_header
                 for s in sentences: fw.write(f"{s if s else '-'}\n")
     else:
         # Create empty text file if it doesn't exist
         if not os.path.exists(text_filename):
             with open(text_filename, 'w') as fw:
-                fw.write(text_header)  # Text file split_header
+                fw.write(textfile_header)  # Text file split_header
     utterances = load_text_data(text_filename)
 
 
@@ -358,7 +407,7 @@ if __name__ == "__main__":
             print("Segment exported")
         elif x == 's':  # Save split data to disk
             if modified:
-                save_segments(segments, split_header, split_filename)
+                save_segments(segments, split_filename)
                 modified = False
         elif x == 'eaf': # Export to Elan format
             splitToEafFile(split_filename)
@@ -392,5 +441,9 @@ if __name__ == "__main__":
         elif x == 'q':
             if modified:
                 r = input("Save before quitting (y|n) ? ")
-                if r == 'y': save_segments(segments, split_header, split_filename) 
+                if r == 'y': save_segments(segments, split_filename) 
             running = False
+
+
+if __name__ == "__main__":
+    main()

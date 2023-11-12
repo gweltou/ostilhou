@@ -11,7 +11,8 @@ import re
 import sys
 
 
-TIMECODE_PATTERN = re.compile(r"(?:(\d+):)?(\d+):(\d+),(\d+) --> (?:(\d+):)?(\d+):(\d+),(\d+)")
+#TIMECODE_PATTERN = re.compile(r"(?:(\d+):)?(\d+):(\d+),(\d+) --> (?:(\d+):)?(\d+):(\d+),(\d+)")
+TIMECODE_PATTERN = re.compile(r"(?:(\d+):)?(\d+):(\d+)(?:,|.)(\d+) --> (?:(\d+):)?(\d+):(\d+)(?:,|.)(\d+)")
 
 
 
@@ -47,12 +48,13 @@ if __name__ == "__main__":
     # for filename in os.listdir():
     for filename in sys.argv[1:]:
         basename, ext = os.path.splitext(filename)
-        if ext.lower() == ".srt":
+        if ext.lower() in (".srt", ".vtt"):
             print(filename)
             with open(filename, 'r') as fin:
                 segments, text = srt2split(fin.readlines())
             
             with open(basename + ".txt", 'w') as fout:
+                fout.write("{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n")
                 fout.writelines([t+'\n' for t in text])
 
             with open(basename + ".split", 'w') as fout:

@@ -23,7 +23,7 @@ from hashlib import md5
 from colorama import Fore
 
 from ostilhou import normalize_sentence
-from ostilhou.text import filter_out, pre_process, split_sentences
+from ostilhou.text import filter_out_chars, pre_process, split_sentences
 from ostilhou.text.definitions import PUNCTUATION
 from ostilhou.dicts import proper_nouns
 from ostilhou.audio import add_amb_random, AUDIO_AMB_FILES
@@ -58,7 +58,7 @@ def parse_dataset(file_or_dir, args):
             "speakers": set(),  # Speakers names
             "lexicon": set(),   # Word dictionary
             "corpus": set(),    # Sentences for LM corpus
-            "audio_length": {'m': 0, 'f': 0},    # Audio length for each gender
+            "audio_length": {'m': 0, 'f': 0, 'u': 0},    # Audio length for each gender
             "subdir_audiolen": {}   # Size (total audio length) for every sub-folders
             }
         
@@ -75,9 +75,13 @@ def parse_dataset(file_or_dir, args):
                 data["speakers"].update(data_item["speakers"])
                 data["lexicon"].update(data_item["lexicon"])
                 data["corpus"].update(data_item["corpus"])
-                data["audio_length"]['m'] += data_item["audio_length"]['m']
                 data["audio_length"]['f'] += data_item["audio_length"]['f']
-                data["subdir_audiolen"][filename] = data_item["audio_length"]['m'] + data_item["audio_length"]['f']
+                data["audio_length"]['m'] += data_item["audio_length"]['m']
+                data["audio_length"]['u'] += data_item["audio_length"]['u']
+                data["subdir_audiolen"][filename] = \
+                    data_item["audio_length"]['f'] + \
+                    data_item["audio_length"]['m'] + \
+                    data_item["audio_length"]['u']
         
         return data
     else:
@@ -111,12 +115,12 @@ def parse_data_file(split_filename, args):
         "speakers": set(),  # Speakers names
         "lexicon": set(),   # Word dictionary
         "corpus": set(),    # Sentences for LM corpus
-        "audio_length": {'m': 0, 'f': 0},    # Audio length for each gender
+        "audio_length": {'m': 0, 'f': 0, 'u': 0},    # Audio length for each gender
         }
     
     ## PARSE TEXT FILE
     speaker_ids = []
-    speaker_id = "unnamed"
+    speaker_id = "unknown"
     sentences = []
 
     for sentence, metadata in load_text_data(text_filename):
@@ -141,7 +145,7 @@ def parse_data_file(split_filename, args):
             sent = normalize_sentence(cleaned, autocorrect=True)
             sent = sent.replace('-', ' ').replace('/', ' ')
             sent = sent.replace('\xa0', ' ')
-            sent = filter_out(sent, PUNCTUATION)
+            sent = filter_out_chars(sent, PUNCTUATION)
             sentences.append(' '.join(sent.replace('*', '').split()))
             speaker_ids.append(speaker_id)
             
@@ -150,7 +154,7 @@ def parse_data_file(split_filename, args):
                 # Remove black-listed words (those beggining with '*')
                 if word.startswith('*'):
                     pass
-                elif word in ("<NTT>", "<C'HOARZH>", "<UNK>", "<HUM>"):
+                elif word in ("<NTT>", "<C'HOARZH>", "<UNK>", "<HUM>", "<PASSAAT>"):
                     pass
                 elif word == "'":
                     pass
@@ -168,7 +172,7 @@ def parse_data_file(split_filename, args):
                 sent = normalize_sentence(sub, autocorrect=True)
                 sent = sent.replace('-', ' ').replace('/', ' ')
                 sent = sent.replace('\xa0', ' ')
-                sent = filter_out(sent, PUNCTUATION)
+                sent = filter_out_chars(sent, PUNCTUATION)
                 if not sent:
                     continue
 
@@ -195,7 +199,7 @@ def parse_data_file(split_filename, args):
                 sub = normalize_sentence(sub, autocorrect=True)
                 sub = sub.replace('-', ' ').replace('/', ' ')
                 sub = sub.replace('\xa0', ' ')
-                sub = filter_out(sub, PUNCTUATION)
+                sub = filter_out_chars(sub, PUNCTUATION)
                 data["corpus"].add(' '.join(sub.split()))
     
 
@@ -221,6 +225,8 @@ def parse_data_file(split_filename, args):
             data["audio_length"]['m'] += stop - start
         elif speaker_gender == 'f':
             data["audio_length"]['f'] += stop - start
+        else:
+            data["audio_length"]['u'] += stop - start
         
         utterance_id = f"{speaker_ids[i]}-{recording_id}-{floor(100*start):0>7}_{ceil(100*stop):0>7}"
         data["text"].append((utterance_id, sentences[i]))
@@ -356,7 +362,7 @@ if __name__ == "__main__":
                             cleaned = normalize_sentence(cleaned.strip(), autocorrect=True)
                             cleaned = cleaned.replace('-', ' ').replace('/', ' ')
                             cleaned = cleaned.replace('\xa0', ' ')
-                            cleaned = filter_out(cleaned, PUNCTUATION+'{}')
+                            cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}')
                             for word in cleaned.split():
                                 if word in corpora["train"]["lexicon"]:
                                     pass
@@ -379,7 +385,14 @@ if __name__ == "__main__":
         print(f"building file \'{lexicon_path}\'")
 
         with open(lexicon_path, 'w') as f_out:
-            f_out.write(f"!SIL SIL\n<SPOKEN_NOISE> SPN\n<UNK> SPN\n<C'HOARZH> LAU\n<NTT> SPN\n<HUM> SPN\n")
+            f_out.write("!SIL SIL\n"
+                        "<SPOKEN_NOISE> SPN\n"
+                        "<UNK> SPN\n"
+                        "<C'HOARZH> LAU\n"
+                        "<NTT> SPN\n"
+                        "<HUM> SPN\n"
+                        "<PASSAAT> SPN\n"
+                        "<SONEREZH> SPN\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize(word):
                     if not pron:
@@ -454,10 +467,14 @@ if __name__ == "__main__":
         print(f"== {corpus.capitalize()} ==")
         audio_length_m = corpora[corpus]["audio_length"]['m']
         audio_length_f = corpora[corpus]["audio_length"]['f']
-        total_audio_length = audio_length_f + audio_length_m
+        audio_length_u = corpora[corpus]["audio_length"]['u']
+        total_audio_length = audio_length_f + audio_length_m + audio_length_u
         print(f"- Total audio length:\t{sec2hms(total_audio_length)}")
         print(f"- Male speakers:\t{sec2hms(audio_length_m)}\t{audio_length_m/total_audio_length:.1%}")
         print(f"- Female speakers:\t{sec2hms(audio_length_f)}\t{audio_length_f/total_audio_length:.1%}")
+        if audio_length_u > 0:
+            print(f"- Unknown speakers:\t{sec2hms(audio_length_u)}\t{audio_length_u/total_audio_length:.1%}")
+
 
 
     # print()
@@ -477,7 +494,9 @@ if __name__ == "__main__":
 
         plt.figure(figsize = (8, 8))
 
-        total_audio_length = corpora["train"]["audio_length"]["f"] + corpora["train"]["audio_length"]["m"]
+        total_audio_length = corpora["train"]["audio_length"]["f"] \
+            + corpora["train"]["audio_length"]["m"] \
+            + corpora["train"]["audio_length"]["u"]
         keys, val = zip(*corpora["train"]["subdir_audiolen"].items())
         keys = [ k.replace('_', ' ') if v/total_audio_length>0.02 else ''
                  for k,v in corpora["train"]["subdir_audiolen"].items() ]

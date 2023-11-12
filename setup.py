@@ -45,4 +45,10 @@ setup(
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
 	test_suite="tests",
+    entry_points={
+        "console_scripts": [
+            "srt2split = ostilhou:srt2split",
+            "wavesplit = wavesplit:main",
+        ],
+    }
 )

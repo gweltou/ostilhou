@@ -11,7 +11,7 @@ import argparse
 import os
 
 from ostilhou.utils import list_files_with_extension
-from ostilhou.text import pre_process, filter_out, normalize_sentence, PUNCTUATION
+from ostilhou.text import pre_process, filter_out_chars, normalize_sentence, PUNCTUATION
 from ostilhou.asr import load_segments_data, load_text_data
 from ostilhou.asr.recognizer import transcribe_segment
 from ostilhou.audio import load_audiofile, get_segment
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         # print("# ==== " + basename + " ====")
         for i in range(len(segments)):
             # sentence, _ = get_cleaned_sentence(utterances[i][0])
-            sentence = filter_out(utterances[i][0], PUNCTUATION + '*')
+            sentence = filter_out_chars(utterances[i][0], PUNCTUATION + '*')
             sentence = normalize_sentence(sentence, autocorrect=True)
             sentence = pre_process(sentence).replace('-', ' ').lower()
             transcription = transcribe_segment(get_segment(i, song, segments))

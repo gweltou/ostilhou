@@ -18,7 +18,7 @@ import argparse
 import srt
 from ostilhou.asr.recognizer import transcribe_file_timecode
 from ostilhou.text import (
-    pre_process, filter_out,
+    pre_process, filter_out_chars,
     sentence_stats,
     tokenize, detokenize, normalize_sentence, split_sentences,
     PUNCTUATION
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     else:
         lines = read_file_drop_comments(args.text_file)
 
-    cleaned_lines = [ filter_out(pre_process(line), PUNCTUATION + "><*").strip() for line in lines ]
+    cleaned_lines = [ filter_out_chars(pre_process(line), PUNCTUATION + "><*").strip() for line in lines ]
     
     # Look for numbers in text file, normalize in that case
     normalize = False
@@ -85,8 +85,8 @@ if __name__ == "__main__":
                 hyp_window = hyp[i: i+offset]
                 hyp_sentence = ' '.join( [t["word"].lower().replace('-', ' ') for t in hyp_window] )
                 score = jiwer.cer(
-                    filter_out(sentence, ' '),
-                    filter_out(hyp_sentence, ' ')
+                    filter_out_chars(sentence, ' '),
+                    filter_out_chars(hyp_sentence, ' ')
                     )
                 if score <= best_score:
                     best_score = score
@@ -174,8 +174,8 @@ if __name__ == "__main__":
                 hyp_window = hyp[span[0]: span[1]]
                 hyp_sentence = ' '.join( [t["word"].lower().replace('-', ' ') for t in hyp_window] )
                 score = jiwer.cer(
-                    filter_out(sentence, ' '),
-                    filter_out(hyp_sentence, ' ')
+                    filter_out_chars(sentence, ' '),
+                    filter_out_chars(hyp_sentence, ' ')
                     )
                 sentence_matches[i] = {"hyp": hyp_sentence, "score": score, "span": span}
                 reliability[i] = '.'

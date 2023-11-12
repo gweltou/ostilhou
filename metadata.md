@@ -10,7 +10,8 @@ Kinda like CSS for metadata integration in text corpuses.
 {author: author_of_transcription, other_author...}
 {licence: }
 {tags: tag1, tag2, tag3...}
-{parser: no-lm/add-lm}	# Exclude or include text to language model
+
+{parser: no-lm/add-lm}	# Exclude or include text into language model
 
 ```
 
@@ -60,7 +61,7 @@ You can specify a list of values for an attribute, by separating them with a com
 
 Names of people and software responsible for transcribing the text (in order if possible)
 
-`{author: vosk-br, katell lagadeg, yann kloareg}`
+`{author: vosk-br, Katell Lagadeg, Yann Kloareg}`
 
 Document scope.
 

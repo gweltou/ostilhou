@@ -57,12 +57,14 @@ difeulz
 digourdi
 dilaoskadennoù
 diñsad
+diskiblez
 disleksek
 disleksiezh
 dismantrus
 disuit
 diventelezh
 divigoù
+dizainer
 doktorez
 doneier
 duplex
@@ -81,6 +83,7 @@ epidemiezhioù
 espres
 espres-kaer
 fablab
+falc'hañ
 fenotip
 feulsterioù
 figez
@@ -107,7 +110,6 @@ hey
 hibiskus
 hieroglifoù
 holenegezh
-holenegezh
 homo
 homofobek
 houmous
@@ -126,7 +128,6 @@ kardio
 kayak
 kenfinañ
 kenfinet
-kenrneveureg
 kentaidi
 kigezat
 klaviadiñ
@@ -159,6 +160,7 @@ normalizet
 nukleotid
 nutrimantoù
 oberezhioù
+objedoù
 orgasm
 pagailh
 pandemi
@@ -189,6 +191,7 @@ roeñviñ
 rondigennoù
 rubrikenn
 ruilhañ
+sañskriteg
 santilitr
 santilitrad
 seurf
@@ -199,6 +202,7 @@ skalpel
 skampiola
 sklêrijennat
 skript
+skuizhaat
 statistikel
 stereotip
 strikt
@@ -230,4 +234,5 @@ whisky
 youc'hou
 zenien
 zigentañ
+ziskrogañ
 ziwar
