@@ -15,8 +15,8 @@
 import sys
 import os
 import argparse
-import numpy as np
-import re
+# import numpy as np
+# import re
 from math import floor, ceil
 
 from hashlib import md5
@@ -25,14 +25,11 @@ from colorama import Fore
 from ostilhou import normalize_sentence
 from ostilhou.text import filter_out_chars, pre_process, split_sentences
 from ostilhou.text.definitions import PUNCTUATION
-from ostilhou.dicts import proper_nouns
-from ostilhou.audio import add_amb_random, AUDIO_AMB_FILES
+# from ostilhou.dicts import proper_nouns
+# from ostilhou.audio import add_amb_random, AUDIO_AMB_FILES
 from ostilhou.asr import (
     load_segments_data,
     load_text_data,
-    extract_metadata,
-    lexicon_add,
-    verbal_fillers,
     phonemes,
     phonetize,
 )
@@ -97,7 +94,7 @@ def parse_data_file(split_filename, args):
         sys.exit(1)
     
     # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
-    print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
+    # print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
     text_filename = split_filename.replace('.split', '.txt')
     assert os.path.exists(text_filename), f"ERROR: no text file found for {split_filename}"
     wav_filename = os.path.abspath(split_filename.replace('.split', '.wav'))
@@ -193,7 +190,7 @@ def parse_data_file(split_filename, args):
                 data["corpus"].add(' '.join(tokens))
     
     if replace_corpus and not args.no_lm:
-        for sentence, _ in load_text_data(substitute_corpus_filename):
+        for sentence in load_text_data(substitute_corpus_filename):
             for sub in split_sentences(sentence):
                 sub = pre_process(sub)
                 sub = normalize_sentence(sub, autocorrect=True)
@@ -204,7 +201,7 @@ def parse_data_file(split_filename, args):
     
 
     ## PARSE SPLIT FILE
-    segments, _ = load_segments_data(split_filename)
+    segments = load_segments_data(split_filename)
     assert len(sentences) == len(segments), \
         f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
 
@@ -233,6 +230,10 @@ def parse_data_file(split_filename, args):
         data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(stop*100)/100}\n")
         data["utt2spk"].append(f"{utterance_id}\t{speaker_ids[i]}\n")
     
+    status = Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET
+    if data["audio_length"]['u'] > 0:
+        status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
+    print(status)
     return data
 
 

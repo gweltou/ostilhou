@@ -51,7 +51,7 @@ Sentence scope.
 
 Accent metadata applies until another `accent` property is found or end of document is reached.
 
-Possible values : gwened(eg), leon(eg), treger(ieg), kerne(veg), gwenrann(eg), goueloù, bear...
+Possible values : gwened(eg), leon(eg), treger(ieg), kerne(veg), gwenrann(eg), goueloù, bear, fañch...
 
 You can specify a list of values for an attribute, by separating them with a comma `,` :
 

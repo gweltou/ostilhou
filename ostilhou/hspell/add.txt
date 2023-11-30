@@ -23,7 +23,6 @@ balbouzerezh
 b'an
 bandemiezh
 b'ar
-bazhigoù
 benelour
 benlazhioù
 binarel
@@ -58,6 +57,7 @@ digourdi
 dilaoskadennoù
 diñsad
 diskiblez
+diskuilhañ
 disleksek
 disleksiezh
 dismantrus

@@ -14,7 +14,6 @@
 """
 
 
-import sys
 import os
 import argparse
 import re
@@ -24,10 +23,8 @@ from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 from pydub.playback import _play_with_simpleaudio
 from pyrubberband import time_stretch
-#import librosa
-# from libMySTT import get_player_name, get_audiofile_info, convert_to_wav
-from ostilhou.utils import splitToEafFile, eafToSplitFile
 
+from ostilhou.utils import splitToEafFile, eafToSplitFile
 from ostilhou.asr import load_vosk, load_text_data, load_segments_data, transcribe_segment
 from ostilhou.hspell import get_hspell_mistakes
 from ostilhou.text import pre_process, normalize_sentence, strip_punct
@@ -188,6 +185,7 @@ def main():
     recording_id = recording_id.replace(' ', '_')
     #recording_id = recording_id.replace('.', '_')
     recording_id = recording_id.replace("'", '')
+    recording_id = recording_id.replace(",", '')
     print(recording_id)
     
     wav_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'wav')))
@@ -213,7 +211,7 @@ def main():
 
     if os.path.exists(split_filename):
         print("Split file already exists.")
-        segments, _ = load_segments_data(split_filename)
+        segments = load_segments_data(split_filename)
         do_split = False
 
 
@@ -400,6 +398,8 @@ def main():
             print("Undone")
             segments = segments_undo
             modified = True
+        elif x == 'm': # Show metadata
+            print(utterances[idx][1])
         elif x == 'x' or x == 'e':  # Export segment
             seg = song[segments[idx][0]:segments[idx][1]]
             seg_name = os.path.join(rep, os.path.extsep.join((recording_id + f"_seg{idx:03d}", 'wav')))
@@ -427,6 +427,7 @@ def main():
             print("'z'\t\tUndo previous segment modification")
             print("'a'\t\tRegister acronym")
             print("'t'\t\tAutomatic transcription")
+            print("'m'\t\tShow metadata")
             print("'s'\t\tSave")
             print("'x/e'\t\tExport audio segment")
             print("'eaf'\t\tExport to Elan format (.eaf)")
@@ -441,7 +442,7 @@ def main():
         elif x == 'q':
             if modified:
                 r = input("Save before quitting (y|n) ? ")
-                if r == 'y': save_segments(segments, split_filename) 
+                if r != 'n': save_segments(segments, split_filename) 
             running = False
 
 

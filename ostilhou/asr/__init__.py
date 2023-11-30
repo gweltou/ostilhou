@@ -1,5 +1,5 @@
 from typing import Tuple, List, Dict
-from .dataformat import extract_metadata, load_segments_data, load_text_data
+from .dataset import extract_metadata, load_segments_data, load_text_data
 from .recognizer import load_vosk, transcribe_segment, transcribe_file, transcribe_file_timecoded
 from .post_processing import verbal_fillers
 from ..dicts import proper_nouns, acronyms
