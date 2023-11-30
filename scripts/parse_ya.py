@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
+Download whole website
+
 Command line:
 	wget -r -nc -A.html ya.bzh
-
+    
 """
 
 import os
@@ -15,7 +17,6 @@ import json
 import sys
 from ostilhou.utils import list_files_with_extension
 import re
-
 
 
 
@@ -106,40 +107,6 @@ def parseHTML(htmlfile):
         parser.feed(f.read())
 
     return {"title" : parser.title, "date" : parser.date, "num": parser.journal_num, "text" : parser.content}
-
-
-
-"""
-def parseXML(xmlfile):
-
-	# create element tree object
-	tree = ET.parse(xmlfile)
-
-	# get root element
-	root = tree.getroot()
-
-	# create empty list for news items
-	newsitems = []
-
-	# iterate news items
-	#for item in root.findall('./channel/item'):
-	for item in root.findall('div'):
-		print(item)
-		# empty news dictionary
-		news = {}
-		# iterate child elements of item
-		for child in item:
-			# special checking for namespace object content:media
-			if child.tag == '{http://search.yahoo.com/mrss/}content':
-				news['media'] = child.attrib['url']
-			else:
-				news[child.tag] = child.text.encode('utf8')
-		# append news dictionary to news items list
-		newsitems.append(news)
-	
-	# return news items list
-	return newsitems
-"""
 
 
 
