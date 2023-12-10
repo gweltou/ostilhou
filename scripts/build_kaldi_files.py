@@ -53,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("--test", help="train dataset directory")
     parser.add_argument("--lm-corpus", nargs='+', help="path of a text file to build the language model")
     parser.add_argument("-n", "--no-lm", help="do not copy utterances to language model", action="store_true")
-    parser.add_argument("-a", "--augment", help="duplicate audio data with added noise", action="store_true")
+    # parser.add_argument("-a", "--augment", help="duplicate audio data with added noise", action="store_true")
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
     parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
     parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
@@ -189,8 +189,8 @@ if __name__ == "__main__":
                         "<C'HOARZH> LAU\n"
                         "<NTT> SPN\n"
                         "<HUM> SPN\n"
-                        "<PASSAAT> SPN\n"
-                        "<SONEREZH> MUS\n")
+                        "<PASAAT> SPN\n"
+                        "<SONEREZH> NSN\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize(word):
                     if not pron:
