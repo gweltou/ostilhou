@@ -1,4 +1,4 @@
-from typing import List
+from typing import Union, List, Iterable
 import os
 
 # For eaf (Elan) file conversion
@@ -9,20 +9,23 @@ from .audio import convert_to_mp3
 
 
 
-def list_files_with_extension(ext: str, rep, recursive=True) -> List[str]:
+def list_files_with_extension(ext: Union[str, tuple, list], rep, recursive=True) -> List[str]:
     """
+        Recursively list all files of the given extension(s) in a folder
+
         Parameters
         ----------
-            ext : str
+            ext : str|list
                 file extension, including the dot
     """
+    extensions = (ext) if isinstance(ext, str) else ext
     file_list = []
     if os.path.isdir(rep):
         for filename in os.listdir(rep):
             filename = os.path.join(rep, filename)
             if os.path.isdir(filename) and recursive:
-                file_list.extend(list_files_with_extension(ext, filename))
-            elif os.path.splitext(filename)[1] == ext:
+                file_list.extend(list_files_with_extension(extensions, filename))
+            elif os.path.splitext(filename)[1] in extensions:
                 file_list.append(filename)
     return file_list
 

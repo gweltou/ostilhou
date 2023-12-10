@@ -1,19 +1,36 @@
 from typing import Tuple, List, Dict
 import os.path
 import re
-from hashlib import md5
+from math import floor, ceil
 
 # For eaf (Elan) file conversion
 from xml.dom import minidom
-import datetime, pytz
-
+from hashlib import md5
+from uuid import uuid4
 from colorama import Fore
 
 from ..utils import read_file_drop_comments
-from ..text import pre_process, normalize_sentence, filter_out_chars
+from ..text import (
+    pre_process, normalize_sentence, filter_out_chars,
+    split_sentences,
+    PUNCTUATION
+)
+
 
 
 header = "{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n"
+
+
+# Special tokens, found in transcriptions
+special_tokens = (
+    "<UNK>",
+    "<NTT>",
+    "<C'HOARZH>",
+    "<HUM>",
+    "<PASSAAT>",
+    "<SONEREZH>",
+)
+
 
 
 Segment = Tuple[int, int]
@@ -39,7 +56,9 @@ def load_segments_data(segfile: str) -> Tuple[List[Segment], str]:
 
 
 def load_text_data(filename) -> List[Tuple[str, Dict]]:
-    """ return list of sentences with metadata
+    """ 
+        Return list of sentences with metadata.
+        Metadata dictionaries will always have, at least, the "speaker" and "gender" keys.
 
         Return
         ------
@@ -75,7 +94,6 @@ def load_text_data(filename) -> List[Tuple[str, Dict]]:
 
 
 def get_text_header(filename) -> Dict:
-    #s=set()
     metadata = dict()
     for l in read_file_drop_comments(filename):
         l, md = extract_metadata(l)
@@ -111,22 +129,24 @@ def parse_dataset(file_or_dir, args):
             if os.path.isdir(os.path.join(file_or_dir, filename)) \
                     or filename.endswith(".split") \
                     or filename.endswith(".seg"):
-                data_item = parse_dataset(os.path.join(file_or_dir, filename), args)
-                data["wavscp"].update(data_item["wavscp"])
-                data["utt2spk"].extend(data_item["utt2spk"])
-                data["segments"].extend(data_item["segments"])
-                data["text"].extend(data_item["text"])
-                data["speakers"].update(data_item["speakers"])
-                data["lexicon"].update(data_item["lexicon"])
-                data["corpus"].update(data_item["corpus"])
-                data["audio_length"]['f'] += data_item["audio_length"]['f']
-                data["audio_length"]['m'] += data_item["audio_length"]['m']
-                data["audio_length"]['u'] += data_item["audio_length"]['u']
+                item_data = parse_dataset(os.path.join(file_or_dir, filename), args)
+                data["wavscp"].update(item_data["wavscp"])
+                data["utt2spk"].extend(item_data["utt2spk"])
+                data["segments"].extend(item_data["segments"])
+                data["text"].extend(item_data["text"])
+                data["speakers"].update(item_data["speakers"])
+                data["lexicon"].update(item_data["lexicon"])
+                data["corpus"].update(item_data["corpus"])
                 data["subdir_audiolen"][filename] = \
-                    data_item["audio_length"]['f'] + \
-                    data_item["audio_length"]['m'] + \
-                    data_item["audio_length"]['u']
-        
+                    item_data["audio_length"]['f'] + \
+                    item_data["audio_length"]['m'] + \
+                    item_data["audio_length"]['u']
+                for k, dur in item_data["audio_length"].items():
+                    if k in data["audio_length"]:
+                        data["audio_length"][k] += dur
+                    else:
+                        data["audio_length"][k] = dur
+
         return data
     else:
         print("File argument must be a split file or a directory")
@@ -136,20 +156,21 @@ def parse_dataset(file_or_dir, args):
 
 speakers_gender = {"unknown": "u"}
 
-def parse_data_file(split_filename, args):
-    # Kaldi doensn't like whitespaces in file path
-    if ' ' in split_filename:
-        raise "ERROR: whitespaces in path " + split_filename
+def parse_data_file(seg_filename, args):
+    # Kaldi doesn't like whitespaces in file path
+    if ' ' in seg_filename:
+        raise "ERROR: whitespaces in path " + seg_filename
     
     # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
     # print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
-    text_filename = split_filename.replace('.split', '.txt')
-    assert os.path.exists(text_filename), f"ERROR: no text file found for {split_filename}"
-    wav_filename = os.path.abspath(split_filename.replace('.split', '.wav'))
-    assert os.path.exists(wav_filename), f"ERROR: no wave file found for {split_filename}"
+    seg_ext = os.path.splitext(seg_filename)[1] # Could be '.split' or '.seg'
+    text_filename = seg_filename.replace(seg_ext, '.txt')
+    assert os.path.exists(text_filename), f"ERROR: no text file found for {seg_filename}"
+    wav_filename = os.path.abspath(seg_filename.replace(seg_ext, '.wav'))
+    assert os.path.exists(wav_filename), f"ERROR: no wave file found for {seg_filename}"
     recording_id = md5(wav_filename.encode("utf8")).hexdigest()
     
-    substitute_corpus_filename = split_filename.replace('.split', '.cor')
+    substitute_corpus_filename = seg_filename.replace(seg_ext, '.cor')
     replace_corpus = os.path.exists(substitute_corpus_filename)
     
     data = {
@@ -165,7 +186,6 @@ def parse_data_file(split_filename, args):
     
     ## PARSE TEXT FILE
     speaker_ids = []
-    speaker_id = "unknown"
     sentences = []
 
     for sentence, metadata in load_text_data(text_filename):
@@ -176,14 +196,15 @@ def parse_data_file(split_filename, args):
             elif "add-lm" in metadata["parser"]:
                 add_to_corpus = True
             
-        if "speaker" in metadata:
-            speaker_id = metadata["speaker"]
+        speaker_id = metadata["speaker"]
+        if speaker_id == "unknown":
+            speaker_id = str(uuid4()).replace('-', '')
+        else:
             data["speakers"].add(speaker_id)
         
-        if "gender" in metadata and speaker_id != "unknown":
-            if speaker_id not in speakers_gender:
-                # speakers_gender is a global variable
-                speakers_gender[speaker_id] = metadata["gender"]
+        if speaker_id not in speakers_gender:
+            # speakers_gender is a global variable
+            speakers_gender[speaker_id] = metadata["gender"]
         
         cleaned = pre_process(sentence)
         if cleaned:
@@ -199,7 +220,7 @@ def parse_data_file(split_filename, args):
                 # Remove black-listed words (those beggining with '*')
                 if word.startswith('*'):
                     pass
-                elif word in ("<NTT>", "<C'HOARZH>", "<UNK>", "<HUM>", "<PASSAAT>"):
+                elif word in special_tokens:
                     pass
                 elif word == "'":
                     pass
@@ -231,7 +252,7 @@ def parse_data_file(split_filename, args):
                 # Remove starred words
                 tokens = [tok for tok in tokens if not tok.startswith('*')]
                 # Ignore if sentence is too short
-                if len(tokens) < LM_SENTENCE_MIN_WORDS:
+                if len(tokens) < args.lm_min_token:
                     if args.verbose:
                         print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
                     continue
@@ -249,22 +270,20 @@ def parse_data_file(split_filename, args):
     
 
     ## PARSE SPLIT FILE
-    segments, _ = load_segments_data(split_filename)
+    segments = load_segments_data(seg_filename)
     assert len(sentences) == len(segments), \
         f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
 
     for i, s in enumerate(segments):
         start = s[0] / 1000
         stop = s[1] / 1000
-        if stop - start < UTTERANCES_MIN_LENGTH:
+        if stop - start < args.utt_min_len:
             # Skip short utterances
             continue
 
-        if speaker_ids[i] in speakers_gender:
-            speaker_gender = speakers_gender[speaker_ids[i]]
-        else:
-            print(Fore.RED + "unknown gender:" + Fore.RESET, speaker_ids[i])
-            speaker_gender = 'u'
+        speaker_gender = speakers_gender[speaker_ids[i]]
+        # if speaker_gender not in ('f', 'm'):
+        #     print(Fore.YELLOW + "unknown gender:" + Fore.RESET, speaker_ids[i])
         
         if speaker_gender == 'm':
             data["audio_length"]['m'] += stop - start
@@ -278,7 +297,7 @@ def parse_data_file(split_filename, args):
         data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(stop*100)/100}\n")
         data["utt2spk"].append(f"{utterance_id}\t{speaker_ids[i]}\n")
     
-    status = Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET
+    status = Fore.GREEN + f" * {seg_filename[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
         status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
     print(status)
@@ -299,11 +318,13 @@ _VALID_PARAMS = {
     "source", "source-audio",
     "tags",
     "parser",
-    "author",
+    "author", "authors",
     "licence",
     "speaker", "spk",
     "gender",
     "accent",
+    "modifications",
+    "transcription"
 #    "phon",
 }
 

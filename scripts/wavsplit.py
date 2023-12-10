@@ -143,20 +143,6 @@ def prompt_acronym_phon(w, song, segments, idx):
             return answer
 
 
-# def split_segments(song: AudioSegment, min_silence_len, silence_thresh):
-    
-#     segments = detect_nonsilent(song, min_silence_len, silence_thresh)
-    
-#     # Including silences at head and tail of segments
-#     if len(segments) >= 2:
-#         segments[0] = (segments[0][0], segments[0][1] + args.dur)
-#         segments[-1] = (segments[-1][0] - args.dur, segments[-1][1])
-#         for i in range(1, len(segments)-1):
-#             segments[i] = (segments[i][0] - args.dur, segments[i][1] + args.dur)
-    
-#     return segments
-
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -164,8 +150,6 @@ def main():
                     description = 'Audio file converter, splitter and text alignment')
     parser.add_argument('filename')
     # parser.add_argument('-o', '--overwrite', action='store_true', help="Overwrite split file (if present)")
-    # parser.add_argument('-t', '--thresh', type=float, default=-62, metavar="DB", help="Silence intensity threshold (in decibels)")
-    # parser.add_argument('-d', '--dur', type=int, default=400, metavar="MS", help="Silence minimum duration (in millisecs)")
     parser.add_argument('-s', '--transcribe', action='store_true', help="Automatic transcription")
     parser.add_argument("-m", "--model", help="Vosk model to use for decoding", metavar='MODEL_PATH')
     parser.add_argument('--keep-sil', action='store_true', help="Keep silent utterances")
@@ -175,8 +159,6 @@ def main():
 
     if args.filename.endswith(".eaf"):
         eafToSplitFile(args.filename)
-
-    # PLAYER = get_player_name()
     
     rep, filename = os.path.split(os.path.abspath(args.filename))
     # Removing special characters from filename
@@ -190,6 +172,7 @@ def main():
     
     wav_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'wav')))
     split_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'split')))
+    seg_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'seg')))
     text_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'txt')))
 
     # Converting sound file to 16kHz mono wav if needed
@@ -209,8 +192,12 @@ def main():
     segments = []
     do_split = True
 
-    if os.path.exists(split_filename):
-        print("Split file already exists.")
+    if os.path.exists(seg_filename):
+        print("Segments file already exists.")
+        segments = load_segments_data(seg_filename)
+        do_split = False
+    elif os.path.exists(split_filename):
+        print("Segments file already exists.")
         segments = load_segments_data(split_filename)
         do_split = False
 
@@ -218,7 +205,7 @@ def main():
     if do_split:
         print("spliting wave file")
         segments = split_to_segments(song, max_length=20, min_length=2)
-        save_segments(segments, split_filename)
+        save_segments(segments, seg_filename)
     
 
     if args.transcribe:
@@ -253,7 +240,7 @@ def main():
                         sent_keepers.append(sentences[i])
                 segments = seg_keepers
                 sentences = sent_keepers
-                save_segments(segments, split_filename)
+                save_segments(segments, seg_filename)
                 
             with open(text_filename, 'w') as fw:
                 fw.write(textfile_header)  # Text file split_header
@@ -442,7 +429,7 @@ def main():
         elif x == 'q':
             if modified:
                 r = input("Save before quitting (y|n) ? ")
-                if r != 'n': save_segments(segments, split_filename) 
+                if r != 'n': save_segments(segments, seg_filename) 
             running = False
 
 

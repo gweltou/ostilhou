@@ -5,13 +5,13 @@ from ostilhou.text import (
     split_sentences, extract_parenthesis_content,
     load_translation_dict, translate, reverse_translation_dict,
     normalize, normalize_sentence,
-    inverse_normalize_sentence, inverse_normalize_vosk,
+    inverse_normalize_sentence, inverse_normalize_timecoded,
     pre_process, sentence_stats,
     )
 from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES, PATTERN_DOTTED_ACRONYM, PUNCTUATION
 from ostilhou.corpora import load_wikipedia_150k, load_sarmoniou
 from ostilhou.asr import phonetize
-from ostilhou.asr.post_processing import post_process_vosk, post_process_text
+from ostilhou.asr.post_processing import post_process_timecoded, post_process_text
 from ostilhou.hspell import get_hspell_mistakes
 
 
@@ -181,15 +181,15 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "e Pariz 1588 1648 1830..."
+    sentence = "Pellaat a reas Jaig evit mont d’ar gêr. Larkoc’hik e chomas a-sav, distreiñ e benn war-zu Eona a oa o ouelañ ha mont d’ar park en-dro. Erruet eno e krogas en e falz ha kendelc’her da droc’hañ ar gwinizh. An holl wazed gwitibunan a reas eveltañ."
     # test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
     # test_detokenize(sentence)
     # test_normalize(sentence)
     # print(phonetize(sentence))
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
-    # for s in split_sentences(sentence):
-    #     print(s, end='')
+    for s in split_sentences(sentence):
+        print(s, end='')
     
     # test_wiki150_noun_gender()
     # test_sarmoniou()
@@ -197,4 +197,4 @@ if __name__ == "__main__":
     # post_process_text("Evel se mañ")
     # print(phonetize("traoù"))
 
-    reverse_translation_dict("./ostilhou/dicts/sarmonioù_peurunvan.tsv", "./puv_leoneg2.tsv")
+    # reverse_translation_dict("./ostilhou/dicts/sarmonioù_peurunvan.tsv", "./puv_leoneg2.tsv")

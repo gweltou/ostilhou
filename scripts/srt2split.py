@@ -3,7 +3,12 @@
 
 
 """
-    Convert a srt files to split and txt files
+    Converts a srt or vtt file to a split and a txt file
+    The resulting files will be created in the same folder as the source srt file
+
+    Usage:
+        python3 srt2split.py subtitles.srt
+
 """
 
 import os
@@ -11,12 +16,10 @@ import re
 import sys
 
 
-
 TIMECODE_PATTERN = re.compile(r"(?:(\d+):)?(\d+):(\d+)(?:,|.)(\d+) --> (?:(\d+):)?(\d+):(\d+)(?:,|.)(\d+)")
 
 
-
-def srt2split(lines):
+def parse_lines(lines):
     segments = []
     text = []
     next_is_text = False
@@ -39,17 +42,22 @@ def srt2split(lines):
                 text.append('')
                 next_is_text = True
     
+    # Remove formatting escaped tags from text (ex: <i>, </i>)
+    text = [ re.sub(r"&lt;/?[a-zA-Z]+&gt;", "", line) for line in text ]
+    # Remove escaped non-breakable spaces
+    text = [ line.replace("&nbsp;", '') for line in text ]
+ 
     return segments, text
 
 
-def main():
+def srt2split(*filenames):
 	# for filename in os.listdir():
-    for filename in sys.argv[1:]:
+    for filename in filenames:
         basename, ext = os.path.splitext(filename)
         if ext.lower() in (".srt", ".vtt"):
             print(filename)
             with open(filename, 'r') as fin:
-                segments, text = srt2split(fin.readlines())
+                segments, text = parse_lines(fin.readlines())
             
             with open(basename + ".txt", 'w') as fout:
                 fout.write("{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n")
@@ -60,4 +68,4 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+	srt2split(*sys.argv[1:])

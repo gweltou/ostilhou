@@ -15,226 +15,20 @@
 import sys
 import os
 import argparse
-# import numpy as np
-# import re
-from math import floor, ceil
+# from math import floor, ceil
 
-from hashlib import md5
+# from hashlib import md5
+# from uuid import uuid4
 from colorama import Fore
 
 from ostilhou import normalize_sentence
-from ostilhou.text import filter_out_chars, pre_process, split_sentences
-from ostilhou.text.definitions import PUNCTUATION
-# from ostilhou.dicts import proper_nouns
-# from ostilhou.audio import add_amb_random, AUDIO_AMB_FILES
+from ostilhou.text import filter_out_chars, pre_process, split_sentences, PUNCTUATION
 from ostilhou.asr import (
-    load_segments_data,
-    load_text_data,
     phonemes,
     phonetize,
+    parse_dataset
 )
 
-
-
-SAVE_DIR = "data"
-LM_SENTENCE_MIN_WORDS = 3 # Min number of words for a sentence to be added to the LM
-UTTERANCES_MIN_LENGTH = 0 # exclude utterances shorter than this length (in seconds)
-
-
-
-def parse_dataset(file_or_dir, args):
-    if file_or_dir.endswith(".split"):   # Single data item
-        return parse_data_file(file_or_dir, args)
-    elif os.path.isdir(file_or_dir):
-        data = {
-            "path": file_or_dir,
-            "wavscp": dict(),       # Wave filenames
-            "utt2spk": [],      # Utterance to speakers
-            "segments": [],     # Time segments
-            "text": [],         # Utterances text
-            "speakers": set(),  # Speakers names
-            "lexicon": set(),   # Word dictionary
-            "corpus": set(),    # Sentences for LM corpus
-            "audio_length": {'m': 0, 'f': 0, 'u': 0},    # Audio length for each gender
-            "subdir_audiolen": {}   # Size (total audio length) for every sub-folders
-            }
-        
-        for filename in sorted(os.listdir(file_or_dir)):
-            if filename.startswith('.'):
-                # Skip hidden folders
-                continue
-            if os.path.isdir(os.path.join(file_or_dir, filename)) or filename.endswith(".split"):
-                data_item = parse_dataset(os.path.join(file_or_dir, filename), args)
-                data["wavscp"].update(data_item["wavscp"])
-                data["utt2spk"].extend(data_item["utt2spk"])
-                data["segments"].extend(data_item["segments"])
-                data["text"].extend(data_item["text"])
-                data["speakers"].update(data_item["speakers"])
-                data["lexicon"].update(data_item["lexicon"])
-                data["corpus"].update(data_item["corpus"])
-                data["audio_length"]['f'] += data_item["audio_length"]['f']
-                data["audio_length"]['m'] += data_item["audio_length"]['m']
-                data["audio_length"]['u'] += data_item["audio_length"]['u']
-                data["subdir_audiolen"][filename] = \
-                    data_item["audio_length"]['f'] + \
-                    data_item["audio_length"]['m'] + \
-                    data_item["audio_length"]['u']
-        
-        return data
-    else:
-        print("File argument must be a split file or a directory")
-        return
-    
-
-
-def parse_data_file(split_filename, args):
-    # Kaldi doensn't like whitespaces in file path
-    if ' ' in split_filename:
-        print("ERROR: whitespaces in path", split_filename)
-        sys.exit(1)
-    
-    # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
-    # print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
-    text_filename = split_filename.replace('.split', '.txt')
-    assert os.path.exists(text_filename), f"ERROR: no text file found for {split_filename}"
-    wav_filename = os.path.abspath(split_filename.replace('.split', '.wav'))
-    assert os.path.exists(wav_filename), f"ERROR: no wave file found for {split_filename}"
-    recording_id = md5(wav_filename.encode("utf8")).hexdigest()
-    
-    substitute_corpus_filename = split_filename.replace('.split', '.cor')
-    replace_corpus = os.path.exists(substitute_corpus_filename)
-    
-    data = {
-        "wavscp": {recording_id: wav_filename},   # Wave filenames
-        "utt2spk": [],      # Utterance to speakers
-        "segments": [],     # Time segments
-        "text": [],         # Utterances text
-        "speakers": set(),  # Speakers names
-        "lexicon": set(),   # Word dictionary
-        "corpus": set(),    # Sentences for LM corpus
-        "audio_length": {'m': 0, 'f': 0, 'u': 0},    # Audio length for each gender
-        }
-    
-    ## PARSE TEXT FILE
-    speaker_ids = []
-    speaker_id = "unknown"
-    sentences = []
-
-    for sentence, metadata in load_text_data(text_filename):
-        add_to_corpus = True
-        if "parser" in metadata:
-            if "no-lm" in metadata["parser"]:
-                add_to_corpus = False
-            elif "add-lm" in metadata["parser"]:
-                add_to_corpus = True
-            
-        if "speaker" in metadata:
-            speaker_id = metadata["speaker"]
-            data["speakers"].add(speaker_id)
-        
-        if "gender" in metadata and speaker_id != "unknown":
-            if speaker_id not in speakers_gender:
-                # speakers_gender is a global variable
-                speakers_gender[speaker_id] = metadata["gender"]
-        
-        cleaned = pre_process(sentence)
-        if cleaned:
-            sent = normalize_sentence(cleaned, autocorrect=True)
-            sent = sent.replace('-', ' ').replace('/', ' ')
-            sent = sent.replace('\xa0', ' ')
-            sent = filter_out_chars(sent, PUNCTUATION)
-            sentences.append(' '.join(sent.replace('*', '').split()))
-            speaker_ids.append(speaker_id)
-            
-            # Add words to lexicon
-            for word in sent.split():
-                # Remove black-listed words (those beggining with '*')
-                if word.startswith('*'):
-                    pass
-                elif word in ("<NTT>", "<C'HOARZH>", "<UNK>", "<HUM>", "<PASSAAT>"):
-                    pass
-                elif word == "'":
-                    pass
-                # elif word in verbal_fillers:
-                #     pass
-                # elif is_acronym(word):
-                #     pass
-                # elif word.lower() in proper_nouns:
-                #     pass
-                else: data["lexicon"].add(word)
-        
-        # Add sentence to language model corpus
-        if add_to_corpus and not replace_corpus and not args.no_lm:
-            for sub in split_sentences(cleaned, end=''):
-                sent = normalize_sentence(sub, autocorrect=True)
-                sent = sent.replace('-', ' ').replace('/', ' ')
-                sent = sent.replace('\xa0', ' ')
-                sent = filter_out_chars(sent, PUNCTUATION)
-                if not sent:
-                    continue
-
-                n_stared = sent.count('*')
-                tokens = sent.split()
-                # Ignore if to many black-listed words in sentence
-                if n_stared / len(tokens) > 0.2:
-                    if args.verbose:
-                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
-                    continue
-                # Remove starred words
-                tokens = [tok for tok in tokens if not tok.startswith('*')]
-                # Ignore if sentence is too short
-                if len(tokens) < LM_SENTENCE_MIN_WORDS:
-                    if args.verbose:
-                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
-                    continue
-                data["corpus"].add(' '.join(tokens))
-    
-    if replace_corpus and not args.no_lm:
-        for sentence in load_text_data(substitute_corpus_filename):
-            for sub in split_sentences(sentence):
-                sub = pre_process(sub)
-                sub = normalize_sentence(sub, autocorrect=True)
-                sub = sub.replace('-', ' ').replace('/', ' ')
-                sub = sub.replace('\xa0', ' ')
-                sub = filter_out_chars(sub, PUNCTUATION)
-                data["corpus"].add(' '.join(sub.split()))
-    
-
-    ## PARSE SPLIT FILE
-    segments = load_segments_data(split_filename)
-    assert len(sentences) == len(segments), \
-        f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
-
-    for i, s in enumerate(segments):
-        start = s[0] / 1000
-        stop = s[1] / 1000
-        if stop - start < UTTERANCES_MIN_LENGTH:
-            # Skip short utterances
-            continue
-
-        if speaker_ids[i] in speakers_gender:
-            speaker_gender = speakers_gender[speaker_ids[i]]
-        else:
-            print(Fore.RED + "unknown gender:" + Fore.RESET, speaker_ids[i])
-            speaker_gender = 'u'
-        
-        if speaker_gender == 'm':
-            data["audio_length"]['m'] += stop - start
-        elif speaker_gender == 'f':
-            data["audio_length"]['f'] += stop - start
-        else:
-            data["audio_length"]['u'] += stop - start
-        
-        utterance_id = f"{speaker_ids[i]}-{recording_id}-{floor(100*start):0>7}_{ceil(100*stop):0>7}"
-        data["text"].append((utterance_id, sentences[i]))
-        data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(stop*100)/100}\n")
-        data["utt2spk"].append(f"{utterance_id}\t{speaker_ids[i]}\n")
-    
-    status = Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET
-    if data["audio_length"]['u'] > 0:
-        status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
-    print(status)
-    return data
 
 
 
@@ -253,7 +47,7 @@ def sec2hms(seconds):
 
 
 if __name__ == "__main__":
-    desc = f"Generate Kaldi data files in directory '{os.path.join(os.getcwd(), SAVE_DIR)}'"
+    desc = "Generate Kaldi training files"
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("--train", help="train dataset directory", required=True)
     parser.add_argument("--test", help="train dataset directory")
@@ -263,6 +57,9 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
     parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
     parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
+    parser.add_argument("-o", "--output", help="Output folder for generated Kalid files", default="data")
+    parser.add_argument("--lm-min-token", help="Minimum number of tokens in sentence for adding it to LM corpus", type=int, default=3)
+    parser.add_argument("--utt-min-len", help="Minimum length of audio utterances", type=float, default=0.0)
     args = parser.parse_args()
     print(args)
 
@@ -331,10 +128,10 @@ if __name__ == "__main__":
 
     if not args.dry_run:
 
-        if not os.path.exists(SAVE_DIR):
-            os.mkdir(SAVE_DIR)
+        if not os.path.exists(args.output):
+            os.mkdir(args.output)
 
-        dir_kaldi_local = os.path.join(SAVE_DIR, 'local')
+        dir_kaldi_local = os.path.join(args.output, 'local')
         if not os.path.exists(dir_kaldi_local):
             os.mkdir(dir_kaldi_local)
             
@@ -393,7 +190,7 @@ if __name__ == "__main__":
                         "<NTT> SPN\n"
                         "<HUM> SPN\n"
                         "<PASSAAT> SPN\n"
-                        "<SONEREZH> SPN\n")
+                        "<SONEREZH> MUS\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize(word):
                     if not pron:
@@ -405,7 +202,7 @@ if __name__ == "__main__":
         silence_phones_path  = os.path.join(dir_dict_nosp, "silence_phones.txt")
         print(f"building file \'{silence_phones_path}\'")
         with open(silence_phones_path, 'w') as f:
-            f.write(f'SIL\noov\nSPN\nLAU\n')
+            f.write(f'SIL\noov\nSPN\nLAU\nMUS\n')
         
 
         # nonsilence_phones.txt
@@ -424,7 +221,7 @@ if __name__ == "__main__":
 
 
         for corpus_name in corpora:
-            save_dir = os.path.join(SAVE_DIR, corpus_name)
+            save_dir = os.path.join(args.output, corpus_name)
             if not os.path.exists(save_dir):
                 os.mkdir(save_dir)
             

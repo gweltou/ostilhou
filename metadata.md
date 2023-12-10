@@ -1,13 +1,16 @@
 # Metadata specification
 
 Kinda like CSS for metadata integration in text corpuses.
+All metadata are optional.
 
 ## Header
 
 ```
 {source: url_to_text_data}
 {source-audio: url_to_audio}
-{author: author_of_transcription, other_author...}
+{author: author_of_audiofile, other_author...}
+{transcription: author_of_transcription}
+{modifications: author_of_corrections}
 {licence: }
 {tags: tag1, tag2, tag3...}
 
@@ -17,7 +20,7 @@ Kinda like CSS for metadata integration in text corpuses.
 
 ## Speaker name
 
-`{spk: marc'harid lagadeg}`
+`{spk: Marc'harid Lagadeg}`
 
 Sentence scope.
 
@@ -27,7 +30,9 @@ As its usage is frequent, a metadata with no attribute should be interpreted as 
 
 Names are case-insensitive.
 
-`{marc'harid lagadeg}`
+`{Marc'harid Lagadeg}`
+
+When the speaker name is not known, `{unknown}` can be used.
 
 ## Speaker gender
 
@@ -41,7 +46,7 @@ It is enough to specify the speaker's gender only once. It will be taken into ac
 
 Different attribute can be chained in the same metadata with the `;` character :
 
-`{spk: marc'harid lagadeg; gender: f}`
+`{spk: Marc'harid Lagadeg; gender: f}`
 
 ## Accent
 
