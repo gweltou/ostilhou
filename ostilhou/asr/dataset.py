@@ -24,10 +24,11 @@ header = "{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\
 # Special tokens, found in transcriptions
 special_tokens = (
     "<UNK>",
+    "<SPOKEN_NOISE>"
     "<NTT>",
     "<C'HOARZH>",
     "<HUM>",
-    "<PASSAAT>",
+    "<PASAAT>",
     "<SONEREZH>",
 )
 

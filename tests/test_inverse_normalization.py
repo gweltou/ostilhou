@@ -1,4 +1,4 @@
-from ostilhou.text import inverse_normalize_sentence, inverse_normalize_vosk
+from ostilhou.text import inverse_normalize_sentence, inverse_normalize_timecoded
 
 
 test_cases = [

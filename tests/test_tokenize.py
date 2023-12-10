@@ -96,3 +96,4 @@ def test_autocorrection():
     should_be("abadenn France 3", "abadenn Frañs 3")
     should_be("abadenn France 3", "abadenn Frañs 3")
     should_be("Hirio on aet war twitter", "Hiziv on aet war Twitter")
+    should_be("Ar bleuñ", "Ar bleuñv")

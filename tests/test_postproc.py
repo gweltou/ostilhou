@@ -1,5 +1,5 @@
 from typing import List
-from ostilhou.asr.post_processing import apply_post_process_dict_text, post_process_vosk, post_process_text
+from ostilhou.asr.post_processing import apply_post_process_dict_text, post_process_timecoded, post_process_text
 
 
 test_cases = [
