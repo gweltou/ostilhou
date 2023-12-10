@@ -15,10 +15,6 @@
 import sys
 import os
 import argparse
-# from math import floor, ceil
-
-# from hashlib import md5
-# from uuid import uuid4
 from colorama import Fore
 
 from ostilhou import normalize_sentence
@@ -53,7 +49,6 @@ if __name__ == "__main__":
     parser.add_argument("--test", help="train dataset directory")
     parser.add_argument("--lm-corpus", nargs='+', help="path of a text file to build the language model")
     parser.add_argument("-n", "--no-lm", help="do not copy utterances to language model", action="store_true")
-    # parser.add_argument("-a", "--augment", help="duplicate audio data with added noise", action="store_true")
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
     parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
     parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
@@ -202,7 +197,7 @@ if __name__ == "__main__":
         silence_phones_path  = os.path.join(dir_dict_nosp, "silence_phones.txt")
         print(f"building file \'{silence_phones_path}\'")
         with open(silence_phones_path, 'w') as f:
-            f.write(f'SIL\noov\nSPN\nLAU\nMUS\n')
+            f.write(f'SIL\noov\nSPN\nLAU\nNSN\n')
         
 
         # nonsilence_phones.txt
@@ -249,6 +244,7 @@ if __name__ == "__main__":
             print(f"building file \'{fname}\'")
             with open(fname, 'w') as f:
                 for speaker in sorted(corpora[corpus_name]["speakers"]):
+                    if speaker not in speakers_gender: continue
                     f.write(f"{speaker}\t{speakers_gender[speaker]}\n")
             
             # Build 'wav.scp'
