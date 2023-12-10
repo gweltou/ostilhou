@@ -1,0 +1,13 @@
+venv/
+build/
+dist/
+data/
+ostilhou.egg-info/
+**/__pycache__/
+.eggs/
+.vscode/
+
+ostilhou/audio/amb/*.mp3
+
+copy_to_vosk-br.sh
+count_words.py
