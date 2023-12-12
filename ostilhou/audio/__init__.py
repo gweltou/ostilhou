@@ -16,8 +16,14 @@ from pydub.silence import detect_nonsilent
 
 
 
-def load_audiofile(path: str) -> AudioSegment:
-    return AudioSegment.from_file(path)
+def load_audiofile(path: str, sr=None) -> AudioSegment:
+    data = AudioSegment.from_file(path)
+    if isinstance(sr, int):
+        data.set_channels(1)
+        data.set_frame_rate(sr)
+        data.set_sample_width(2)
+    return data
+
 
 
 def get_segment(i, song, segments):
@@ -25,6 +31,7 @@ def get_segment(i, song, segments):
     stop = int(segments[i][1])
     seg = song[start: stop]
     return seg
+
 
 
 def play_segment(i, song, segments, speed):
@@ -183,7 +190,7 @@ def _recursive_split(song: AudioSegment, segment: list, max_length=15, min_silen
 
     min_e, max_e = get_min_max_energy(song[start:end])
     delta_e = max_e - min_e
-    thresh = min_e + delta_e / 6.5
+    thresh = min_e + delta_e / 4.5
     sub_segments = detect_nonsilent(song[start:end], min_silence_len=min_silence_len, silence_thresh=thresh)
 
     # Filter out segments too short (< 0.8s)
@@ -210,14 +217,14 @@ def _recursive_split(song: AudioSegment, segment: list, max_length=15, min_silen
 
 
 
-def split_to_segments(song: AudioSegment, max_length=15, min_length=5) -> List:
+def split_to_segments(song: AudioSegment, max_length=15, min_length=5, min_silence_length=300) -> List:
     """
         Return a list of sub-segments from a pydub AudioSegment
         Sub-segments are represented as 2-elements lists:
             [start, end]
         Where 'start' and 'end' are in milliseconds
     """
-    segments: list = _recursive_split(song, [0, len(song)], max_length=max_length)
+    segments: list = _recursive_split(song, [0, len(song)], max_length=max_length, min_silence_len=min_silence_length)
 
     # Extend segments length
     for i, seg in enumerate(segments[1:]):

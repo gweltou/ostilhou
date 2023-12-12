@@ -35,7 +35,7 @@ n_dropped = 0
 
 
 def parse_dataset(file_or_dir):
-    if file_or_dir.endswith(".split"):   # Single data item
+    if file_or_dir.endswith(".split") or file_or_dir.endswith(".seg"):   # Single data item
         return parse_data_file(file_or_dir)
     
     elif os.path.isdir(file_or_dir):
@@ -147,7 +147,6 @@ def parse_data_file(split_filename):
         data["utterances"].append(
             [sentence, speaker_id, speaker_gender, accent, wav_filename, int(start*1000), int(stop*1000)]
         )
-    
     
     status = Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
