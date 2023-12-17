@@ -3,8 +3,6 @@ import os.path
 import re
 from math import floor, ceil
 
-# For eaf (Elan) file conversion
-from xml.dom import minidom
 from hashlib import md5
 from uuid import uuid4
 from colorama import Fore
@@ -155,7 +153,7 @@ def parse_dataset(file_or_dir, args):
     
 
 
-speakers_gender = {"unknown": "u"}
+speakers_gender = dict()
 
 def parse_data_file(seg_filename, args):
     # Kaldi doesn't like whitespaces in file path
@@ -201,6 +199,7 @@ def parse_data_file(seg_filename, args):
         if speaker_id == "unknown":
             speaker_id = str(uuid4()).replace('-', '')
         else:
+            speaker_id = md5(speaker_id.encode('utf-8')).hexdigest()
             data["speakers"].add(speaker_id)
         
         if speaker_id not in speakers_gender:
@@ -293,8 +292,7 @@ def parse_data_file(seg_filename, args):
         else:
             data["audio_length"]['u'] += stop - start
         
-        # utterance_id = f"{speaker_ids[i]}-{recording_id}-{floor(100*start):0>7}_{ceil(100*stop):0>7}"
-        utterance_id = f"{recording_id}-{floor(100*start):0>7}_{ceil(100*stop):0>7}-{speaker_ids[i]}"
+        utterance_id = f"{speaker_ids[i]}-{recording_id}-{floor(100*start):0>7}_{ceil(100*stop):0>7}"
         data["text"].append((utterance_id, sentences[i]))
         data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(stop*100)/100}\n")
         data["utt2spk"].append(f"{utterance_id}\t{speaker_ids[i]}\n")
