@@ -163,6 +163,8 @@ def sec2hms(seconds):
     return f"{hours}h {minutes}' {seconds}''"
 
 
+
+
 if __name__ == "__main__":
     global args
 
@@ -177,6 +179,6 @@ if __name__ == "__main__":
     print("{} utterances dropped".format(n_dropped), file=sys.stderr)
 
     sep = ','
-    print(sep.join(["text", "speaker_id", "gender", "accent", "audiofile_path", "start_ms", "end_ms"]))
+    print(sep.join(["text", "speaker_id", "gender", "accent", "audiofile_path", "begin_time", "end_time"]))
     for item in dataset["utterances"]:
         print(sep.join(map(str, item)))

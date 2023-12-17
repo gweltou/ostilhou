@@ -168,6 +168,8 @@ def main():
     #recording_id = recording_id.replace('.', '_')
     recording_id = recording_id.replace("'", '')
     recording_id = recording_id.replace(",", '')
+    recording_id = recording_id.replace("(", '')
+    recording_id = recording_id.replace(")", '')
     print(recording_id)
     
     wav_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'wav')))
