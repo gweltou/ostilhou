@@ -153,7 +153,7 @@ def parse_dataset(file_or_dir, args):
     
 
 
-speakers_gender = dict()
+speakers_gender = {"unknown": 'u'}
 
 def parse_data_file(seg_filename, args):
     # Kaldi doesn't like whitespaces in file path
@@ -197,9 +197,11 @@ def parse_data_file(seg_filename, args):
             
         speaker_id = metadata["speaker"]
         if speaker_id == "unknown":
-            speaker_id = str(uuid4()).replace('-', '')
+            if args.hash_id:
+                speaker_id = str(uuid4()).replace('-', '')
         else:
-            speaker_id = md5(speaker_id.encode('utf-8')).hexdigest()
+            if args.hash_id:
+                speaker_id = md5(speaker_id.encode('utf-8')).hexdigest()
             data["speakers"].add(speaker_id)
         
         if speaker_id not in speakers_gender:

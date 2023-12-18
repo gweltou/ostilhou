@@ -55,6 +55,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", help="Output folder for generated Kalid files", default="data")
     parser.add_argument("--lm-min-token", help="Minimum number of tokens in sentence for adding it to LM corpus", type=int, default=3)
     parser.add_argument("--utt-min-len", help="Minimum length of audio utterances", type=float, default=0.0)
+    parser.add_argument("--hash-id", help="Hash speaker ids", action="store_true")
     args = parser.parse_args()
     print(args)
 
