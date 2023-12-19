@@ -278,8 +278,8 @@ def parse_data_file(seg_filename, args):
 
     for i, s in enumerate(segments):
         start = s[0] / 1000
-        stop = s[1] / 1000
-        if stop - start < args.utt_min_len:
+        end = s[1] / 1000
+        if end - start < args.utt_min_len:
             # Skip short utterances
             continue
 
@@ -288,15 +288,15 @@ def parse_data_file(seg_filename, args):
         #     print(Fore.YELLOW + "unknown gender:" + Fore.RESET, speaker_ids[i])
         
         if speaker_gender == 'm':
-            data["audio_length"]['m'] += stop - start
+            data["audio_length"]['m'] += end - start
         elif speaker_gender == 'f':
-            data["audio_length"]['f'] += stop - start
+            data["audio_length"]['f'] += end - start
         else:
-            data["audio_length"]['u'] += stop - start
+            data["audio_length"]['u'] += end - start
         
-        utterance_id = f"{speaker_ids[i]}-{recording_id}-{floor(100*start):0>7}_{ceil(100*stop):0>7}"
+        utterance_id = f"{speaker_ids[i]}-{recording_id}-{floor(100*start):0>7}_{ceil(100*end):0>7}"
         data["text"].append((utterance_id, sentences[i]))
-        data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(stop*100)/100}\n")
+        data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(end*100)/100}\n")
         data["utt2spk"].append(f"{utterance_id}\t{speaker_ids[i]}\n")
     
     status = Fore.GREEN + f" * {seg_filename[:-6]}" + Fore.RESET

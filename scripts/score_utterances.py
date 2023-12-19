@@ -14,7 +14,7 @@ from ostilhou.utils import list_files_with_extension
 from ostilhou.text import pre_process, filter_out_chars, normalize_sentence, PUNCTUATION
 from ostilhou.asr import load_segments_data, load_text_data
 from ostilhou.asr.recognizer import transcribe_segment
-from ostilhou.audio import load_audiofile, get_segment
+from ostilhou.audio import load_audiofile, get_audio_segment
 from jiwer import wer, cer
 
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
             sentence = filter_out_chars(utterances[i][0], PUNCTUATION + '*')
             sentence = normalize_sentence(sentence, autocorrect=True)
             sentence = pre_process(sentence).replace('-', ' ').lower()
-            transcription = transcribe_segment(get_segment(i, song, segments))
+            transcription = transcribe_segment(get_audio_segment(i, song, segments))
             transcription = transcription.replace('-', ' ').lower()
             references.append(sentence)
             hypothesis.append(transcription)

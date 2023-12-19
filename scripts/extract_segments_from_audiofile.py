@@ -6,7 +6,7 @@ import os
 import argparse
 
 from ostilhou.asr import transcribe_file_timecoded, load_vosk
-from ostilhou.audio import split_to_segments, load_audiofile, get_segment
+from ostilhou.audio import split_to_segments, load_audiofile, get_audio_segment
 
 
 def save_segments(segments, filename):

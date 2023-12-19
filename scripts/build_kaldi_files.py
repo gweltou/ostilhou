@@ -18,12 +18,14 @@ import argparse
 from colorama import Fore
 
 from ostilhou import normalize_sentence
-from ostilhou.text import filter_out_chars, pre_process, split_sentences, PUNCTUATION
+from ostilhou.text import filter_out_chars, pre_process, PUNCTUATION
 from ostilhou.asr import (
     phonemes,
     phonetize,
-    parse_dataset
+    parse_dataset,
+    load_segments_data
 )
+from ostilhou.audio import load_audiofile
 
 
 
