@@ -26,16 +26,20 @@ def load_audiofile(path: str, sr=None) -> AudioSegment:
 
 
 
-def get_segment(i, song, segments):
+def get_audio_segment(i, audio, segments):
     start = int(segments[i][0])
     stop = int(segments[i][1])
-    seg = song[start: stop]
+    seg = audio[start: stop]
     return seg
 
 
+def audio_segments(audio, segments):
+    for start, stop in segments:
+        yield audio[start, stop]
 
-def play_segment(i, song, segments, speed):
-    play_with_ffplay(get_segment(i, song, segments), speed)
+
+def play_audio_segment(i, song, segments, speed):
+    play_with_ffplay(get_audio_segment(i, song, segments), speed)
 
 
 
@@ -253,9 +257,12 @@ def split_to_segments(song: AudioSegment, max_length=15, min_length=5, min_silen
 
 
 _AMB_REP = os.path.join(os.path.split(os.path.abspath(__file__))[0], "amb")
-AUDIO_AMB_FILES = [os.path.abspath(os.path.join(_AMB_REP, f))
-                    for f in listdir(_AMB_REP)
-                    if f[-3:] in ("wav", "mp3")]
+if os.path.exists(_AMB_REP):
+    AUDIO_AMB_FILES = [os.path.abspath(os.path.join(_AMB_REP, f))
+                        for f in listdir(_AMB_REP)
+                        if f[-3:] in ("wav", "mp3")]
+else:
+    print("Empty 'amb' folder (samples of ambiant audio)")
 
 
 def add_amb_random(voice_file, output_file, gain=None):
