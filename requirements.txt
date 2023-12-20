@@ -3,5 +3,4 @@ pytz
 vosk
 pydub
 colorama
-cyhunspell
 jiwer

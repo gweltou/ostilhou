@@ -98,10 +98,8 @@ def parse_data_file(seg_filename):
     assert len(text_data) == len(segments), \
         f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
 
-    for i, segment in enumerate(segments):
-        start = segment[0] / 1000
-        stop = segment[1] / 1000
-        if stop - start < args.utterances_min_length:
+    for i, (start, stop) in enumerate(segments):
+        if (stop - start) / 1000 < args.utterances_min_length:
             # Skip short utterances
             continue
 
@@ -145,18 +143,18 @@ def parse_data_file(seg_filename):
             speaker_gender = 'u'
         
         if speaker_gender == 'm':
-            data["audio_length"]['m'] += stop - start
+            data["audio_length"]['m'] += (stop - start) / 1000
         elif speaker_gender == 'f':
-            data["audio_length"]['f'] += stop - start
+            data["audio_length"]['f'] += (stop - start) / 1000
         else:
-            data["audio_length"]['u'] += stop - start
+            data["audio_length"]['u'] += (stop - start) / 1000
 
         accent = ""
         if "accent" in metadata:
             accent = metadata["accent"]
         
         data["utterances"].append(
-            [sentence, speaker_id, speaker_gender, accent, wav_filename, int(start*1000), int(stop*1000)]
+            [sentence, speaker_id, speaker_gender, accent, wav_filename, start, stop]
         )
     
     status = Fore.GREEN + f" * {seg_filename[:-6]}" + Fore.RESET
@@ -205,7 +203,7 @@ if __name__ == "__main__":
     splitted = set()
 
     metadata_file = open(os.path.join(args.output, "metadata.csv"), 'w')
-    metadata_file.write(','.join(["audio_file", "sentence", "speaker_id", "gender", "accent"]) + '\n')
+    metadata_file.write(','.join(["file_name", "text", "speaker_id", "gender", "accent"]) + '\n')
 
     wave_folder = os.path.join(args.output, "data")
     if not args.dry_run and not os.path.exists(wave_folder):
@@ -223,7 +221,7 @@ if __name__ == "__main__":
             audio_file, start, end = utterance[4:]
 
             recording_id = md5(utterance[4].encode("utf8")).hexdigest()
-            seg_audio_file = os.path.join("data", corpus_name, f"{recording_id}_{start:0>7}_{end:0>7}.wav")
+            seg_audio_file = os.path.join("data", corpus_name, f"{recording_id}_{start:0>7}_{end:0>7}.mp3")
             
             metadata_file.write(','.join([seg_audio_file, sentence, speaker_id, speaker_gender, accent]) + '\n')
         
@@ -237,7 +235,8 @@ if __name__ == "__main__":
                 for start, end in segments:
                     segment = audio[start: end]
                     output_file = os.path.join(corpus_folder, f"{recording_id}_{start:0>7}_{end:0>7}.mp3")
-                    segment.export(output_file, format='mp3')
+                    if not os.path.exists(output_file):
+                        segment.export(output_file, format='mp3')
                     n_segments += 1
                 splitted.add(recording_id)
         print(f"{n_segments} segments exported")
