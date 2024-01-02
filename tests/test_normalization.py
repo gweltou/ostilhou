@@ -6,7 +6,7 @@ from ostilhou.text.normalizer import solve_mutation_article, solve_mutation_numb
 def test_normalization():
 
     def should_be(s1: str, s2: str) -> None:
-        normalized = normalize_sentence(s1)
+        normalized = normalize_sentence(s1, norm_punct=False)
         print(normalized)
         assert s2 == normalized
 
@@ -17,14 +17,14 @@ def test_normalization():
         ("tro dro da 85000 den e Mec'hiko", "tro dro da pemp ha pevar-ugent mil den e Mec'hiko"),
         ("12 000 euro", "daouzek mil euro"),
         ("92 ki", "daouzek ki ha pevar-ugent"),
-        ("Ouzhpenn da 42 bemdez", "ouzhpenn da daou ha daou-ugent bemdez"),
+        ("Ouzhpenn da 42 bemdez", "Ouzhpenn da daou ha daou-ugent bemdez"),
         ("51 dre den", "unan hag hanter-kant dre den"),
         ("da lavaret eo 950km", "da lavaret eo nav c'hant hanter-kant kilometr"),
         ("72 m eo he uhelder keitat", "daouzek metr ha tri-ugent eo he uhelder keitat"),
         ("75m2 eo gorread an dachenn", "pemzek metr karrez ha tri-ugent eo gorread an dachenn"),
-        ("Un dachenn 5km²", "un dachenn pemp kilometr karrez"),
+        ("Un dachenn 5km²", "Un dachenn pemp kilometr karrez"),
         ("Lennoù Bras zo war-dro 250000km² bezet an hanter eus gorread Frañs",
-            "lennoù bras zo war-dro daou c'hant hanter-kant mil kilometr karrez bezet an hanter eus gorread Frañs"),
+            "Lennoù Bras zo war-dro daou c'hant hanter-kant mil kilometr karrez bezet an hanter eus gorread Frañs"),
         ("34% e 2010", "pevar ha tregont dre gant e daou vil dek"),
         ("35 % eus al loened", "pemp ha tregont dre gant eus al loened"),
         ("12e30, 11e35, 9e15, 8e45", "kreisteiz hanter, unnek eur pemp ha tregont, nav eur ha kard, nav eur nemet kard"),
@@ -41,8 +41,8 @@ def test_normalization():
         ("500715 a annezidi a oa e 2013 516092 hervez an niveradeg diwezhañ e 2017",
             "pemp kant mil seizh kant pemzek a annezidi a oa e daou vil trizek pemp kant c'hwezek mil daouzek ha pevar-ugent hervez an niveradeg diwezhañ e daou vil seitek"),
         ("Evit gwir ez eus bet meur a zevezh ar bardelloù e Pariz 1588 1648 1830...",
-            "evit gwir ez eus bet meur a zevezh ar bardelloù e Pariz mil pemp kant eizh ha pevar-ugent mil c'hwec'h kant eizh ha daou-ugent mil eizh kant tregont..."),
-        ("Bichon en doa strobinellet 2.500 den.", "bichon en doa strobinellet daou vil pemp kant den."),
+            "Evit gwir ez eus bet meur a zevezh ar bardelloù e Pariz mil pemp kant eizh ha pevar-ugent mil c'hwec'h kant eizh ha daou-ugent mil eizh kant tregont..."),
+        ("Bichon en doa strobinellet 2.500 den.", "Bichon en doa strobinellet daou vil pemp kant den."),
         ("e 2021 ez eus ganet 32 065 babig, 1 072 muioc'h eget e 2020 +35 %",
             "e daou vil un warn-ugent ez eus ganet daou ha tregont mil pemp babig ha tri-ugent, mil daouzek ha tri-ugent muioc'h eget e daou vil ugent +35 dre gant"),
         ("9 400 en Il-ha-Gwilen +09 % ouzhpenn 3 800 er Morbihan +05% ouzhpenn 500 en aodoù an Arvor", ""),
@@ -85,7 +85,23 @@ def test_normalization():
     for t, gt in test_cases:
         should_be(t, gt)
 
-    
+
+def test_normalization_punct_capitalze():
+
+    def should_be(s1: str, s2: str) -> None:
+        normalized = normalize_sentence(s1, norm_punct=True, capitalize=True)
+        print(normalized)
+        assert s2 == normalized
+
+    test_cases = [
+        ("un test kentañ.", "Un test kentañ."),
+        ("ur frazen komposet. eil lodenn ar frazenn.", "Ur frazen komposet. Eil lodenn ar frazenn."),
+        ("pelec'h emañ an dud? n'ouzhon ket 'vat !ah ya?", "Pelec'h emañ an dud ? N'ouzhon ket 'vat ! Ah ya ?")
+    ]
+
+    for t, gt in test_cases:
+        should_be(t, gt)
+
 
 def test_ordinal_normalization():
     test_cases = ["1añ", "2vet", "3de", "3vet", "IIIde", "4e", "IVe", "4re", "4vet", "5vet", "17vet", "XIIvet", "123vet", "XXIvet"]

@@ -27,6 +27,8 @@ def load_translation_dict(path: str) -> dict:
 
 
 def reverse_translation_dict(path: str, newpath: str) -> None:
+    """ Build a translation dictionary (tsv file) by reversing another translation dictionary
+    """
     reversed = dict()
     for line in read_file_drop_comments(path):
         line = pre_process(line)
@@ -50,7 +52,7 @@ def correct_sentence(sentence: str) -> str:
 
 
 
-def translate(token_stream: Iterator[Token], tra_dict: dict, **options: Any) -> Iterator[Token]:
+def translate_tokens(token_stream: Iterator[Token], tra_dict: dict, **options: Any) -> Iterator[Token]:
     """ Substitute tokens according to a given dictionary
         
         Keys with uppercase letters will be case-sentitive

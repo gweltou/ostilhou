@@ -148,7 +148,7 @@ def main():
     parser = argparse.ArgumentParser(
                     prog = 'Wavsplit',
                     description = 'Audio file converter, splitter and text alignment')
-    parser.add_argument('filename')
+    parser.add_argument("filename", help="Segment filename")
     # parser.add_argument('-o', '--overwrite', action='store_true', help="Overwrite split file (if present)")
     parser.add_argument('-s', '--transcribe', action='store_true', help="Automatic transcription")
     parser.add_argument("-m", "--model", help="Vosk model to use for decoding", metavar='MODEL_PATH')
@@ -173,8 +173,9 @@ def main():
     print(recording_id)
     
     wav_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'wav')))
-    split_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'split')))
+    mp3_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'mp3')))
     seg_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'seg')))
+    split_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'split')))
     text_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'txt')))
 
     # Converting sound file to 16kHz mono wav if needed
@@ -200,7 +201,8 @@ def main():
         do_split = False
     elif os.path.exists(split_filename):
         print("Segments file already exists.")
-        segments = load_segments_data(split_filename)
+        seg_filename = split_filename
+        segments = load_segments_data(seg_filename)
         do_split = False
 
 
@@ -396,7 +398,7 @@ def main():
             print("Segment exported")
         elif x == 's':  # Save split data to disk
             if modified:
-                save_segments(segments, split_filename)
+                save_segments(segments, seg_filename)
                 modified = False
         elif x == 'eaf': # Export to Elan format
             splitToEafFile(split_filename)

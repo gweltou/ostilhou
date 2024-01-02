@@ -36,11 +36,11 @@ def test_inverse_normalization():
 
 
 
-def test_inverse_normalization_vosk():
+def test_inverse_normalization_timecoded():
 
     def should_be(s1: str, s2: str) -> None:
         s1 = [{"word":t, "start":2*i, "end":2*i+1, "conf":1.0} for i, t in enumerate(s1.split())]
-        tokens = inverse_normalize_vosk(s1, min_num=4)
+        tokens = inverse_normalize_timecoded(s1, min_num=4)
         # Check timecode order
         for i in range(len(tokens)-1):
             assert tokens[i]["start"] < tokens[i+1]["start"]

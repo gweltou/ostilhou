@@ -1,23 +1,23 @@
-from ostilhou import phonetize
+from ostilhou import phonetize_word
 from ostilhou.asr import lexicon_add, lexicon_sub
 
 
 def test_phonetize():
     
-    assert len(phonetize("the")) == 2
-    assert len(phonetize("world")) == 1
-    assert len(phonetize("bepred")) == 4
+    assert len(phonetize_word("the")) == 2
+    assert len(phonetize_word("world")) == 1
+    assert len(phonetize_word("bepred")) == 4
 
-    assert phonetize("Monique") == ['M O N I K']
-    assert phonetize("Marie-Jeanne") == ['M A R I J A N']
-    assert phonetize("tra-mañ-tra") == ['T R A M AN T R A']
+    assert phonetize_word("Monique") == ['M O N I K']
+    assert phonetize_word("Marie-Jeanne") == ['M A R I J A N']
+    assert phonetize_word("tra-mañ-tra") == ['T R A M AN T R A']
 
     # Acronyms
-    assert phonetize("QR") == ['K U EH R']
-    assert phonetize("BZH") == ['B E Z E D A CH']
+    assert phonetize_word("QR") == ['K U EH R']
+    assert phonetize_word("BZH") == ['B E Z E D A CH']
 
     # Fillers
-    assert phonetize("tiens") == ['T I EN']
+    assert phonetize_word("tiens") == ['T I EN']
 
     # Single letters spelled out
-    assert phonetize("B") == ['B E']
+    assert phonetize_word("B") == ['B E']

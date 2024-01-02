@@ -21,7 +21,7 @@ from ostilhou import normalize_sentence
 from ostilhou.text import filter_out_chars, pre_process, PUNCTUATION
 from ostilhou.asr import (
     phonemes,
-    phonetize,
+    phonetize_word,
     parse_dataset,
     load_segments_data
 )
@@ -190,7 +190,7 @@ if __name__ == "__main__":
                         "<PASAAT> SPN\n"
                         "<SONEREZH> NSN\n")
             for word in sorted(corpora["train"]["lexicon"]):
-                for pron in phonetize(word):
+                for pron in phonetize_word(word):
                     if not pron:
                         print(Fore.RED + "ERROR empty pronunciation" + Fore.RESET, word)
                     # print(f"{word} {pron}\n")

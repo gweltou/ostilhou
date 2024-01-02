@@ -11,14 +11,14 @@ def test_tokenizer():
 def test_split_sentence():
     test_cases = [
         ("Un tan-gwall a voe d'ar 1añ a viz Gouhere 2011 el leti. Ne voe den ebet gloazet pe lazhet. Un nebeud estajoù nemetken a oa bet tizhet.", 3),
-        ("unan daou tri : pevar pemp c'hwec'h", 2),
-        ("Tamm ebet. Klasket em boa e-pad 5 miz ha n’on ket bet plijet ; un afer a bublik eo.", 3),
+        ("unan daou tri : pevar pemp c'hwec'h", 1),
+        ("Tamm ebet. Klasket em boa e-pad 5 miz ha n’on ket bet plijet ; un afer a bublik eo.", 2),
         ("Tout an dud en em soñj. Piv int ar skrivagnerien-se ? Eus pelec'h emaint o tont... ?", 3),
         ("E 1938 e voe he gwaz harzet ha lazhet en U. R. S. S., ar pezh na viras ket ouzh Ana Pauker a chom feal d'ar gomunouriezh, d'an U. R. S. S. ha da Jozef Stalin.", 1),
-        ("Ur maen-koun zo war lein, da bevar barzh eus ar vro : T. Hughes Jones, B.T. Hopkins, J. M. Edwards hag Edward Prosser Rhys.", 2),
+        ("Ur maen-koun zo war lein, da bevar barzh eus ar vro : T. Hughes Jones, B.T. Hopkins, J. M. Edwards hag Edward Prosser Rhys.", 1),
         ("Dindan anv A. J. Orde, E. E. Horlak, ha B. J. Oliphant he-deus skrivet hag hec'h oberennoù kentañ a voe embannet dindan anv Sheri S. Eberhart.", 1),
-        ("""Hervez Levr ar C'heneliezh ec'h eo Yafet eil mab Noah. Hervez ar Bibl e tiskouezas doujañs e-kenver e dad mezv-dall. Benniget e voe gantañ evel Shem : "Frankiz ra roio Doue da Yafet ! Ha ra chomo e tinelloù Shem !" """, 4),
-        ("""C'hoariet en deus evit Stade Rennais Football Club etre 1973 ha 1977 hag e 1978-1979. Unan eus ar c'hoarierien wellañ bet gwelet e klub Roazhon e oa. Pelé en deus lavaret diwar e benn : « Kavet 'm eus an hini a dapo ma flas. Laurent Pokou e anv. ».""", 4),
+        ("""Hervez Levr ar C'heneliezh ec'h eo Yafet eil mab Noah. Hervez ar Bibl e tiskouezas doujañs e-kenver e dad mezv-dall. Benniget e voe gantañ evel Shem : "Frankiz ra roio Doue da Yafet ! Ha ra chomo e tinelloù Shem !" """, 3),
+        ("""C'hoariet en deus evit Stade Rennais Football Club etre 1973 ha 1977 hag e 1978-1979. Unan eus ar c'hoarierien wellañ bet gwelet e klub Roazhon e oa. Pelé en deus lavaret diwar e benn : « Kavet 'm eus an hini a dapo ma flas. Laurent Pokou e anv. ».""", 3),
     ]
 
     for t in test_cases:
