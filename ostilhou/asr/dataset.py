@@ -187,6 +187,9 @@ def parse_data_file(seg_filename, args):
     speaker_ids = []
     sentences = []
 
+    # Use a single random speaker id per file for unknown speakers
+    file_speaker_id = str(uuid4()).replace('-', '')
+
     for sentence, metadata in load_text_data(text_filename):
         add_to_corpus = True
         if "parser" in metadata:
@@ -198,7 +201,8 @@ def parse_data_file(seg_filename, args):
         speaker_id = metadata["speaker"]
         if speaker_id == "unknown":
             if args.hash_id:
-                speaker_id = str(uuid4()).replace('-', '')
+                #speaker_id = str(uuid4()).replace('-', '')
+                speaker_id = file_speaker_id
         else:
             if args.hash_id:
                 speaker_id = md5(speaker_id.encode('utf-8')).hexdigest()

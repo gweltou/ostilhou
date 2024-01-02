@@ -50,7 +50,7 @@ def parse_lines(lines):
     return segments, text
 
 
-def srt2split(*filenames):
+def srt2segments(*filenames):
 	# for filename in os.listdir():
     for filename in filenames:
         basename, ext = os.path.splitext(filename)
@@ -63,9 +63,9 @@ def srt2split(*filenames):
                 fout.write("{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n")
                 fout.writelines([t+'\n' for t in text])
 
-            with open(basename + ".split", 'w') as fout:
+            with open(basename + ".seg", 'w') as fout:
                 fout.writelines([f"{s[0]} {s[1]}\n" for s in segments])
 
 
 if __name__ == "__main__":
-	srt2split(*sys.argv[1:])
+	srt2segments(*sys.argv[1:])

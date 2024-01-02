@@ -23,9 +23,9 @@ from ostilhou.asr import (
     phonemes,
     phonetize_word,
     parse_dataset,
-    load_segments_data
+    # load_segments_data
 )
-from ostilhou.audio import load_audiofile
+# from ostilhou.audio import load_audiofile
 
 
 
