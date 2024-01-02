@@ -7,6 +7,7 @@
 
 
 from typing import Iterator, Iterable, List, Any, Union, Set
+from enum import Enum
 import re
 
 from .definitions import (
@@ -84,8 +85,8 @@ is_roman_number = lambda s: bool(match_roman_number(s))
 class Token:
     # Enum
     RAW = -1
-    FIRST_IN_SENTENCE = 0
-    END_SENTENCE = 1
+    SPECIAL_TOKEN = 0
+    END_OF_SENTENCE = 1
     PUNCTUATION = 2
     WORD = 3
     NUMBER = 4
@@ -104,8 +105,8 @@ class Token:
 
     descr = {
         RAW: "RAW",
-        FIRST_IN_SENTENCE: "FIRST_IN_SENTENCE",
-        END_SENTENCE: "END_SENTENCE",
+        SPECIAL_TOKEN: "SPECIAL_TOKEN",
+        END_OF_SENTENCE: "END_SENTENCE",
         WORD: "WORD",
         NUMBER: "NUMBER",
         ROMAN_NUMBER: "ROMAN_NUMBER",
@@ -130,10 +131,14 @@ class Token:
         self.flags: Set[Flag] = set(flags)
     
     def __repr__(self):
-        return f"Token({repr(self.data)}, {self.descr[self.kind]})"
+        flags_name = [flag.name for flag in self.flags]
+        return "Token(" + \
+            f"{repr(self.data)}, {self.descr[self.kind]}" + \
+            f", {flags_name if flags_name else ''}" + \
+            ")"
 
 
-class Flag:
+class Flag(Enum):
     FIRST_WORD = 1
     MASCULINE = 2
     FEMININE = 3
@@ -144,7 +149,9 @@ class Flag:
 
 
 def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Token]:
-    """ Generate raw tokens by splitting strings on whitespaces """
+    """ Generate raw tokens by splitting strings on whitespaces
+        SPECIAL_TOKENS will be generated at this stage as well
+    """
     
     if isinstance(text_or_gen, str):
         if not text_or_gen:
@@ -153,7 +160,10 @@ def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Toke
     
     for sentence in text_or_gen:
         for s in sentence.split():
-            yield Token(s, Token.RAW)
+            if re.fullmatch(r"<[A-Z']+>", s):
+                yield Token(s, Token.SPECIAL_TOKEN)
+            else:
+                yield Token(s, Token.RAW)
 
 
 
@@ -171,6 +181,8 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
     norm_punct = options.pop('norm_punct', False)
 
     punct_stack = []
+
+    next_is_first_in_sentence = True
 
     for tok in token_stream:
         if tok.kind == Token.RAW:
@@ -200,8 +212,6 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                     match = re.match(r"([A-Z]\.)+", data)
                     tokens.append(Token(data))
                     data = data[match.end():]
-                    #data = remainder
-                    #remainder = ""
                 else:
                     # Parse left punctuation
                     while data and data[0] in PUNCTUATION:
@@ -248,9 +258,14 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                             if punct_stack and punct_stack[-1] == '(':
                                 punct_stack.pop()
 
+                    if next_is_first_in_sentence:
+                        t.flags.add(Flag.FIRST_WORD)
+                        next_is_first_in_sentence = False
                     yield t
-                    if not punct_stack and t.data in '.?!:;':
-                        yield Token('', Token.END_SENTENCE)
+                    # if not punct_stack and t.data in '.?!:;':
+                    if not punct_stack and t.data in '.?!':
+                        yield Token('', Token.END_OF_SENTENCE)
+                        next_is_first_in_sentence = True
         
         else:
             yield tok
@@ -270,6 +285,8 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
     for tok in token_stream:
         if tok.kind == Token.RAW:
             if tok.data in acronyms:
+                tok.kind = Token.ACRONYM
+            elif tok.data.isupper() and Flag.FIRST_WORD not in tok.flags:
                 tok.kind = Token.ACRONYM
             elif is_word(tok.data):
                 # Token is a simple and well formed word
@@ -427,6 +444,14 @@ def correct_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
 
 def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[Token]:
     """
+        Parameters
+        ----------
+            autocorrect: boolean
+                Try to correct typos with a substitution dictionary
+            
+            norm_punct: boolean
+                Normalize punctuation
+        
         TODO:
             * &
     """
@@ -448,16 +473,31 @@ def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator
 
 
 def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
+    """
+        Parameters
+        ----------
+            capitalize: boolean
+                Capitalize sentence
+            
+            end: str
+                String to append at end of each sentence
+    """
     
     # Parse options
     end_sentence = options.pop('end', '')
+    capitalize_opt = options.pop('capitalize', False)
     # colored = options.pop("colored", False)
 
     parts: List[str] = []
     punct_stack = [] # Used to keep track of coupled punctuation (quotes and brackets)
+    capitalize_next_word = capitalize_opt
 
     for tok in token_stream:
         data = tok.norm[0] if tok.norm else tok.data
+
+        if capitalize_next_word:
+            data = data.capitalize()
+            capitalize_next_word = False
 
         prefix = ''
         if tok.kind == Token.PUNCTUATION:
@@ -493,8 +533,10 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
             elif data == '/…':
                 prefix = ''
         
-        elif tok.kind == Token.END_SENTENCE:
+        elif tok.kind == Token.END_OF_SENTENCE:
             prefix = end_sentence
+            if capitalize_opt:
+                capitalize_next_word = True
 
         elif parts and parts[-1]:
             last_char = parts[-1][-1]
@@ -526,8 +568,12 @@ def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> I
     """ Split a line (or list of lines) according to its punctuation
         This function can be used independently
 
-        Options:
-            'end' : end the sentences with the given character 
+        Parameters
+        ----------
+            chars : List[str]
+                Sentences separator chars TODO
+            end : str
+                End the sentences with the given character
 
     """
 
@@ -544,7 +590,7 @@ def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> I
 
     current_sentence = []
     for tok in token_stream:
-        if tok.kind == Token.END_SENTENCE:
+        if tok.kind == Token.END_OF_SENTENCE:
             yield detokenize(current_sentence, **options) + end_sentence
             current_sentence = []
         else:

@@ -319,7 +319,7 @@ norm_roman_ordinal = lambda s: ROMAN_ORDINALS[s] if s in ROMAN_ORDINALS else rom
 
 
 
-def normalize_sentence(sentence: str, autocorrect=False) -> str:
+def normalize_sentence(sentence: str, autocorrect=False, norm_punct=True, capitalize=False) -> str:
     """
         Normalize a single sentence
         return: list of all possible normalization for the sentence
@@ -329,7 +329,7 @@ def normalize_sentence(sentence: str, autocorrect=False) -> str:
 
     propositions = []
     result = ""
-    return detokenize(normalize(tokenize(sentence, autocorrect=autocorrect)))
+    return detokenize(normalize(tokenize(sentence, autocorrect=autocorrect, norm_punct=norm_punct)), capitalize=capitalize)
 
 
 
@@ -343,7 +343,7 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
     # hold_token = False
     for tok in token_stream:
         if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data)
-        elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
+        # elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
         elif tok.kind == Token.NUMBER:
             # hold_token = True
             tok.norm.append(num2txt(int(tok.data)))

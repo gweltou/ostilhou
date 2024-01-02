@@ -27,8 +27,14 @@ def filter_out_chars(text: str, chars: str) -> str:
 
 
 def capitalize(word: str) -> str:
-    """ Capitalize a single word or the first word of a given sentence """
-    # Should we capitalize the whole "C'H" character ? For now we don't.
+    """
+        Capitalize a single word or the first word of a given sentence
+    
+        TODO:
+            * Capitalize compound names, i.e "marie-thérèse" -> "Marie-Thérèse"
+        
+        Should we capitalize the whole "C'H" character ? For now we don't.
+    """
 
     # Find first letter
     lowered = word.lower()

@@ -23,9 +23,9 @@ from ostilhou.audio import load_audiofile
 
 
 """
- Build a csv file from a folder hierarcy
+ Build a tsv file from a folder hierarcy
 
- Usage : ./build_csv.py -h
+ Usage : ./build_tsv.py -h
  
  Author:  Gweltaz Duval-Guennoc
 """
@@ -114,10 +114,11 @@ def parse_data_file(seg_filename):
         sentence = pre_process(sentence)
         if not sentence:
             continue
-        sentence = normalize_sentence(sentence, autocorrect=True)
-        sentence = sentence.replace('-', ' ').replace('/', ' ')
+        sentence = normalize_sentence(sentence, autocorrect=True, norm_punct=True, capitalize=False)
         sentence = sentence.replace('\xa0', ' ')
-        sentence = filter_out_chars(sentence, PUNCTUATION)
+        if args.no_punct:
+            sentence = sentence.replace('-', ' ').replace('/', ' ')
+            sentence = filter_out_chars(sentence, PUNCTUATION)
         sentence = ' '.join(sentence.replace('*', '').split())
         
         if args.unique:
@@ -179,12 +180,14 @@ if __name__ == "__main__":
 
     desc = f"Generate a CSV file from a dataset"
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument("--train", help="train dataset directory", required=True)
-    parser.add_argument("--test", help="train dataset directory")
+    parser.add_argument("--train", help="Train dataset directory", required=True)
+    parser.add_argument("--test", help="Test dataset directory")
     parser.add_argument("-o", "--output", help="Output folder for generated files", default="data_hf")
     parser.add_argument("--utterances-min-length", help="Minimum length of an utterance", type=float, default=0)
-    parser.add_argument("--unique", help="Remove multiple occurences of the same utterance", default=True)
-    parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
+    parser.add_argument("--unique", help="Remove multiple occurences of the same utterance", action="store_true")
+    parser.add_argument("--no-punct", help="Remove punctuation from sentences", action="store_true")
+    parser.add_argument("--audio-format", help="Audio format of exported segments", choices=['wav', 'mp3'], default='mp3')
+    parser.add_argument("-d", "--dry-run", help="Run script without actualy writting files to disk", action="store_true")
 
     args = parser.parse_args()
 
@@ -202,17 +205,18 @@ if __name__ == "__main__":
 
     splitted = set()
 
-    metadata_file = open(os.path.join(args.output, "metadata.csv"), 'w')
-    metadata_file.write(','.join(["file_name", "text", "speaker_id", "gender", "accent"]) + '\n')
+    metadata_file = open(os.path.join(args.output, "metadata.tsv"), 'w')
+    # metadata_file.write('\t'.join(["file_name", "text", "speaker_id", "gender", "accent"]) + '\n')
+    metadata_file.write('\t'.join(["file_name", "text"]) + '\n')
 
-    wave_folder = os.path.join(args.output, "data")
-    if not args.dry_run and not os.path.exists(wave_folder):
-        os.mkdir(wave_folder)
+    audio_folder = os.path.join(args.output, "data")
+    if not args.dry_run and not os.path.exists(audio_folder):
+        os.mkdir(audio_folder)
 
     for corpus_name, data in dataset.items():
         n_segments = 0
 
-        corpus_folder = os.path.join(wave_folder, corpus_name)
+        corpus_folder = os.path.join(audio_folder, corpus_name)
         if not args.dry_run and not os.path.exists(corpus_folder):
             os.mkdir(corpus_folder)
 
@@ -223,8 +227,9 @@ if __name__ == "__main__":
             recording_id = md5(utterance[4].encode("utf8")).hexdigest()
             seg_audio_file = os.path.join("data", corpus_name, f"{recording_id}_{start:0>7}_{end:0>7}.mp3")
             
-            metadata_file.write(','.join([seg_audio_file, sentence, speaker_id, speaker_gender, accent]) + '\n')
-        
+            # metadata_file.write('\t'.join([seg_audio_file, sentence, speaker_id, speaker_gender, accent]) + '\n')
+            metadata_file.write('\t'.join([seg_audio_file, sentence]) + '\n')
+
             if recording_id not in splitted and not args.dry_run:
                 print("Segmenting", os.path.split(audio_file)[1])
                 audio = load_audiofile(audio_file)
@@ -234,9 +239,9 @@ if __name__ == "__main__":
                 segments = load_segments_data(seg_filename)
                 for start, end in segments:
                     segment = audio[start: end]
-                    output_file = os.path.join(corpus_folder, f"{recording_id}_{start:0>7}_{end:0>7}.mp3")
+                    output_file = os.path.join(corpus_folder, f"{recording_id}_{start:0>7}_{end:0>7}.{args.audio_format}")
                     if not os.path.exists(output_file):
-                        segment.export(output_file, format='mp3')
+                        segment.export(output_file, format=args.audio_format)
                     n_segments += 1
                 splitted.add(recording_id)
         print(f"{n_segments} segments exported")

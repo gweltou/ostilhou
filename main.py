@@ -3,14 +3,14 @@ from ostilhou import tokenize, detokenize
 from ostilhou.text import (
     strip_punct, filter_out_chars,
     split_sentences, extract_parenthesis_content,
-    load_translation_dict, translate, reverse_translation_dict,
+    load_translation_dict, translate_tokens, reverse_translation_dict,
     normalize, normalize_sentence,
     inverse_normalize_sentence, inverse_normalize_timecoded,
     pre_process, sentence_stats,
     )
 from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES, PATTERN_DOTTED_ACRONYM, PUNCTUATION
 from ostilhou.corpora import load_wikipedia_150k, load_sarmoniou
-from ostilhou.asr import phonetize
+from ostilhou.asr import phonetize_word
 from ostilhou.asr.post_processing import post_process_timecoded, post_process_text
 from ostilhou.hspell import get_hspell_mistakes
 
@@ -26,9 +26,9 @@ def test_detokenize(sentence):
 
 
 def test_normalize(sentence):
-    for token in tokenize(sentence, autocorrect=True):
-        print(token, token.norm)
-    print(normalize_sentence(sentence, autocorrect=True))
+    # for token in tokenize(sentence, autocorrect=True):
+    #     print(token, token.norm)
+    print(normalize_sentence(sentence, autocorrect=True, norm_punct=True))
 
 
 
@@ -81,7 +81,7 @@ def test_sarmoniou():
     #     for line in sarmoniou:
     #         f.write(detokenize( translate(tokenize(line), td) ) + '\n')
     for line in sarmoniou:
-        print(detokenize( translate(tokenize(line), td) ))
+        print(detokenize( translate_tokens(tokenize(line), td) ))
 
 
 
@@ -181,15 +181,23 @@ def test_clean_ya():
 
 
 if __name__ == "__main__":
-    sentence = "Pellaat a reas Jaig evit mont d’ar gêr. Larkoc’hik e chomas a-sav, distreiñ e benn war-zu Eona a oa o ouelañ ha mont d’ar park en-dro. Erruet eno e krogas en e falz ha kendelc’her da droc’hañ ar gwinizh. An holl wazed gwitibunan a reas eveltañ."
-    # test_tokenize(sentence)
+    sentence = "<C'HOARZH> Memes euh lenn an Aviel peotramant... peotramant Buhez ar Sent?"
+    test_tokenize(sentence)
     # print(get_hspell_mistakes(sentence)[0])
-    # test_detokenize(sentence)
-    # test_normalize(sentence)
-    # print(phonetize(sentence))
+    test_detokenize(sentence)
+    test_normalize(sentence)
+    # print(phonetize_word("hiziv"))
+    # print(phonetize_word("marteze"))
+
+    # reverse_translation_dict("ostilhou/dicts/gwenedeg_peurunvan.tsv", "ostilhou/puv_gwe.tsv")
+    # td = load_translation_dict("ostilhou/puv_gwe.tsv")
+    # print(detokenize( translate_tokens(tokenize("Mont a rin da Vrest e miz ebrel ? .", autocorrect=True), td) ))
+
+
+    # print(normalize_sentence("evit gwir ez eus bet meur a zevezh ar bardelloù e Pariz 1588 1648 1830..."))
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
-    for s in split_sentences(sentence):
-        print(s, end='')
+    # for s in split_sentences(sentence):
+    #     print(s, end='')
     
     # test_wiki150_noun_gender()
     # test_sarmoniou()

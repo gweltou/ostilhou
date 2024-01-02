@@ -1,4 +1,6 @@
 adlec'hiañ
+adnevesaat
+adnevesaet
 agar
 agav
 aktourez
@@ -71,6 +73,7 @@ duplex
 eilveidi
 ejiptologourez
 ekolojisted
+eksponantel
 elektrik
 embregiñ
 emoji
@@ -82,6 +85,7 @@ ensteud
 epidemiezhioù
 espres
 espres-kaer
+etanol
 fablab
 falc'hañ
 fenotip
@@ -97,6 +101,8 @@ frigo
 gapitalouriezh
 geriaduriñ
 geriaouegi
+gle
+gleoù
 gopradez
 goronavirus
 gourskrid

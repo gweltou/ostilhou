@@ -179,7 +179,7 @@ with open(_lexicon_sub_path, 'r') as f:
 
 
 
-def phonetize(word: str) -> List[str]:
+def phonetize_word(word: str) -> List[str]:
     """ Simple phonetizer
         Returns a string of phonemes representing the pronunciation
         of a single given word.
@@ -195,7 +195,7 @@ def phonetize(word: str) -> List[str]:
         prop = [""]
         for sub in word.split('-'):
             new_prop = []
-            rep = phonetize(sub)
+            rep = phonetize_word(sub)
             for r in rep:
                 for pre in prop:
                     new_prop.append(str.strip(pre + ' ' + r))
