@@ -21,8 +21,8 @@ from shutil import copyfile
 import argparse
 
 from ostilhou.audio import convert_to_wav
-from ostilhou.asr import load_segments_data
-from srt2split import srt2split
+from ostilhou.asr import load_segments_data, load_text_data
+from srt2seg import srt2segments
 
 
 
@@ -68,12 +68,16 @@ if __name__ == "__main__":
 		if not os.path.exists(wav_file):
 			convert_to_wav(source_audio_file, wav_file, keep_orig=not args.remove)
 		
-		srt2split(new_file)
+		srt2segments(new_file)
 
 		# Remove subtitle file if necessary
 		if args.output and args.output != args.folder:
 			os.remove(new_file)
 		
 		# Clean files
-		segments = load_segments_data(wav_file.replace(".wav", ".split"))
-		text = load_text_data(wav_file.replace(".wav", ".txt"))
+		#segments = load_segments_data(wav_file.replace(".wav", ".seg"))
+		#text = load_text_data(wav_file.replace(".wav", ".txt"))
+
+		# Things to do :
+		# * Join close segments
+		# * Normalize text
