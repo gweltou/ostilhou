@@ -173,6 +173,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
         TODO:
             * words with a dot in the middle and more than 2 letters
                 (ex: [...] fin miz Gouere.Laouen e oa [...])
+                Met diwall da "postel.bzh", da skouer
             * rak,tost
 
     """
@@ -190,6 +191,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
             remainder = ""
             while data:
                 tokens = []
+                
                 if re.search(r"\.\.+", data):
                     match = re.search(r"\.\.+", data)
                     if match.start() == 0:
@@ -230,7 +232,6 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                         remainder = ""
                     if deferred_tokens:
                         tokens.extend(deferred_tokens)
-
                 
                 for t in tokens:
                     if t.kind == Token.PUNCTUATION:
@@ -501,7 +502,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
 
         prefix = ''
         if tok.kind == Token.PUNCTUATION:
-            if data in '!?:;':
+            if data in '!?:;–':
                 prefix = '\xa0' # Non-breakable space
             elif data == '"':
                 if punct_stack and punct_stack[-1] == '"':

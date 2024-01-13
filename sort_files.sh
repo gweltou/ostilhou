@@ -10,6 +10,7 @@ ostilhou/dicts/standard_tokens.tsv
 ostilhou/dicts/gwenedeg_peurunvan.tsv
 ostilhou/dicts/sarmonioù_peurunvan.tsv
 ostilhou/hspell/add.txt
+ostilhou/hspell/add_gwe.txt
 ostilhou/asr/lexicon_add.tsv
 ostilhou/asr/lexicon_sub.tsv
 ostilhou/asr/postproc_sub.tsv

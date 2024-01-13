@@ -6,7 +6,7 @@ from .definitions import LETTERS, PUNCTUATION
 
 
 def strip_punct(word: str) -> str:
-    """ strip punctuation left and right of a word """
+    """ Strip punctuation left and right of a word """
 
     while word and word[0] in PUNCTUATION:
         word = word[1:]
@@ -17,7 +17,7 @@ def strip_punct(word: str) -> str:
 
 
 def filter_out_chars(text: str, chars: str) -> str:
-    """ Remove characters from a string """
+    """ Remove given characters from a string """
 
     filtered_text = ""
     for l in text:
@@ -75,6 +75,8 @@ def pre_process(text: str) -> str:
     text = text.replace('ñ', 'ñ') # A sneaky n-tilde (found in Ya! webpages)
     text = text.replace('ň', 'ñ')
     text = text.replace('ù', 'ù') # Another sneaky one (found in Ya! webpages)
+    text = text.replace('ê', 'ê') # Found in brezhoweb subtitles
+    text = text.replace('û', 'û') # Found in brezhoweb subtitles
     return text
 
 

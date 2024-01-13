@@ -48,6 +48,7 @@ def test_normalization():
         ("9 400 en Il-ha-Gwilen +09 % ouzhpenn 3 800 er Morbihan +05% ouzhpenn 500 en aodoù an Arvor", ""),
         ("klask ar 500 000€ a vo ezhomm", "klask ar pemp kant mil euro a vo ezhomm"),
         ("21000 steredenn", "unan warn-ugent mil steredenn"),
+        ("N'eo ket fall, Ao. Croguennec !", "N'eo ket fall, aotroù Croguennec !"),
         ("1kg sukr, 1kg bleud", "ur c'hilo sukr, ur c'hilo bleud"),
         ("1m2, 2m2, 3m3", "ur metr karrez, daou metr karrez, tri metr diñs"),
         ("1cm, 2cm2, 3cm3", "ur santimetr, daou santimetr karrez, tri santimetr diñs"),

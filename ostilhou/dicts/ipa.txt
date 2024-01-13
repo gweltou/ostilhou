@@ -1,4 +1,4 @@
-AN	ã
+AN	ã ɑ̃
 A	a
 ON	õ
 E	ə
@@ -6,4 +6,6 @@ E	e
 K	k
 T	t
 EH	ɛ
+EU	ø
 X	ɣ
+OE	œ

@@ -29,8 +29,8 @@ verbal_fillers = {
     'pff'   :   'P F F',
     'mais'  :   'M EH',
     'hmm'   :   'M M',
-    #'oh'    :   'O',
-    #'ah'    :   'A',
+    'oh'    :   'O',
+    'ah'    :   'A',
 }
 
 

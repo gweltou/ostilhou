@@ -4,23 +4,27 @@ import hunspell
 from colorama import Fore
 
 from ..text.tokenizer import Token, Flag, tokenize, detokenize
-from ..asr import lexicon_sub
+from ..asr import lexicon_sub, verbal_fillers
 
 
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 HS_DIC_PATH = os.path.join(ROOT, "hunspell-dictionary", "br_FR")
 HS_AFF_PATH = os.path.join(ROOT, "hunspell-dictionary", "br_FR.aff")
-HS_ADD_PATH= os.path.join(ROOT, "add.txt")
+
+additional_words = ["add.txt", "add_gwe.txt"]
 
 
 
 def get_hunspell_dict():
     #hs = hunspell.HunSpell(HS_DIC_PATH+".dic", HS_AFF_PATH)
     hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
-    with open(HS_ADD_PATH, 'r') as f:
-        for w in f.readlines():
-            hs.add(w.strip())
+    for f in additional_words:
+        HS_ADD_PATH= os.path.join(ROOT, f)
+        with open(HS_ADD_PATH, 'r') as f:
+            for w in f.readlines():
+                if not w.startswith('#'):
+                    hs.add(w.strip())
     return hs
 
 hs_dict = get_hunspell_dict()
@@ -39,6 +43,8 @@ def get_hspell_mistakes(sentence: str) -> Tuple[str, int]:
     for tok in tokenize(sentence, autocorrect=True):
         if tok.kind == Token.WORD:
             if tok.data.lower() in lexicon_sub:
+                tok.data = Fore.YELLOW + tok.data + Fore.RESET
+            elif tok.data.lower() in verbal_fillers:
                 tok.data = Fore.YELLOW + tok.data + Fore.RESET
             elif Flag.INCLUSIVE in tok.flags:
                 head, *_ = tok.data.split('·')
