@@ -94,7 +94,11 @@ def stage2():
 			line = line.split('\t')
 			sub_dict[line[0]] = line[1].strip()
 	
-	file_list = glob.glob(args.folder + "/*.seg")
+	if args.output:
+		file_list = glob.glob(args.output + "/*.seg")
+	else:
+		file_list = glob.glob(args.folder + "/*.seg")
+	
 	total_mistakes = 0
 	total_kept_sentences = 0
 	for file in file_list:
@@ -128,6 +132,9 @@ def stage2():
 			else:
 				print(corr)
 		#print()
+		if args.dry_run:
+			continue
+		
 		with open(text_file, 'w') as fout:
 			#fout.write("{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n")
 			fout.writelines([t+'\n' for t in kept_text])
@@ -148,11 +155,12 @@ if __name__ == "__main__":
 	parser.add_argument('-o', '--output', type=str, help="Destination folder")
 	parser.add_argument('--remove', action='store_true', help="Remove original files (audio and subs)")
 	parser.add_argument('--stage', type=int, default=1)
+	parser.add_argument('-d', '--dry-run', action='store_true', help="Do not write to disk")
 	args = parser.parse_args()
 
-	if args.stage <= 1:
+	if args.stage == 1:
 		stage1()
-	elif args.stage <= 2:
+	elif args.stage == 2:
 		if args.output and args.output != args.folder:
 			args.folder = args.output
 		stage2()

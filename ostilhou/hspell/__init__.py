@@ -5,6 +5,7 @@ from colorama import Fore
 
 from ..text.tokenizer import Token, Flag, tokenize, detokenize
 from ..asr import lexicon_sub, verbal_fillers
+from ..dicts import interjections
 
 
 
@@ -19,12 +20,14 @@ additional_words = ["add.txt", "add_gwe.txt"]
 def get_hunspell_dict():
     #hs = hunspell.HunSpell(HS_DIC_PATH+".dic", HS_AFF_PATH)
     hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
-    for f in additional_words:
-        HS_ADD_PATH= os.path.join(ROOT, f)
+    for path in additional_words:
+        HS_ADD_PATH= os.path.join(ROOT, path)
         with open(HS_ADD_PATH, 'r') as f:
             for w in f.readlines():
                 if not w.startswith('#'):
                     hs.add(w.strip())
+    for w in interjections:
+        hs.add(w)
     return hs
 
 hs_dict = get_hunspell_dict()

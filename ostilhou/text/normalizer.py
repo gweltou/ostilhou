@@ -5,34 +5,15 @@
 # import random
 import re
 from typing import Iterator, List, Any
-from .definitions import SI_UNITS
+
 from .tokenizer import match_time
-from .tokenizer import ORDINALS, match_ordinal, is_ordinal
-from .tokenizer import ROMAN_ORDINALS, match_roman_ordinal, is_roman_ordinal
+from .definitions import (
+    SI_UNITS,
+    ORDINALS, match_ordinal,
+    ROMAN_ORDINALS, match_roman_ordinal,
+    )
 from .tokenizer import tokenize, detokenize, Token
 from ..dicts import nouns_f, nouns_m
-
-
-
-substitutions = {
-    "+"     : ["mui"],
-    "="     : ["kevatal da"],
-    "&"     : ["ha", "hag"],
-    "%"     : ["dre gant"],
-    "1/2"   : ["hanter", "unan war daou"],
-    "3/4"   : ["tri c'hard"],
-    "eurvezh/sizhun" : ["eurvezh dre sizhun"],
-    "ao."   : ["aotrou"],
-    "Ao."   : ["aotrou"],
-    "niv." : ["niverenn"],
-    "g.m." : ["goude meren"],
-    "GM"   : ["goude meren"],
-    "St."  : ["Sant"],
-    "h.a." : ["hag all"],
-    "km/h" : [],
-    "c'hm" : ["c'hilometr", "c'hilometrad"],
-    "s.o"  : ["sellet ouzh"],
-}
 
 
 
@@ -344,7 +325,7 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
     # hold_token = False
     for tok in token_stream:
         if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data)
-        elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
+        #elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
         elif tok.kind == Token.NUMBER:
             # hold_token = True
             tok.norm.append(num2txt(int(tok.data)))

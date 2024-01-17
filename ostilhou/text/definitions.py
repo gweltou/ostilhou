@@ -4,17 +4,99 @@ from ..dicts import proper_nouns, nouns_f, nouns_m
 
 
 LETTERS = "aâàbcçdeêéèfghiïjklmnñoôpqrstuüùûvwxyz"
-PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—'
+PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—-'
 OPENING_QUOTES = "«“"
 CLOSING_QUOTES = "»”"
 # CLOSING_PUNCT = {'»': '«', '”': '“', ')': '('}
 # OPENING_PUNCT = CLOSING_PUNCT.values()
+PUNCT_PAIRS = {'«': '»', '“': '”', '(': ')', '[': ']'}
+OPENING_PUNCT = PUNCT_PAIRS.keys()
+CLOSING_PUNCT = PUNCT_PAIRS.values()
+
+
+
+abbreviations = {
+    "ao."  : "aotrou",
+    "Ao."  : "aotrou",
+    "niv." : "niverenn",
+    "g.m." : "goude meren",
+    "GM"   : "goude meren",
+    "St."  : "Sant",
+    "st"   : "Sant",
+    "h.a." : "hag all",
+    "s.o."  : "sellet ouzh",
+    "dwb"   : "diwar benn"
+}
+
+substitutions = {
+    "+"     : ["mui"],
+    "="     : ["kevatal da"],
+    "&"     : ["ha", "hag"],
+    "%"     : ["dre gant"],
+    "1/2"   : ["hanter", "unan war daou"],
+    "3/4"   : ["tri c'hard"],
+    "eurvezh/sizhun" : ["eurvezh dre sizhun"],
+    "km/h" : [],
+    "c'hm" : ["c'hilometr", "c'hilometrad"],
+}
+
+
+# Regular words
+re_word = re.compile(r"['’\-·" + LETTERS + r"]+", re.IGNORECASE)
+common_word = re.compile(r"['’\·" + LETTERS + r"]+(-[" + LETTERS + r"]+)*", re.IGNORECASE)
+match_word = lambda s: re_word.fullmatch(s)
+is_word = lambda s: bool(match_word(s))
+
+# Inclusive words (ex: arvester·ez)
+# will always match as regular words as well
+re_word_inclusive = re.compile(r"(['-" + LETTERS + r"]+)·([-" + LETTERS + r"]+)", re.IGNORECASE)
+match_word_inclusive = lambda s: re_word_inclusive.fullmatch(s)
+is_word_inclusive = lambda s: bool(match_word_inclusive(s))
+
+
+# Nouns and proper nouns
+def is_proper_noun(word: str) -> bool:
+    if '-' in word:
+        for sub in word.split('-'):
+            if sub not in proper_nouns:
+                return False
+        return True
+    else:
+        return word in proper_nouns
+
+
+def is_noun_f(word: str) -> bool:
+    if len(word) < 2:
+        return False
+    
+    word = word.lower()
+    if word in nouns_f:
+        return True
+    for candidate in reverse_mutation(word):
+        if candidate in nouns_f:
+            return True
+    return False
+
+
+def is_noun_m(word: str) -> bool:
+    if len(word) < 2:
+        return False
+
+    word = word.lower()
+    if word in nouns_m:
+        return True
+    for candidate in reverse_mutation(word):
+        if candidate in nouns_m:
+            return True
+    return False
+
+
+def is_noun(word: str) -> bool:
+    return is_noun_m(word) or is_noun_f(word)
 
 
 # Acronyms
-
 PATTERN_DOTTED_ACRONYM = re.compile(r"([A-Z]\.)+([A-Z])?")
-
 
 
 SI_UNITS = {
@@ -58,7 +140,6 @@ def is_unit_number(s):
 
 
 # Time (hours and minutes)
-
 re_time = re.compile(r"(\d+)(?:e|h|eur)(\d+)?")
 match_time = lambda s: re_time.fullmatch(s)
 def is_time(s):
@@ -68,46 +149,49 @@ def is_time(s):
     return int(m) < 60
 
 
-# Nouns and proper nouns
+# Percentage
 
-def is_proper_noun(word: str) -> bool:
-    if '-' in word:
-        for sub in word.split('-'):
-            if sub not in proper_nouns:
-                return False
-        return True
-    else:
-        return word in proper_nouns
+# re_percent = re.compile(r"(\d+)%")
+# match_percent = lambda s: re_percent.fullmatch(s)
+# is_percent = lambda s: bool(match_percent(s))
 
 
-def is_noun_f(word: str) -> bool:
-    if len(word) < 2:
-        return False
-    
-    word = word.lower()
-    if word in nouns_f:
-        return True
-    for candidate in reverse_mutation(word):
-        if candidate in nouns_f:
-            return True
-    return False
+
+# Ordinals
+ORDINALS = {
+    "1añ"  : "kentañ",
+    "2vet" : "eilvet",
+    "3de"  : "trede",
+    "3vet" : "teirvet",
+    "4e"   : "pevare",
+    "4re"  : "pevare",
+    "4vet" : "pedervet",
+    "9vet" : "navet"
+}
+
+re_ordinal = re.compile(r"(\d+)vet")
+match_ordinal = lambda s: re_ordinal.fullmatch(s)
+is_ordinal = lambda s: s in ORDINALS or bool(match_ordinal(s))
 
 
-def is_noun_m(word: str) -> bool:
-    if len(word) < 2:
-        return False
+ROMAN_ORDINALS = {
+    "Iañ"  : "kentañ",
+    "IIvet": "eilvet",
+    "IIIde": "trede",
+    "IIIe" : "trede",
+    "IIIvet": "teirvet",
+    "IVe"  : "pevare",
+    "IVvet": "pedervet",
+    "IXvet": "navet"
+}
 
-    word = word.lower()
-    if word in nouns_m:
-        return True
-    for candidate in reverse_mutation(word):
-        if candidate in nouns_m:
-            return True
-    return False
+re_roman_ordinal = re.compile(r"([XVI]+)vet")
+match_roman_ordinal = lambda s: re_roman_ordinal.fullmatch(s)
+is_roman_ordinal = lambda s: s in ROMAN_ORDINALS or bool(match_roman_ordinal(s))
 
-
-def is_noun(word: str) -> bool:
-    return is_noun_m(word) or is_noun_f(word)
+re_roman_number = re.compile(r"([XVI]+)")
+match_roman_number = lambda s: re_roman_number.fullmatch(s)
+is_roman_number = lambda s: bool(match_roman_number(s))
 
 
 

@@ -43,7 +43,7 @@ def test_normalization():
         ("Evit gwir ez eus bet meur a zevezh ar bardelloù e Pariz 1588 1648 1830...",
             "Evit gwir ez eus bet meur a zevezh ar bardelloù e Pariz mil pemp kant eizh ha pevar-ugent mil c'hwec'h kant eizh ha daou-ugent mil eizh kant tregont..."),
         ("Bichon en doa strobinellet 2.500 den.", "Bichon en doa strobinellet daou vil pemp kant den."),
-        ("e 2021 ez eus ganet 32 065 babig, 1 072 muioc'h eget e 2020 +35 %",
+        ("e 2021 ez eus ganet 32 065 babig, 1 072 muioc'h eget e 2020 +35 %", # <-- we are here
             "e daou vil un warn-ugent ez eus ganet daou ha tregont mil pemp babig ha tri-ugent, mil daouzek ha tri-ugent muioc'h eget e daou vil ugent +35 dre gant"),
         ("9 400 en Il-ha-Gwilen +09 % ouzhpenn 3 800 er Morbihan +05% ouzhpenn 500 en aodoù an Arvor", ""),
         ("klask ar 500 000€ a vo ezhomm", "klask ar pemp kant mil euro a vo ezhomm"),

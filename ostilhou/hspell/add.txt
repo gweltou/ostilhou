@@ -14,6 +14,7 @@ anatomiezh
 aotism
 aotomatek
 apero
+apeupre
 arkitektour
 artifisiel
 astronomek
@@ -37,7 +38,6 @@ benlazhioù
 binarel
 biolojik
 bisiklet
-visiklet
 blam
 blini 
 boellgomzerioù
@@ -113,6 +113,7 @@ feneant
 fenotip
 feulsterioù
 figez
+fitamdoue
 flodad
 fonksion
 fonksionoù
@@ -148,6 +149,7 @@ ideologiezh
 immunizet
 industriel
 industriezh
+inervet
 ionoù
 isrannet
 isspesad
@@ -210,8 +212,11 @@ nutrimantoù
 oberezhioù
 objed
 objedoù
+okupe
+okupet
 opala
 orgasm
+ounner
 pagailh
 pandemi
 pandemiezh
@@ -225,6 +230,7 @@ penngasourez
 perc'henniñ
 pesketouriezh
 pesto
+peupre
 peurreizh
 pleustroù
 plik
@@ -278,6 +284,7 @@ strikt
 stummadurezh
 surtoud
 tabletennoù
+taksoù
 #tañvan
 tañvet
 temperadur
@@ -292,6 +299,7 @@ trakteur
 trañkil
 trañkiloc'h
 tretañ
+tribledie
 trio
 troiadur
 trug
@@ -303,6 +311,7 @@ venelouriezh
 vengleuzerien
 vilajenn
 vilourel
+visiklet
 vitaminoù
 voudisted
 vousfentiñ

@@ -11,74 +11,19 @@ from enum import Enum
 import re
 
 from .definitions import (
+    re_word, is_word, is_word_inclusive, common_word,
+    is_roman_number, is_ordinal, is_roman_ordinal,
     is_noun, is_noun_f, is_noun_m, is_proper_noun,
     is_time, match_time,
     is_unit_number, match_unit_number,
     PUNCTUATION, LETTERS, SI_UNITS,
     OPENING_QUOTES, CLOSING_QUOTES,
+    abbreviations,
+    PUNCT_PAIRS, OPENING_PUNCT, CLOSING_PUNCT,
 )
 from .utils import capitalize
 from ..dicts import acronyms, corrected_tokens, standard_tokens
 
-
-
-# Regular words
-
-re_word = re.compile(r"['\-·" + LETTERS + r"]+", re.IGNORECASE)
-match_word = lambda s: re_word.fullmatch(s)
-is_word = lambda s: bool(match_word(s))
-
-# Inclusive words (ex: arvester·ez)
-# will always match as regular words
-re_word_inclusive = re.compile(r"(['-" + LETTERS + r"]+)·([-" + LETTERS + r"]+)", re.IGNORECASE)
-match_word_inclusive = lambda s: re_word_inclusive.fullmatch(s)
-is_word_inclusive = lambda s: bool(match_word_inclusive(s))
-
-
-
-# Percentage
-
-# re_percent = re.compile(r"(\d+)%")
-# match_percent = lambda s: re_percent.fullmatch(s)
-# is_percent = lambda s: bool(match_percent(s))
-
-
-# Ordinals
-
-ORDINALS = {
-    "1añ"  : "kentañ",
-    "2vet" : "eilvet",
-    "3de"  : "trede",
-    "3vet" : "teirvet",
-    "4e"   : "pevare",
-    "4re"  : "pevare",
-    "4vet" : "pedervet",
-    "9vet" : "navet"
-}
-
-re_ordinal = re.compile(r"(\d+)vet")
-match_ordinal = lambda s: re_ordinal.fullmatch(s)
-is_ordinal = lambda s: s in ORDINALS or bool(match_ordinal(s))
-
-
-ROMAN_ORDINALS = {
-    "Iañ"  : "kentañ",
-    "IIvet": "eilvet",
-    "IIIde": "trede",
-    "IIIe" : "trede",
-    "IIIvet": "teirvet",
-    "IVe"  : "pevare",
-    "IVvet": "pedervet",
-    "IXvet": "navet"
-}
-
-re_roman_ordinal = re.compile(r"([XVI]+)vet")
-match_roman_ordinal = lambda s: re_roman_ordinal.fullmatch(s)
-is_roman_ordinal = lambda s: s in ROMAN_ORDINALS or bool(match_roman_ordinal(s))
-
-re_roman_number = re.compile(r"([XVI]+)")
-match_roman_number = lambda s: re_roman_number.fullmatch(s)
-is_roman_number = lambda s: bool(match_roman_number(s))
 
 
 
@@ -100,13 +45,13 @@ class Token:
     TIME = 12
     UNIT = 13         # %, m, km2, kg...
     QUANTITY = 14     # a number and a unit (%, m, km2, kg, bloaz, den...)
-    # PERCENT = 11
+    ABBREVIATIION = 15
     UNKNOWN = 99
 
     descr = {
         RAW: "RAW",
         SPECIAL_TOKEN: "SPECIAL_TOKEN",
-        END_OF_SENTENCE: "END_SENTENCE",
+        END_OF_SENTENCE: "END_OF_SENTENCE",
         WORD: "WORD",
         NUMBER: "NUMBER",
         ROMAN_NUMBER: "ROMAN_NUMBER",
@@ -121,6 +66,7 @@ class Token:
         UNIT: "UNIT",
         QUANTITY: "QUANTITY",
         # PERCENT: "PERCENT",
+        ABBREVIATIION: "ABBREVIATION",
         UNKNOWN: "UNKNOWN",
     }
 
@@ -129,6 +75,7 @@ class Token:
         self.norm = []
         self.kind = kind
         self.flags: Set[Flag] = set(flags)
+        self.next = None # The token following this one, after "generate_tokens_lookahead" is called
     
     def __repr__(self):
         flags_name = [flag.name for flag in self.flags]
@@ -145,12 +92,16 @@ class Flag(Enum):
     INCLUSIVE = 4
     CAPITALIZED = 5
     CORRECTED = 6
+    OPENING_PUNCT = 7
+    CLOSING_PUNCT = 8
 
 
 
 def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Token]:
-    """ Generate raw tokens by splitting strings on whitespaces
-        SPECIAL_TOKENS will be generated at this stage as well
+    """ 
+        Generate raw tokens by splitting strings on whitespaces
+
+        <SPECIAL_TOKENS> will be generated at this stage as well
     """
     
     if isinstance(text_or_gen, str):
@@ -166,8 +117,239 @@ def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Toke
                 yield Token(s, Token.RAW)
 
 
+def generate_tokens_lookahead(token_stream: Iterator[Token]):
+    token = next(token_stream)
+    for next_token in token_stream:
+        token.next = next_token
+        yield token
+        token = next_token
+    token.next = None
+    yield token
+
+
+
+def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
+    """
+        Adds <END_OF_SENTENCE> tokens to token stream.
+
+        Tokens must have the 'next' parameter defined by calling
+        'generate_tokens_lookahead' on the token stream first.
+    """
+
+    subsentence_depth = 0
+    in_double_quotes = False
+
+    for token in token_stream:
+        if token.kind != Token.PUNCTUATION:
+            yield token
+            continue
+
+        if Flag.OPENING_PUNCT in token.flags:
+            subsentence_depth += 1
+        elif Flag.CLOSING_PUNCT in token.flags:
+            subsentence_depth -= 1
+        elif token.data == '"':
+            in_double_quotes = not in_double_quotes
+            if in_double_quotes:
+                subsentence_depth += 1
+            else:
+                subsentence_depth -= 1
+
+        if token.norm:
+            punct = token.norm[0]
+        else:
+            punct = token.data
+        
+        if punct in ".!?":
+            yield token
+            if subsentence_depth == 0:
+                yield Token('', Token.END_OF_SENTENCE)
+        elif punct == '…' or re.fullmatch(r"\.\.+", punct):
+            yield token
+            pass
+        else:
+            yield token
+
 
 def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
+    """
+        Parse a stream of raw tokens to find punctuation marks
+    
+        TODO:
+            * URLS, email addresses (anything with internal punctuation marks)
+    """
+
+    # Normalize punctuation option
+    norm_punct = options.pop('norm_punct', False)
+
+    punct_stack = []
+
+    next_is_first_in_sentence = True
+
+    for tok in token_stream:
+        if tok.kind == Token.RAW:
+            data = tok.data
+            subtokens = []
+            post_subtokens = []
+
+            while data:
+                #print(f"'{data}'")
+
+                # Check at the beggining of token
+                # Check for opening punctuation
+                if data[0] in OPENING_PUNCT:
+                    punct_stack.append(data[0])
+                    subtokens.append(Token(data[0], Token.PUNCTUATION, Flag.OPENING_PUNCT))
+                    data = data[1:]
+                    continue
+
+                # Check for closing punctuation
+                if data[0] in CLOSING_PUNCT:
+                    if punct_stack and data[0] == PUNCT_PAIRS[punct_stack[-1]]:
+                        punct_stack.pop()
+                        subtokens.append(Token(data[0], Token.PUNCTUATION, Flag.CLOSING_PUNCT))
+                        data = data[1:]
+                        continue
+                
+                # Check for ellipsis
+                m = re.match(r"\.\.+", data)
+                if m:
+                    subtokens.append(Token(m.group(), Token.PUNCTUATION))
+                    data = data[m.end():]
+                    continue
+                
+                # Check for single punctuation mark
+                if data[0] in PUNCTUATION:
+                    subtokens.append(Token(data[0], Token.PUNCTUATION))
+                    data = data[1:]
+                    continue
+                
+
+                # Check for common abbreviations, lest the final dot messes things up
+                # Itron
+                m = re.match(r"it\.", data, re.IGNORECASE)
+                if m:
+                    t = Token(m.group(), Token.ABBREVIATIION)
+                    t.norm.append("itron")
+                    subtokens.append(t)
+                    data = data[3:]
+                    continue
+
+                # Aotrou
+                m = re.match(r"ao\.", data, re.IGNORECASE)
+                if m:
+                    t = Token(m.group(), Token.ABBREVIATIION)
+                    t.norm.append("aotrou")
+                    subtokens.append(t)
+                    data = data[3:]
+                    continue
+                
+                # Sellet ouzh
+                m = re.match(r"s\.o\.", data, re.IGNORECASE)
+                if m:
+                    t = Token(m.group(), Token.ABBREVIATIION)
+                    t.norm.append("sellet ouzh")
+                    subtokens.append(t)
+                    data = data[4:]
+                    continue
+
+                # Hag all
+                m = re.match(r"h\.a\.", data, re.IGNORECASE)
+                if m:
+                    t = Token(m.group(), Token.ABBREVIATIION)
+                    t.norm.append("hag all")
+                    subtokens.append(t)
+                    data = data[4:]
+                    continue
+
+                m = re.match(r"h\.a(?=…)", data, re.IGNORECASE)
+                if m:
+                    t = Token(m.group(), Token.ABBREVIATIION)
+                    t.norm.append("hag all")
+                    subtokens.append(t)
+                    subtokens.append(Token('…', Token.PUNCTUATION))
+                    data = data[4:]
+                    continue
+
+                # Niverenn
+                m = re.match(r"niv\.", data, re.IGNORECASE)
+                if m:
+                    t = Token(m.group(), Token.ABBREVIATIION)
+                    t.norm.append("niverenn")
+                    subtokens.append(t)
+                    data = data[4:]
+                    continue
+
+                # Single initial or group of initials (i.e: I.E. or U.N.…)
+                m = re.match(r"([A-Z]\.)+", data)
+                if m:
+                    subtokens.append(Token(m.group(), Token.ACRONYM))
+                    data = data[m.end():]
+                    continue
+                
+
+                # Check for trailing punctuation
+                # Trailing ellipsis
+                m = re.search(r"\.\.+$", data)
+                if m:
+                    post_subtokens.insert(0, Token(m.group(), Token.PUNCTUATION))
+                    data = data[:m.start()]
+                    continue
+
+                # Other trailing punctuation
+                m = re.match(r"\!(\!)*$", data)
+                if m:
+                    t = Token(m.group(), Token.PUNCTUATION)
+                    t.norm.append('!')
+                    post_subtokens.insert(0, t)
+                    data = data[:m.start()]
+                    continue
+                
+                m = re.match(r"\?(\?)*$", data)
+                if m:
+                    t = Token(m.group(), Token.PUNCTUATION)
+                    t.norm.append('?')
+                    post_subtokens.insert(0, t)
+                    data = data[:m.start()]
+                    continue
+                
+                if data[-1] in CLOSING_PUNCT:
+                    post_subtokens.insert(0, Token(data[-1], Token.PUNCTUATION, Flag.CLOSING_PUNCT))
+                    data = data[:-1]
+                    continue
+
+                if data[-1] in PUNCTUATION:
+                    post_subtokens.insert(0, Token(data[-1], Token.PUNCTUATION))
+                    data = data[:-1]
+                    continue
+
+
+                # Parse the remainder
+                #m = re_word.match(data)
+                #m = re.match(r"[\w\-'’·]+", data)
+                m = common_word.match(data)
+                if m:
+                    l = m.end() - m.start()
+                    subtokens.append(Token(m.group()))
+                    data = data[l:]
+                    continue
+
+                subtokens.append(Token(data))
+                data = ''
+            
+            for t in subtokens + post_subtokens:
+                if norm_punct:
+                    if re.fullmatch(r"\.\.+", t.data):
+                        t.norm.append('…')
+                    elif t.data == '‚':   # dirty comma
+                        t.norm.append(',')
+                yield t
+        
+        else:
+            yield tok
+
+
+def parse_punctuation_bck(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
     """ Parse a stream of raw tokens to find punctuation
     
         TODO:
@@ -191,8 +373,17 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
             remainder = ""
             while data:
                 tokens = []
-                
-                if re.search(r"\.\.+", data):
+
+                # Check if it is an abbreviation
+                for abbr in abbreviations:
+                    if data.startswith(abbr):
+                        t = Token(abbr, Token.ABBREVIATIION)
+                        t.norm.append(abbreviations[abbr])
+                        tokens.append(t)
+                        data = data[len(abbr):]
+                        break
+                                
+                if re.search(r"\.\.+", data):   # Ellipsis
                     match = re.search(r"\.\.+", data)
                     if match.start() == 0:
                         # Ellipsis is at the beginning of the word
@@ -203,7 +394,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                         left_part = data[:match.start()]
                         remainder = data[match.start():]
                         data = left_part
-                elif data in PUNCTUATION:
+                elif data and data in PUNCTUATION:
                     # A single punctuation
                     tokens.append(Token(data, Token.PUNCTUATION))
                     # All data is consumed
@@ -327,10 +518,10 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                 elif num_concat and len(tok.data) == 3:
                     num_concat += tok.data                    
                 else:
-                    # An full number
+                    # A full number
                     tok.kind = Token.NUMBER
             elif re.fullmatch(r"\d{1,3}(\.\d\d\d)+", tok.data):
-                # A big number with dotted thousands (i.e: 12.000.000)
+                # Big number with dotted thousands (i.e: 12.000.000)
                 tok.data = tok.data.replace('.', '')
                 tok.kind = Token.NUMBER
             else:
@@ -463,6 +654,8 @@ def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator
     
     token_stream = generate_raw_tokens(text_or_gen)
     token_stream = parse_punctuation(token_stream, **options)
+    token_stream = generate_tokens_lookahead(token_stream)
+    token_stream = generate_eos_tokens(token_stream)
     if autocorrect:
         token_stream = correct_tokens(token_stream)
     token_stream = parse_numerals(token_stream)
@@ -588,6 +781,8 @@ def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> I
     
     token_stream = generate_raw_tokens(text_or_gen)
     token_stream = parse_punctuation(token_stream)
+    token_stream = generate_tokens_lookahead(token_stream) # Needed to generate subsequent eos tokens
+    token_stream = generate_eos_tokens(token_stream)
 
     current_sentence = []
     for tok in token_stream:

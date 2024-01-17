@@ -17,8 +17,6 @@ aoziñ
 arc'hanin
 àrc'hoazh
 àrlerc'h
-farrouzioù
-sonerion
 àrnezhe
 àrnin
 arriet
@@ -35,6 +33,7 @@ aveidoc'h
 aveite
 aveitoñ
 baeiñ
+bamdé
 barrouz
 behe
 beleion
@@ -42,6 +41,7 @@ berped
 betag
 betak
 beviñ
+blead
 bleadoù
 bleidi
 blez
@@ -121,10 +121,12 @@ evidin
 eviñ
 ewit
 ey
+farrouzioù
 feñv
 feñval
 feñvo
 fichal
+foetal
 founapl
 founnaploc'h
 gadoer
@@ -163,6 +165,8 @@ hanon
 hanout
 henoazh
 herie
+hiniv
+hiniv
 hom
 hudu
 iet
@@ -181,6 +185,7 @@ kanourez
 kat
 kaviet
 kea
+keginour
 keno
 koedaj
 koedajoù
@@ -241,7 +246,6 @@ oec'h
 oemp
 oen
 oent
-okupe
 ouezan
 ouezer
 ouezez
@@ -286,6 +290,7 @@ sinifia
 skandalus
 skolerion
 skrivagnour
+sonerion
 staotaat
 stoup
 studierion

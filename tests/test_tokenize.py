@@ -1,11 +1,21 @@
 
 from ostilhou import tokenize, detokenize
-from ostilhou.text import split_sentences, normalize
+from ostilhou.text import split_sentences
 
 
 
 def test_tokenizer():
-    assert len(list(tokenize("unan daou tri"))) == 3
+    def num_tokens(s):
+        return len(list(tokenize(s)))
+    
+    test_cases = [
+        ("unan daou tri", 3),
+        ("demat,deoc'h", 3),
+        ("fin miz Gouere.Laouen e oa", 8), # +1 for EOS token
+    ]
+
+    for s, n in test_cases:
+        assert num_tokens(s) == n
 
 
 def test_split_sentence():
@@ -92,7 +102,7 @@ def test_autocorrection():
     def should_be(sent: str, correction: str) -> str:
         assert detokenize(tokenize(sent, autocorrect=True)) == correction
     
-    should_be("kemer an taski", "kemer an taksi") 
+    should_be("kemer an taski", "kemer an taxi") 
     should_be("abadenn France 3", "abadenn Frañs 3")
     should_be("abadenn France 3", "abadenn Frañs 3")
     should_be("Hirio on aet war twitter", "Hiziv on aet war Twitter")

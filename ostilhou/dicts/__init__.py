@@ -77,6 +77,38 @@ def get_acronyms_dict():
 acronyms = get_acronyms_dict()
 
 
+# Interjections
+
+_interjections_path = __file__.replace("__init__.py", "interjections.tsv")
+
+def get_interjections_dict():
+    """
+        Acronyms are stored in UPPERCASE in dictionary
+        Values are lists of strings for all possible pronunciation of an acronym
+    """
+    interjections = dict()
+    # for l in "BCDFGHIJKLMPQRSTUVWXZ":
+    #     acronyms[l] = [acr2f[l]]
+    
+    if os.path.exists(_interjections_path):
+        with open(_interjections_path, 'r') as f:
+            for l in f.readlines():
+                l = l.strip()
+                if l.startswith('#') or not l: continue
+                interj, *pron = l.split(maxsplit=1)
+                pron = pron if pron else []
+
+                if interj in interjections and pron:
+                    interjections[interj].append(pron)
+                else:
+                    interjections[interj] = pron
+    else:
+        print("Interjections dictionary not found... creating file")
+        open(_interjections_path, 'a').close()
+    return interjections
+
+interjections = get_interjections_dict()
+
 
 # Common word mistakes
 
