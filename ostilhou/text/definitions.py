@@ -4,7 +4,7 @@ from ..dicts import proper_nouns, nouns_f, nouns_m
 
 
 LETTERS = "aâàbcçdeêéèfghiïjklmnñoôpqrstuüùûvwxyz"
-PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—-'
+PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—'
 OPENING_QUOTES = "«“"
 CLOSING_QUOTES = "»”"
 # CLOSING_PUNCT = {'»': '«', '”': '“', ')': '('}

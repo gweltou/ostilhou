@@ -171,6 +171,7 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
             yield token
 
 
+
 def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
     """
         Parse a stream of raw tokens to find punctuation marks
@@ -325,9 +326,9 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
 
 
                 # Parse the remainder
-                #m = re_word.match(data)
-                #m = re.match(r"[\w\-'’·]+", data)
-                m = common_word.match(data)
+                m = re_word.match(data)             # Doesn't match (covid-19)
+                #m = re.match(r"[\w\-'’·]+", data)  # Breaks numbers with dots or commas
+                # m = common_word.match(data)       # Doesn't match the final hyphen (labour- \ndouar )
                 if m:
                     l = m.end() - m.start()
                     subtokens.append(Token(m.group()))
@@ -349,118 +350,118 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
             yield tok
 
 
-def parse_punctuation_bck(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
-    """ Parse a stream of raw tokens to find punctuation
+# def parse_punctuation_bck(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
+#     """ Parse a stream of raw tokens to find punctuation
     
-        TODO:
-            * words with a dot in the middle and more than 2 letters
-                (ex: [...] fin miz Gouere.Laouen e oa [...])
-                Met diwall da "postel.bzh", da skouer
-            * rak,tost
+#         TODO:
+#             * words with a dot in the middle and more than 2 letters
+#                 (ex: [...] fin miz Gouere.Laouen e oa [...])
+#                 Met diwall da "postel.bzh", da skouer
+#             * rak,tost
 
-    """
+#     """
 
-    # Normalize punctuation option
-    norm_punct = options.pop('norm_punct', False)
+#     # Normalize punctuation option
+#     norm_punct = options.pop('norm_punct', False)
 
-    punct_stack = []
+#     punct_stack = []
 
-    next_is_first_in_sentence = True
+#     next_is_first_in_sentence = True
 
-    for tok in token_stream:
-        if tok.kind == Token.RAW:
-            data = tok.data
-            remainder = ""
-            while data:
-                tokens = []
+#     for tok in token_stream:
+#         if tok.kind == Token.RAW:
+#             data = tok.data
+#             remainder = ""
+#             while data:
+#                 tokens = []
 
-                # Check if it is an abbreviation
-                for abbr in abbreviations:
-                    if data.startswith(abbr):
-                        t = Token(abbr, Token.ABBREVIATIION)
-                        t.norm.append(abbreviations[abbr])
-                        tokens.append(t)
-                        data = data[len(abbr):]
-                        break
+#                 # Check if it is an abbreviation
+#                 for abbr in abbreviations:
+#                     if data.startswith(abbr):
+#                         t = Token(abbr, Token.ABBREVIATIION)
+#                         t.norm.append(abbreviations[abbr])
+#                         tokens.append(t)
+#                         data = data[len(abbr):]
+#                         break
                                 
-                if re.search(r"\.\.+", data):   # Ellipsis
-                    match = re.search(r"\.\.+", data)
-                    if match.start() == 0:
-                        # Ellipsis is at the beginning of the word
-                        tokens.append(Token(match.group(), Token.PUNCTUATION))
-                        data = data[match.end():]
-                    else:
-                        # Ellipsis in the middle or end of the word
-                        left_part = data[:match.start()]
-                        remainder = data[match.start():]
-                        data = left_part
-                elif data and data in PUNCTUATION:
-                    # A single punctuation
-                    tokens.append(Token(data, Token.PUNCTUATION))
-                    # All data is consumed
-                    data = remainder
-                    remainder = ""
-                elif re.match(r"([A-Z]\.)+", data):
-                    # Single initial or group of initials (i.e: I.E.)
-                    match = re.match(r"([A-Z]\.)+", data)
-                    tokens.append(Token(data))
-                    data = data[match.end():]
-                else:
-                    # Parse left punctuation
-                    while data and data[0] in PUNCTUATION:
-                        tokens.append(Token(data[0], Token.PUNCTUATION))
-                        data = data[1:]
-                    # Parse right punctuation
-                    deferred_tokens = []
-                    while data and data[-1] in PUNCTUATION:
-                        deferred_tokens.insert(0, Token(data[-1], Token.PUNCTUATION))
-                        data = data[:-1]
-                    if data:
-                        # No more punctuation in word
-                        tokens.append(Token(data, tok.kind))
-                        # All data is consumed
-                        data = remainder
-                        remainder = ""
-                    if deferred_tokens:
-                        tokens.extend(deferred_tokens)
+#                 if re.search(r"\.\.+", data):   # Ellipsis
+#                     match = re.search(r"\.\.+", data)
+#                     if match.start() == 0:
+#                         # Ellipsis is at the beginning of the word
+#                         tokens.append(Token(match.group(), Token.PUNCTUATION))
+#                         data = data[match.end():]
+#                     else:
+#                         # Ellipsis in the middle or end of the word
+#                         left_part = data[:match.start()]
+#                         remainder = data[match.start():]
+#                         data = left_part
+#                 elif data and data in PUNCTUATION:
+#                     # A single punctuation
+#                     tokens.append(Token(data, Token.PUNCTUATION))
+#                     # All data is consumed
+#                     data = remainder
+#                     remainder = ""
+#                 elif re.match(r"([A-Z]\.)+", data):
+#                     # Single initial or group of initials (i.e: I.E.)
+#                     match = re.match(r"([A-Z]\.)+", data)
+#                     tokens.append(Token(data))
+#                     data = data[match.end():]
+#                 else:
+#                     # Parse left punctuation
+#                     while data and data[0] in PUNCTUATION:
+#                         tokens.append(Token(data[0], Token.PUNCTUATION))
+#                         data = data[1:]
+#                     # Parse right punctuation
+#                     deferred_tokens = []
+#                     while data and data[-1] in PUNCTUATION:
+#                         deferred_tokens.insert(0, Token(data[-1], Token.PUNCTUATION))
+#                         data = data[:-1]
+#                     if data:
+#                         # No more punctuation in word
+#                         tokens.append(Token(data, tok.kind))
+#                         # All data is consumed
+#                         data = remainder
+#                         remainder = ""
+#                     if deferred_tokens:
+#                         tokens.extend(deferred_tokens)
                 
-                for t in tokens:
-                    if t.kind == Token.PUNCTUATION:
-                        if norm_punct:
-                            if t.data == '‚':   # dirty comma
-                                t.norm.append(',')
-                            if re.match(r"\.\.+", t.data):
-                                t.norm.append('…')
+#                 for t in tokens:
+#                     if t.kind == Token.PUNCTUATION:
+#                         if norm_punct:
+#                             if t.data == '‚':   # dirty comma
+#                                 t.norm.append(',')
+#                             if re.match(r"\.\.+", t.data):
+#                                 t.norm.append('…')
                         
-                        if t.data == '"':
-                            if punct_stack and punct_stack[-1] == '"':
-                                punct_stack.pop()
-                            else:
-                                # we use a single '"' char to represent every kind of quotation mark
-                                # this prevents problems when mixing types of quotation marks
-                                punct_stack.append('"')
-                        elif t.data in OPENING_QUOTES:
-                            punct_stack.append('"')
-                        elif t.data in CLOSING_QUOTES:
-                            if punct_stack and punct_stack[-1] == '"':
-                                punct_stack.pop()
-                        elif t.data == '(':
-                            punct_stack.append('(')
-                        elif t.data == ')':
-                            if punct_stack and punct_stack[-1] == '(':
-                                punct_stack.pop()
+#                         if t.data == '"':
+#                             if punct_stack and punct_stack[-1] == '"':
+#                                 punct_stack.pop()
+#                             else:
+#                                 # we use a single '"' char to represent every kind of quotation mark
+#                                 # this prevents problems when mixing types of quotation marks
+#                                 punct_stack.append('"')
+#                         elif t.data in OPENING_QUOTES:
+#                             punct_stack.append('"')
+#                         elif t.data in CLOSING_QUOTES:
+#                             if punct_stack and punct_stack[-1] == '"':
+#                                 punct_stack.pop()
+#                         elif t.data == '(':
+#                             punct_stack.append('(')
+#                         elif t.data == ')':
+#                             if punct_stack and punct_stack[-1] == '(':
+#                                 punct_stack.pop()
 
-                    if next_is_first_in_sentence:
-                        t.flags.add(Flag.FIRST_WORD)
-                        next_is_first_in_sentence = False
-                    yield t
-                    # if not punct_stack and t.data in '.?!:;':
-                    if not punct_stack and t.data in '.?!':
-                        yield Token('', Token.END_OF_SENTENCE)
-                        next_is_first_in_sentence = True
+#                     if next_is_first_in_sentence:
+#                         t.flags.add(Flag.FIRST_WORD)
+#                         next_is_first_in_sentence = False
+#                     yield t
+#                     # if not punct_stack and t.data in '.?!:;':
+#                     if not punct_stack and t.data in '.?!':
+#                         yield Token('', Token.END_OF_SENTENCE)
+#                         next_is_first_in_sentence = True
         
-        else:
-            yield tok
+#         else:
+#             yield tok
 
 
 
@@ -512,6 +513,8 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
     num_concat = "" # buffer to contatenate numeral forms such as '12 000' -> '12000'
     for tok in token_stream:
         if tok.kind == Token.RAW:
+            # r"[+-]?\d+(?:,\d+)"
+
             if tok.data.isdecimal():
                 if not num_concat and len(tok.data) < 4:
                     num_concat += tok.data
@@ -572,6 +575,7 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                 if num_concat:
                     yield Token(num_concat, Token.NUMBER)
                     num_concat = ""
+        
         else:
             if num_concat:
                 yield Token(num_concat, Token.NUMBER)

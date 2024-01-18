@@ -104,14 +104,33 @@ def test_normalization_punct_capitalze():
         should_be(t, gt)
 
 
-def test_ordinal_normalization():
+def test_normalize_ordinal():
     test_cases = ["1añ", "2vet", "3de", "3vet", "IIIde", "4e", "IVe", "4re", "4vet", "5vet", "17vet", "XIIvet", "123vet", "XXIvet"]
+    
     for t in test_cases:
         print(t, end=' ')
         if is_ordinal(t): print(norm_ordinal(t))
         elif is_roman_ordinal(t): print(norm_roman_ordinal(t))
         else: print("Not an ordinal", t)
 
+
+def test_normalize_abbrev():
+    def should_be(s1: str, s2: str) -> None:
+        normalized = normalize_sentence(s1)
+        print(normalized)
+        assert s2 == normalized
+    
+    test_cases = [
+        ("Ho teul-film Open the Border (s.o. niverenn 640), diwar-benn repuidi eus ar C’hurdistan.",
+            "Ho teul-film Open the Border (sellet ouzh niverenn c'hwec'h kant daou-ugent), diwar-benn repuidi eus ar C’hurdistan."),
+        ("« Deomp de’i » a oa anv manifestadeg miz Meurzh 2012 [s.o. Bremañ niv. 365 ha 367].",
+            "« Deomp de’i » a oa anv manifestadeg miz Meurzh daou vil daouzek [sellet ouzh Bremañ niverenn tri c'hant pemp ha tri-ugent ha tri c'hant seizh ha tri-ugent]."),
+        ("Morlaerezh, utopiezh, sonerezh, barzhoniezh h.a., e Breizh-Veur, er Stadoù-Unanet, en Aostralia, en XIXvet, XXvet hag er XXIvet kantved.",
+            "Morlaerezh, utopiezh, sonerezh, barzhoniezh hag all, e Breizh-Veur, er Stadoù-Unanet, en Aostralia, en naontekvet, ugentvet hag er un warn-ugentvet kantved."),
+    ]
+
+    for t, gt in test_cases:
+        should_be(t, gt)
 
 
 def test_mutations_articles():
