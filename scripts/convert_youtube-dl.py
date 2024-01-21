@@ -31,16 +31,13 @@ from srt2seg import srt2segments
 
 
 def stage1():
-	"""
-	"""
-	
-	print("Stage 1")
+	print("Stage 1 : file conversion")
 	
 	if args.output:
 		if not os.path.exists(args.output):
 			os.mkdir(args.output)
 			print("Created folder", args.output)
-
+	
 	file_list = glob.glob(args.folder + "/*.vtt")
 	
 	for file in file_list:
@@ -80,11 +77,9 @@ def stage1():
 
 
 def stage2():
-	"""
-		Normalize text segments
-	"""
+	"""Normalize text segments"""
 	
-	print("Stage 2")
+	print("Stage 2 : normalization and cherry-picked correction")
 	
 	# Use a specific word substitution file
 	sub_file = "/home/gweltaz/STT/corpora/brezhoweb/substitution.tsv"
@@ -94,20 +89,15 @@ def stage2():
 			line = line.split('\t')
 			sub_dict[line[0]] = line[1].strip()
 	
-	if args.output:
-		file_list = glob.glob(args.output + "/*.seg")
-	else:
-		file_list = glob.glob(args.folder + "/*.seg")
+	file_list = glob.glob(args.folder + "/*.seg")
 	
 	total_mistakes = 0
 	total_kept_sentences = 0
-	for file in file_list:
+	for segment_file in file_list:
 		#print("======", file, "======")
-		wav_file = file.replace(".seg", ".wav")
-		text_file = wav_file.replace(".wav", ".txt")
-		segment_file = wav_file.replace(".wav", ".seg")
-		text = [ t[0] for t in load_text_data(text_file) ]
 		segments = load_segments_data(segment_file)
+		text_file = segment_file.replace(".seg", ".txt")
+		text = [ t[0] for t in load_text_data(text_file) ]
 		
 		kept_text = []
 		kept_segs = []
@@ -118,7 +108,7 @@ def stage2():
 				if word in sentence:
 					sentence = sentence.replace(word, sub_dict[word])
 			# sentence = re.sub(r"^-(?=[A-Z])", "– ", sentence)
-			norm_sentence = normalize_sentence(sentence, autocorrect=True)
+			norm_sentence = normalize_sentence(sentence, autocorrect=True, norm_punct=True)
 			norm_sentence = norm_sentence.replace('-', ' ')
 			corr, n_mistake = get_hspell_mistakes(norm_sentence)
 			n_words = len(filter_out_chars(norm_sentence, PUNCTUATION).split())
@@ -144,9 +134,93 @@ def stage2():
 		
 	print("Num mistakes:", total_mistakes)
 	print("Kept sentences:", total_kept_sentences)
+
+
+
+def stage3():
+	"""Joining segments from the same sentence (when possible)"""
 	
+	print("Stage 3 : joining segments")
 
+	def is_full_sentence(string: str) -> bool:
+		return string[0].isupper() and string[-1] in ".!?…"
 
+	def is_start_open(string: str) -> bool:
+		return t[0].islower() or t[0] == "'"
+	
+	def is_end_open(string: str) -> bool:
+		return joined_text[-1][-1].islower() or \
+				joined_text[-1][-1] in "',»\"…"
+
+	file_list = glob.glob(args.folder + "/*.seg")
+
+	max_sil = 0
+	total_segments_before = 0
+	total_segments_after = 0
+
+	for segment_file in file_list:
+		#print("======", file, "======")
+		segments = load_segments_data(segment_file)
+		text_file = segment_file.replace(".seg", ".txt")
+		text = [ t[0] for t in load_text_data(text_file) ]
+		
+		total_segments_before += len(segments)
+		joined_text = []
+		joined_segs = []
+		
+		for i, t in enumerate(text):
+			t = ' '.join(t.strip().split()) # Remove multi spaces
+
+			# First line in file
+			if not joined_text:
+				joined_text.append(t)
+				joined_segs.append(segments[i])
+				continue
+
+			if is_start_open(t) and is_end_open(joined_text[-1]):
+				# Measure time gap between this line and previous line
+				sil = segments[i][0] - joined_segs[-1][1]
+				# Expected length after joining the two segments together
+				joined_len = segments[i][1] - joined_segs[-1][0]
+				if sil < 1500 and joined_len < 9000:
+					# Join this segment with previous one
+					joined_text[-1] += ' ' + t
+					joined_segs[-1] = (joined_segs[-1][0], segments[i][1])
+					print(joined_text[-1])
+					continue
+			
+			if is_full_sentence(t) and is_full_sentence(joined_text[-1]):
+				# Measure time gap between this line and previous line
+				sil = segments[i][0] - joined_segs[-1][1]
+				# Expected length after joining the two segments together
+				joined_len = segments[i][1] - joined_segs[-1][0]
+				if sil < 2000 and joined_len < 6000:
+					# Join this segment with previous one
+					joined_text[-1] += ' ' + t
+					joined_segs[-1] = (joined_segs[-1][0], segments[i][1])
+					print(joined_text[-1])
+					continue
+
+			joined_text.append(t)
+			joined_segs.append(segments[i])
+		
+
+		total_segments_after += len(joined_segs)
+		if args.dry_run:
+			continue
+		
+		with open(text_file, 'w') as fout:
+			#fout.write("{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n")
+			fout.writelines([t+'\n' for t in joined_text])
+
+		with open(segment_file, 'w') as fout:
+			fout.writelines([f"{s[0]} {s[1]}\n" for s in joined_segs])
+		
+	print("Segments before:", total_segments_before)
+	print("Segments after:", total_segments_after)
+
+		# for seg, se in zip(segments[1:], text[1:]):
+		# 	if
 
 
 if __name__ == "__main__":
@@ -164,3 +238,7 @@ if __name__ == "__main__":
 		if args.output and args.output != args.folder:
 			args.folder = args.output
 		stage2()
+	elif args.stage == 3:
+		if args.output and args.output != args.folder:
+			args.folder = args.output
+		stage3()

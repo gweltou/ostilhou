@@ -214,9 +214,9 @@ def parse_data_file(seg_filename, args):
         
         cleaned = pre_process(sentence)
         if cleaned:
-            sent = normalize_sentence(cleaned, autocorrect=True)
+            sent = normalize_sentence(cleaned, autocorrect=True, norm_case=True)
             sent = sent.replace('-', ' ').replace('/', ' ')
-            sent = sent.replace('\xa0', ' ')
+            sent = sent.replace('\xa0', ' ') # Non-breakable spaces
             sent = filter_out_chars(sent, PUNCTUATION)
             sentences.append(' '.join(sent.replace('*', '').split()))
             speaker_ids.append(speaker_id)
@@ -230,18 +230,12 @@ def parse_data_file(seg_filename, args):
                     pass
                 elif word == "'":
                     pass
-                # elif word in verbal_fillers:
-                #     pass
-                # elif is_acronym(word):
-                #     pass
-                # elif word.lower() in proper_nouns:
-                #     pass
                 else: data["lexicon"].add(word)
         
         # Add sentence to language model corpus
         if add_to_corpus and not replace_corpus and not args.no_lm:
             for sub in split_sentences(cleaned, end=''):
-                sent = normalize_sentence(sub, autocorrect=True)
+                sent = normalize_sentence(sub, autocorrect=True, norm_case=True)
                 sent = sent.replace('-', ' ').replace('/', ' ')
                 sent = sent.replace('\xa0', ' ')
                 sent = filter_out_chars(sent, PUNCTUATION)
@@ -268,7 +262,7 @@ def parse_data_file(seg_filename, args):
         for sentence, _ in load_text_data(substitute_corpus_filename):
             for sub in split_sentences(sentence):
                 sub = pre_process(sub)
-                sub = normalize_sentence(sub, autocorrect=True)
+                sub = normalize_sentence(sub, autocorrect=True, norm_case=True)
                 sub = sub.replace('-', ' ').replace('/', ' ')
                 sub = sub.replace('\xa0', ' ')
                 sub = filter_out_chars(sub, PUNCTUATION)

@@ -4,6 +4,7 @@ achuet
 achuiñ
 aeset
 aesetoc'h
+ahemp
 alkent
 amezog
 amied
@@ -16,6 +17,7 @@ aoziñ
 àrall
 arc'hanin
 àrc'hoazh
+aresto
 àrlerc'h
 àrnezhe
 àrnin
@@ -53,9 +55,11 @@ bomdez
 breniñ
 brezhonegerion
 bromañ
+c'hellahe
 c'hellefe
 c'hellehe
 c'hellehemp
+c'hellehit
 c'hober
 c'hoedaj
 choma
@@ -146,6 +150,7 @@ glaska
 gleva
 gomza
 gonta
+gortait
 goûg
 gouiañv
 gouie
@@ -189,9 +194,12 @@ keginour
 keno
 koedaj
 koedajoù
+komañsamañt
+kondisioñ
 konta
 kontiñ
 kountant
+kousta
 koutant
 kouzhet
 krogiñ
@@ -202,6 +210,7 @@ matreze
 matrezen
 meit
 mem
+meriñ
 meskiñ
 mesklañ
 mestra
@@ -228,8 +237,11 @@ nezhe
 neziñ
 nimp
 noant
+n'oarer
 noe
 non
+n'ouian
+n'ouiomp
 noziad
 oara
 oaran
@@ -246,6 +258,7 @@ oec'h
 oemp
 oen
 oent
+oueliñ
 ouezan
 ouezer
 ouezez
@@ -298,6 +311,7 @@ stummiñ
 surtout
 tait
 tañval
+tenniñ
 troiñ
 vanka
 vefet
@@ -310,6 +324,7 @@ veleion
 vesklañ
 veviñ
 vitañ
+vizitiñ
 vlead
 vlez
 vlezad

@@ -23,9 +23,7 @@ from ostilhou.asr import (
     phonemes,
     phonetize_word,
     parse_dataset,
-    # load_segments_data
 )
-# from ostilhou.audio import load_audiofile
 
 
 
@@ -155,7 +153,7 @@ if __name__ == "__main__":
                     with open(lm_corpus_file, 'r') as fr:
                         for sentence in fr.readlines():
                             cleaned = pre_process(sentence)
-                            cleaned = normalize_sentence(cleaned.strip(), autocorrect=True)
+                            cleaned = normalize_sentence(cleaned.strip(), autocorrect=True, norm_case=True)
                             cleaned = cleaned.replace('-', ' ').replace('/', ' ')
                             cleaned = cleaned.replace('\xa0', ' ')
                             cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}')

@@ -175,9 +175,13 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
 def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
     """
         Parse a stream of raw tokens to find punctuation marks
+
+        Options:
+            * norm_punct: Normalize punctuation marks
     
         TODO:
             * URLS, email addresses (anything with internal punctuation marks)
+            * Fix: A... -> A.…
     """
 
     # Normalize punctuation option

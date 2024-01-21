@@ -301,33 +301,63 @@ norm_roman_ordinal = lambda s: ROMAN_ORDINALS[s] if s in ROMAN_ORDINALS else rom
 
 
 
-def normalize_sentence(sentence: str, autocorrect=False, norm_punct=True, capitalize=False) -> str:
-    """
-        Normalize a single sentence
+def normalize_sentence(sentence: str,
+                       autocorrect=False,
+                       norm_punct=False,
+                       norm_case=False,
+                       capitalize=False) -> str:
+    """ 
+        Normalize a single sentence.
         return: list of all possible normalization for the sentence
+
+        Parameters
+        ----------
+            autocorrect: bool
+                Substitutes words according to `corrected_tokens.tsv` dictionary
+            
+            norm_punct: bool
+                Normalize punctuation
+            
+            norm_case: bool
+                Lowerize any word that shouldn't be capitalized
+            
+            capitalize: bool
+                Capitalize the first word of each grammatical sentence
     """
 
     # Option: cap_first_letter ?
 
     propositions = []
     result = ""
-    return detokenize(normalize(tokenize(sentence, autocorrect=autocorrect, norm_punct=norm_punct)), capitalize=capitalize)
+    return detokenize(
+            normalize(
+                tokenize(sentence,
+                         autocorrect=autocorrect,
+                         norm_punct=norm_punct),
+                norm_case=norm_case),
+            capitalize=capitalize)
 
 
 
 def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
-    """ Text normalizer
+    """ 
+        Apply different kind of normalization to a stream of tokens
+
+        Options:
+            * norm_case: lowerize any word that shouldn't be capitalized
+        
 
         Bugs: the ordinal '3e' will be interpreted as a TIME token
     """
 
-    # prev_tok = None
-    # hold_token = False
+    norm_case = options.pop('norm_case', False)
+
+
     for tok in token_stream:
         if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data)
-        #elif tok.kind == Token.WORD: tok.norm.append(tok.data.lower())
+        elif tok.kind == Token.WORD and norm_case:
+            tok.norm.append(tok.data.lower())
         elif tok.kind == Token.NUMBER:
-            # hold_token = True
             tok.norm.append(num2txt(int(tok.data)))
         elif tok.kind == Token.ROMAN_NUMBER: tok.norm.append(roman2br[tok.data])
         elif tok.kind == Token.TIME: tok.norm.extend(norm_time(tok.data))
@@ -343,10 +373,4 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
         elif tok.kind == Token.UNIT:
             tok.norm.append(SI_UNITS[tok.data][0])
 
-        # if hold_token:
-        #     yield prev_tok
-        # if not hold_token:
-        #     yield tok
-        # hold_token = False
-        # prev_tok = tok
         yield tok
