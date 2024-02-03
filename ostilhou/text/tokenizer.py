@@ -11,7 +11,7 @@ from enum import Enum
 import re
 
 from .definitions import (
-    re_word, is_word, is_word_inclusive, common_word,
+    re_word, is_word, is_word_inclusive, re_extended_word,
     is_roman_number, is_ordinal, is_roman_ordinal,
     is_noun, is_noun_f, is_noun_m, is_proper_noun,
     is_time, match_time,
@@ -333,9 +333,10 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                     data = data[:-1]
                     continue
 
+                # Check for SI_UNITS here maybe
 
                 # Parse the remainder
-                m = re_word.match(data)             # Doesn't match (covid-19)
+                m = re_extended_word.match(data)             # Doesn't match (covid-19)
                 #m = re.match(r"[\w\-'’·]+", data)  # Breaks numbers with dots or commas
                 # m = common_word.match(data)       # Doesn't match the final hyphen (labour- \ndouar )
                 if m:

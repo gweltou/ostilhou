@@ -62,6 +62,7 @@ def test_detokenize():
     should_be("n'eus ster ebet, « na penn na lost» da gement-se.", "n'eus ster ebet, «\xa0na penn na lost\xa0» da gement-se.")
     should_be("un abadenn “ mikro digor” tro-dro d’ar rap", "un abadenn “mikro digor” tro-dro d’ar rap")
     should_be("Gouel Broadel ar Brezhoneg ( GBB ) .", "Gouel Broadel ar Brezhoneg (GBB).")
+    should_be("8,6 M€, 2 cm2", "eizh virgulenn c'hwec'h milion euro, daou santimetr karrez")
 
 
 def test_norm_punct():

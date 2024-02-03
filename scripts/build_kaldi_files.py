@@ -142,7 +142,7 @@ if __name__ == "__main__":
                 n += 1
             print(f" {n} sentences added")
         
-        # External text corpus will be added now
+        # External text corpora will be added now
         if args.lm_corpus:
             print("parsing and embedding external corpora :")
             with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a') as fout:

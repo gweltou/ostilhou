@@ -43,6 +43,7 @@ substitutions = {
 
 # Regular words
 re_word = re.compile(r"['’\-·" + LETTERS + r"]+", re.IGNORECASE)
+re_extended_word = re.compile(r"['’\-·" + LETTERS + r"]+[23²³€$%]?", re.IGNORECASE)
 common_word = re.compile(r"['’\·" + LETTERS + r"]+(-[" + LETTERS + r"]+)*", re.IGNORECASE)
 match_word = lambda s: re_word.fullmatch(s)
 is_word = lambda s: bool(match_word(s))

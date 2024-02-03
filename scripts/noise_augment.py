@@ -21,10 +21,6 @@ Usage:
 """
 
 
-FOLDER = [
-    "#brezhoneg",
-    "to_augment",
-    ]
 DEST = "augmented"
 
 EXCLUDE_FROM_LM = True
