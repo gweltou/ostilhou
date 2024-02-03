@@ -4,7 +4,7 @@ from ..dicts import proper_nouns, nouns_f, nouns_m
 
 
 LETTERS = "aâàbcçdeêéèëfghiïjklmnñoôpqrstuüùûvwxyzœ"
-PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—'
+PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—•'
 OPENING_QUOTES = "«“"
 CLOSING_QUOTES = "»”"
 # CLOSING_PUNCT = {'»': '«', '”': '“', ')': '('}
@@ -127,6 +127,7 @@ SI_UNITS = {
     '$'     : ['dollar', 'dollar amerikan'],
     'M€'    : ['milion euro'],
     '%'     : ["dre gant"],
+    '°C'    : ["derez celsius"],
     }
 
 # A percentage or a number followed by a unit

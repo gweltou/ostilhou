@@ -2,6 +2,7 @@ adgraet
 adlec'hiañ
 adnevesaat
 adnevesaet
+adkanañ
 agar
 agav
 agro
@@ -40,6 +41,7 @@ benlazhioù
 binarel
 biolojik
 bisiklet
+volkanek
 blam
 blini 
 boellgomzerioù
@@ -239,6 +241,7 @@ pandemi
 pandemiezh
 partienn
 partiennoù
+pakout
 pasporzh
 patronez
 pa'z
