@@ -5,6 +5,7 @@ achuiñ
 aeset
 aesetoc'h
 ahemp
+alanañ
 alkent
 amezog
 amied
@@ -17,7 +18,9 @@ aoziñ
 àrall
 arc'hanin
 àrc'hoazh
+arestiñ
 aresto
+aretiñ
 àrlerc'h
 àrnezhe
 àrnin
@@ -29,6 +32,7 @@ arruan
 arruas
 arrue
 arruet
+arruiñ
 avamenn
 avedin
 aveidoc'h
@@ -36,6 +40,7 @@ aveite
 aveitoñ
 baeiñ
 bamdé
+bamnoz
 barrouz
 behe
 beleion
@@ -43,6 +48,7 @@ berped
 betag
 betak
 beviñ
+bilajenn
 blead
 bleadoù
 bleidi
@@ -76,6 +82,7 @@ daet
 dait
 damaik
 daveton
+depañd
 deuson
 deusoutañ
 deusouti
@@ -159,6 +166,7 @@ goûl
 goûlet
 goûlit
 gouniet
+goutell
 gouvezet
 grait
 groga
@@ -180,6 +188,7 @@ implijiñ
 interesant
 intereset
 istoer
+istoerel
 istoerioù
 istoerour
 kailhoc'h
@@ -187,6 +196,7 @@ kaniñ
 kanniget
 kanour
 kanourez
+kasiñ
 kat
 kaviet
 kea
@@ -194,6 +204,7 @@ keginour
 keno
 koedaj
 koedajoù
+komañsa
 komañsamañt
 kondisioñ
 konta
@@ -204,6 +215,7 @@ koutant
 kouzhet
 krogiñ
 laoskel
+lâra
 lojiñ
 marsen
 matreze
@@ -249,6 +261,7 @@ oare
 oaremp
 oaren
 oarent
+oaromp
 oaront
 oblijet
 oc'hpenn
@@ -276,6 +289,7 @@ paeiñ
 pand
 parrouz
 parrouzioù
+partiañ
 pegiz
 pehani
 piàr
@@ -284,6 +298,10 @@ pikiñ
 plija
 poueziñ
 poulziñ
+predegenn
+predegennoù
+preparet
+promes
 rahet
 rall
 reseviñ
@@ -292,18 +310,21 @@ rimp
 rinier
 roiñ
 roñsed
+ruilha
 sa
 sachiñ
 seblanta
 sella
 sertenamant
 servija
+servijiñ
 sinifi
 sinifia
 skandalus
 skolerion
 skrivagnour
 sonerion
+soniñ
 staotaat
 stoup
 studierion
@@ -312,6 +333,7 @@ surtout
 tait
 tañval
 tenniñ
+tommiñ
 troiñ
 vanka
 vefet

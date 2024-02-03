@@ -21,7 +21,7 @@ from .definitions import (
     abbreviations,
     PUNCT_PAIRS, OPENING_PUNCT, CLOSING_PUNCT,
 )
-from .utils import capitalize
+from .utils import capitalize, is_capitalized
 from ..dicts import acronyms, corrected_tokens, standard_tokens
 
 
@@ -118,7 +118,10 @@ def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Toke
 
 
 def generate_tokens_lookahead(token_stream: Iterator[Token]):
-    token = next(token_stream)
+    try:
+        token = next(token_stream)
+    except StopIteration:
+        return
     for next_token in token_stream:
         token.next = next_token
         yield token
@@ -166,7 +169,8 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
                 yield Token('', Token.END_OF_SENTENCE)
         elif punct == '…' or re.fullmatch(r"\.\.+", punct):
             yield token
-            pass
+            if subsentence_depth == 0 and token.next and is_capitalized(token.next.data):
+                yield Token('', Token.END_OF_SENTENCE)
         else:
             yield token
 
@@ -182,12 +186,13 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
         TODO:
             * URLS, email addresses (anything with internal punctuation marks)
             * Fix: A... -> A.…
+            * Fix: Y. -B. Piriou
     """
 
     # Normalize punctuation option
     norm_punct = options.pop('norm_punct', False)
 
-    punct_stack = []
+    # punct_stack = [] # Not sure what's its use anymore...
 
     next_is_first_in_sentence = True
 
@@ -203,18 +208,18 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 # Check at the beggining of token
                 # Check for opening punctuation
                 if data[0] in OPENING_PUNCT:
-                    punct_stack.append(data[0])
+                    # punct_stack.append(data[0])
                     subtokens.append(Token(data[0], Token.PUNCTUATION, Flag.OPENING_PUNCT))
                     data = data[1:]
                     continue
 
                 # Check for closing punctuation
                 if data[0] in CLOSING_PUNCT:
-                    if punct_stack and data[0] == PUNCT_PAIRS[punct_stack[-1]]:
-                        punct_stack.pop()
-                        subtokens.append(Token(data[0], Token.PUNCTUATION, Flag.CLOSING_PUNCT))
-                        data = data[1:]
-                        continue
+                    # if punct_stack and data[0] == PUNCT_PAIRS[punct_stack[-1]]:
+                    #     punct_stack.pop()
+                    subtokens.append(Token(data[0], Token.PUNCTUATION, Flag.CLOSING_PUNCT))
+                    data = data[1:]
+                    continue
                 
                 # Check for ellipsis
                 m = re.match(r"\.\.+", data)
@@ -594,7 +599,10 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
 
 
 def correct_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
-    """ Should be applied before `parse_regular_words` """
+    """
+        Correct words from `corrected_tokens.tsv` and `standard_tokens.tsv`.
+        Should be applied before `parse_regular_words`
+    """
 
     def get_susbitution(word: str) -> List[str]:
         lowered = word.lower()
@@ -779,7 +787,7 @@ def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> I
 
     """
 
-    end_sentence = options.pop("end", '\n')
+    end_char = options.pop("end", '\n')
     # preserve_newline = options.pop("preserve_newline", False)
 
     if isinstance(text_or_gen, str):
@@ -795,9 +803,9 @@ def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> I
     current_sentence = []
     for tok in token_stream:
         if tok.kind == Token.END_OF_SENTENCE:
-            yield detokenize(current_sentence, **options) + end_sentence
+            yield detokenize(current_sentence, **options) + end_char
             current_sentence = []
         else:
             current_sentence.append(tok)
     if current_sentence:
-        yield detokenize(current_sentence, **options) + end_sentence
+        yield detokenize(current_sentence, **options) + end_char

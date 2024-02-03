@@ -4,7 +4,6 @@ from .definitions import LETTERS, PUNCTUATION
 
 
 
-
 def strip_punct(word: str) -> str:
     """ Strip punctuation left and right of a word """
 
@@ -24,6 +23,10 @@ def filter_out_chars(text: str, chars: str) -> str:
         if not l in chars: filtered_text += l
     return filtered_text
 
+
+
+def is_capitalized(word: str) -> bool:
+    return word.istitle()
 
 
 def capitalize(word: str) -> str:
@@ -105,6 +108,7 @@ def pre_process(text: str) -> str:
 #     text = text.replace("n'ouzon ", "n' ouzon ")
 #     # n'oc'h
 #     # n'omp
+
 
 
 def sentence_stats(sentence: str) -> dict:

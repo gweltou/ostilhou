@@ -29,6 +29,8 @@ from ostilhou.hspell import get_hspell_mistakes
 from srt2seg import srt2segments
 
 
+skipfile_path = "/home/gweltaz/STT/corpora/brezhoweb/skip.tsv"
+
 
 def stage1():
 	print("Stage 1 : file conversion")
@@ -40,9 +42,16 @@ def stage1():
 	
 	file_list = glob.glob(args.folder + "/*.vtt")
 	
+	with open(skipfile_path, 'r') as f:
+		skipfiles = [l.strip() for l in f.readlines()]
+	
 	for file in file_list:
 		print(file)
 		new_file = file.replace(".br.vtt", ".vtt")
+		basename = os.path.split(os.path.splitext(new_file)[0])[1]
+		if basename in skipfiles:
+			print("**** skipping ****")
+			continue
 		source_audio_file = new_file.replace(".vtt", ".mp3")
 		new_file = new_file.replace('&', '_')
 		new_file = new_file.replace(' ', '_')
@@ -90,11 +99,10 @@ def stage2():
 			sub_dict[line[0]] = line[1].strip()
 	
 	file_list = glob.glob(args.folder + "/*.seg")
-	
 	total_mistakes = 0
 	total_kept_sentences = 0
+
 	for segment_file in file_list:
-		#print("======", file, "======")
 		segments = load_segments_data(segment_file)
 		text_file = segment_file.replace(".seg", ".txt")
 		text = [ t[0] for t in load_text_data(text_file) ]
@@ -107,21 +115,19 @@ def stage2():
 			for word in sub_dict:
 				if word in sentence:
 					sentence = sentence.replace(word, sub_dict[word])
-			# sentence = re.sub(r"^-(?=[A-Z])", "– ", sentence)
 			norm_sentence = normalize_sentence(sentence, autocorrect=True, norm_punct=True)
 			norm_sentence = norm_sentence.replace('-', ' ')
 			corr, n_mistake = get_hspell_mistakes(norm_sentence)
 			n_words = len(filter_out_chars(norm_sentence, PUNCTUATION).split())
-			if n_mistake <= n_words // 6:
+			if n_mistake <= n_words // 7: # Only sentences with less than 15% errors are kept
 				kept_text.append(norm_sentence)
 				kept_segs.append(seg)
 				total_kept_sentences += 1
 				if n_mistake > 1:
 					total_mistakes += n_mistake
-					#print(corr)
 			else:
 				print(corr)
-		#print()
+		
 		if args.dry_run:
 			continue
 		
@@ -153,13 +159,10 @@ def stage3():
 				joined_text[-1][-1] in "',»\"…"
 
 	file_list = glob.glob(args.folder + "/*.seg")
-
-	max_sil = 0
 	total_segments_before = 0
 	total_segments_after = 0
 
 	for segment_file in file_list:
-		#print("======", file, "======")
 		segments = load_segments_data(segment_file)
 		text_file = segment_file.replace(".seg", ".txt")
 		text = [ t[0] for t in load_text_data(text_file) ]
@@ -186,7 +189,6 @@ def stage3():
 					# Join this segment with previous one
 					joined_text[-1] += ' ' + t
 					joined_segs[-1] = (joined_segs[-1][0], segments[i][1])
-					print(joined_text[-1])
 					continue
 			
 			if is_full_sentence(t) and is_full_sentence(joined_text[-1]):
@@ -198,7 +200,6 @@ def stage3():
 					# Join this segment with previous one
 					joined_text[-1] += ' ' + t
 					joined_segs[-1] = (joined_segs[-1][0], segments[i][1])
-					print(joined_text[-1])
 					continue
 
 			joined_text.append(t)
@@ -219,8 +220,6 @@ def stage3():
 	print("Segments before:", total_segments_before)
 	print("Segments after:", total_segments_after)
 
-		# for seg, se in zip(segments[1:], text[1:]):
-		# 	if
 
 
 if __name__ == "__main__":

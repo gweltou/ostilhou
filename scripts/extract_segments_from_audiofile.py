@@ -1,6 +1,16 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+    File: extract_segments_from_audiofiles.py
+
+    Creates many single utterance audio files from a long audiofile.
+
+    Usage:
+        python3 extract_segments_from_audiofiles.py long_audio.mp3 -o utterances
+    
+    Author: Gweltaz Duval-Guennoc (2023)
+"""
 
 import os
 import argparse

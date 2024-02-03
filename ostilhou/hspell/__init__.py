@@ -34,9 +34,14 @@ hs_dict = get_hunspell_dict()
 
 
 
-def get_hspell_mistakes(sentence: str) -> Tuple[str, int]:
+def get_hspell_mistakes(sentence: str, autocorrect=True) -> Tuple[str, int]:
     """ Return a string which is a colored correction of the sentence
-        and the number of spelling mistakes in sentence
+        and the number of spelling mistakes in sentence.
+
+        Parameters
+        ----------
+            autocorrect: bool
+                Apply autocorrection before countint errors
     """
 
     n_mistakes = 0

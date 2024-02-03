@@ -1,6 +1,19 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
+"""
+    File: build_tsv.py
+
+    Build a tsv file from a folder hierarchy.
+    Split audio files by utterances.
+
+    Usage : python3 build_tsv.py --train file.seg -o output_dir
+
+    Author:  Gweltaz Duval-Guennoc (2023)
+"""
+
+
 import sys
 import os
 import argparse
@@ -20,15 +33,6 @@ from ostilhou.asr import (
     load_text_data,
 )
 from ostilhou.audio import load_audiofile
-
-
-"""
- Build a tsv file from a folder hierarcy
-
- Usage : ./build_tsv.py -h
- 
- Author:  Gweltaz Duval-Guennoc
-"""
 
 
 utt_ids = set()

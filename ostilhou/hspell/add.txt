@@ -1,8 +1,10 @@
+adgraet
 adlec'hiañ
 adnevesaat
 adnevesaet
 agar
 agav
+agro
 a'i
 aktourez
 alambig
@@ -54,6 +56,7 @@ buhezourez
 buhezourien
 c'hameraioù
 c'hamping
+c'hatana
 c'henasantiñ
 c'henfinañ
 c'henitervez
@@ -67,6 +70,7 @@ c'horonavirus
 c'hovid
 de'i
 denien
+diabarzhet
 dianv
 dibaoe
 dibleget
@@ -126,6 +130,7 @@ frigo
 gall'
 gapitalouriezh
 g'ar
+genitervez
 geriaduriñ
 geriaouegi
 glaouch
@@ -163,19 +168,25 @@ kakaouetez
 kaki
 kamping
 kantilitrad
+kantoner
 kapitalist
 kardio
+katana
 kayak
 kenasantiñ
 kenfinañ
 kenfinet
+kenitervez
 kentaidi
 kenweturiñ
+keta
 kigezat
 klaviadiñ
 klaviadoù
 koko
 kompliket
+komunist
+komunisted
 koneri
 konerioù
 koñferañs
@@ -190,8 +201,10 @@ lagout
 lâr'
 lazagn
 lesbian
+liberet
 lignezour
 lignezouriezh
+limonad
 lisañs
 lodennadur
 loupet
@@ -201,6 +214,7 @@ mikroboù
 mililitrad
 milourel
 milvrudet
+mini
 mojennerezh
 nac'helour
 naouek
@@ -232,8 +246,6 @@ pedopornografek
 penngasourez
 perc'henniñ
 pesketouriezh
-katana
-c'hatana
 pesto
 peupre
 peurreizh
@@ -274,6 +286,7 @@ santilitrad
 sañtimetr
 satori
 seksel
+seksist
 servij'
 seurf
 seurfiñ
@@ -285,6 +298,7 @@ skampiola
 sklêrijennat
 skolpoù
 skript
+skriptoù
 skuizhaat
 stasioñ
 statistikel

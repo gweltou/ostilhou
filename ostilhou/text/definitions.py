@@ -3,7 +3,7 @@ import re
 from ..dicts import proper_nouns, nouns_f, nouns_m
 
 
-LETTERS = "aâàbcçdeêéèëfghiïjklmnñoôpqrstuüùûvwxyz"
+LETTERS = "aâàbcçdeêéèëfghiïjklmnñoôpqrstuüùûvwxyzœ"
 PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—'
 OPENING_QUOTES = "«“"
 CLOSING_QUOTES = "»”"

@@ -10,14 +10,12 @@
     Usage: ./verify_text_files.py DIRECTORY
     
     Author: Gweltaz Duval-Guennoc
- 
 """
 
 
 import sys
 import os
-import re
-import libMySTT
+from ostilhou.text import get_hspell_mistakes
 from colorama import Style
 
 
@@ -60,7 +58,7 @@ if __name__ == "__main__":
                 if line.startswith('#'):
                     continue
                     
-                correction, errors = libMySTT.get_correction(line)
+                correction, errors = get_hspell_mistakes(line)
                 num_errors += errors
                 if errors:
                     print(f"[{num_line}] {correction}")

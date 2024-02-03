@@ -96,3 +96,12 @@ def translate_tokens(token_stream: Iterator[Token], tra_dict: dict, **options: A
                     tok.data = tra_dict[tok.data]
                     break
         yield tok
+
+
+def count_words(sentence: str) -> int:
+    """ Return number of regular words in sentence """
+    n = 0
+    for t in tokenize(sentence, norm_punct=True, autocorrect=True):
+        if t.kind == Token.WORD:
+            n += 1
+    return n
