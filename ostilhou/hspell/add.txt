@@ -1,8 +1,8 @@
 adgraet
+adkanañ
 adlec'hiañ
 adnevesaat
 adnevesaet
-adkanañ
 agar
 agav
 agro
@@ -41,7 +41,6 @@ benlazhioù
 binarel
 biolojik
 bisiklet
-volkanek
 blam
 blini 
 boellgomzerioù
@@ -199,6 +198,7 @@ koronavirus
 kouilhoù
 kultivañ
 kurry
+labo
 lagout
 lâr'
 lazagn
@@ -237,11 +237,11 @@ okupet
 orgasm
 ounner
 pagailh
+pakout
 pandemi
 pandemiezh
 partienn
 partiennoù
-pakout
 pasporzh
 patronez
 pa'z
@@ -341,6 +341,7 @@ vilajenn
 vilourel
 visiklet
 vitaminoù
+volkanek
 voudisted
 vousfentiñ
 vuhezour

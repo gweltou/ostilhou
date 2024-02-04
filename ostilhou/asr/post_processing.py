@@ -68,8 +68,18 @@ _inorm_units_dict = load_postproc_dict(_inorm_units_dict_path)
 
 
 
-def post_process_text(sentence: str, normalize=False, keep_fillers=False) -> str:
+def post_process_text(sentence: str, normalize=False, keep_fillers=True) -> str:
     """ Apply post-processing on raw text """
+
+    # Verbal fillers removal
+    if not keep_fillers:
+        sentence = sentence.split()
+        parsed = []
+        for word in sentence:
+            if not word.lower() in verbal_fillers:
+                parsed.append(word)
+        sentence = ' '.join(parsed)
+    
     sentence = apply_post_process_dict_text(sentence, _postproc_dict)
     
     # Add hyphens for "-se" and "-mañ"
@@ -100,6 +110,14 @@ def post_process_timecoded(
         keep_fillers=True) -> List[dict]:
     """ Apply post-processing on Vosk formatted result (keeping timecodes) """
     
+    # Verbal fillers removal
+    if not keep_fillers:
+        parsed = []
+        for idx, tok in enumerate(tokens):
+            if not tok["word"].lower() in verbal_fillers:
+                parsed.append(tok)
+        tokens = parsed
+
     tokens = apply_post_process_dict_timecoded(tokens, _postproc_dict)
 
     # Add hyphens for "-se" and "-mañ"

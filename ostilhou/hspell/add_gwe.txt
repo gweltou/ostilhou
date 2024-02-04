@@ -96,6 +96,7 @@ diàr
 difeñv
 diferañs
 digete
+dihunamb
 diontañ
 dionte
 dioñte
@@ -107,7 +108,6 @@ disheñval
 diskoueziñ
 diskwel
 dislâra
-dihunamb
 doc'hte
 doc'htoñ
 doc'htu
