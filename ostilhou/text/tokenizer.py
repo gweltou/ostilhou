@@ -141,8 +141,13 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
 
     subsentence_depth = 0
     in_double_quotes = False
+    first_in_sentence = True
 
     for token in token_stream:
+        if first_in_sentence:
+            token.flags.add(Flag.FIRST_WORD)
+            first_in_sentence = False
+        
         if token.kind != Token.PUNCTUATION:
             yield token
             continue
@@ -165,10 +170,12 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
         
         if punct in ".!?":
             yield token
+            first_in_sentence = True
             if subsentence_depth == 0:
                 yield Token('', Token.END_OF_SENTENCE)
         elif punct == '…' or re.fullmatch(r"\.\.+", punct):
             yield token
+            first_in_sentence = True
             if subsentence_depth == 0 and token.next and is_capitalized(token.next.data):
                 yield Token('', Token.END_OF_SENTENCE)
         else:

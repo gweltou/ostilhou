@@ -162,6 +162,8 @@ if __name__ == "__main__":
                                     pass
                                 elif word == "'":
                                     pass
+                                elif '·' in word: # Don't add inclusive words for now
+                                    pass
                                 else:
                                     corpora["train"]["lexicon"].add(word)
                             fout.write(cleaned + '\n')

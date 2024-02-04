@@ -103,6 +103,7 @@ PATTERN_DOTTED_ACRONYM = re.compile(r"([A-Z]\.)+([A-Z])?")
 SI_UNITS = {
     'g'     : ["gramm"],
     'kg'    : ["kilo", "kilogramm"],
+    'µg'    : ["mikro gramm"],
     't'     : ["tonenn"],
     'l'     : ["litr", "litrad"],
     'cl'    : ["santilitr", "santilitrad"],
@@ -125,7 +126,8 @@ SI_UNITS = {
     'mn'    : ["munutenn"],
     '€'     : ['euro'],
     '$'     : ['dollar', 'dollar amerikan'],
-    'M€'    : ['milion euro'],
+    'k€'    : ["mil euro"],
+    'M€'    : ["milion euro"],
     '%'     : ["dre gant"],
     '°C'    : ["derez celsius"],
     }
