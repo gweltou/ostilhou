@@ -3,13 +3,13 @@
 
 
 """
-    File: verify_text.files.py
+    File: srt2seg.py
 
-    Converts a srt or vtt file to a seg and a txt file.
+    Converts a srt or vtt file to a seg (audio segments timecodes) and a txt file.
     The resulting files will be created in the same folder as the source srt/vtt file.
 
     Usage:
-        python3 srt2split.py subtitles.srt
+        python3 srt2seg.py subtitles.srt
     
     Author: Gweltaz Duval-Guennoc (2023)
 """

@@ -7,7 +7,7 @@
 	to local dataset format
 
 	Usage:
-		python3 convert_youtube-dl.py DOWNLAD_DIR [-o OUTPUT_DIR]
+		python3 convert_youtube-dl.py SOURCE_DIR [-o OUTPUT_DIR]
 
 	youtube-dl command:
 		youtube-dl --download-archive ${DOWNLOAD_DIR}/downloaded.txt --rm-cache-dir -cwi --no-post-overwrites -o ${DOWNLOAD_DIR}'/%(playlist_index)s-%(title)s.%(ext)s' --cookies=cookies.txt --write-sub --sub-lang br --sub-format vtt --extract-audio --audio-format mp3 https://www.youtube.com/playlist?list=$PLAYLIST
@@ -15,9 +15,9 @@
 
 
 import os
+import sys
 import glob
 from shutil import copyfile
-import re
 
 import argparse
 
@@ -29,11 +29,12 @@ from ostilhou.hspell import get_hspell_mistakes
 from srt2seg import srt2segments
 
 
+# Short list of audio documents that have been manually verified
 skipfile_path = "/home/gweltaz/STT/corpora/brezhoweb/skip.tsv"
 
 
-def stage1():
-	print("Stage 1 : file conversion")
+def stage0():
+	print("Stage 0 : file conversion")
 	
 	if args.output:
 		if not os.path.exists(args.output):
@@ -52,6 +53,8 @@ def stage1():
 		if basename in skipfiles:
 			print("**** skipping ****")
 			continue
+
+		# Renaming files
 		source_audio_file = new_file.replace(".vtt", ".mp3")
 		new_file = new_file.replace('&', '_')
 		new_file = new_file.replace(' ', '_')
@@ -63,26 +66,43 @@ def stage1():
 		if args.output:
 			new_file = os.path.join(args.output, os.path.split(new_file)[1])
 		copyfile(file, new_file)
-		# else:
-		# 	os.rename(file, new_file)
 		
 		if not os.path.exists(source_audio_file):
 			print("Couldn't find", source_audio_file)
 			continue
 		
+		# Audio conversion
 		wav_file = new_file.replace(".vtt", ".wav")
 		if args.output:
 			wav_file = os.path.join(args.output, os.path.split(wav_file)[1])
-
 		if not os.path.exists(wav_file):
 			convert_to_wav(source_audio_file, wav_file, keep_orig=not args.remove)
 		
+		# segments and text extraction
 		srt2segments(new_file)
 
-		# Remove subtitle file if necessary
+		# Remove original vtt subtitle file if necessary
 		if args.output and args.output != args.folder:
 			os.remove(new_file)
+
+
+def stage1():
+	"""Convert text to lowercase for baseline model"""
+
+	print("Stage 1: lowercase")
+	file_list = glob.glob(args.folder + "/*.seg")
+
+	for segment_file in file_list:
+		text_file = segment_file.replace(".seg", ".txt")
+		text = [ t[0] for t in load_text_data(text_file) ]
+
+		text = [ pre_process(s).lower() for s in text ]
 		
+		if args.dry_run:
+			continue
+
+		with open(text_file, 'w') as fout:
+			fout.writelines([t+'\n' for t in text])
 
 
 def stage2():
@@ -132,7 +152,6 @@ def stage2():
 			continue
 		
 		with open(text_file, 'w') as fout:
-			#fout.write("{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n")
 			fout.writelines([t+'\n' for t in kept_text])
 
 		with open(segment_file, 'w') as fout:
@@ -231,13 +250,18 @@ if __name__ == "__main__":
 	parser.add_argument('-d', '--dry-run', action='store_true', help="Do not write to disk")
 	args = parser.parse_args()
 
+	# File conversion
+	stage0()
+	
+	if args.output and args.output != args.folder:
+		args.folder = args.output
+
 	if args.stage == 1:
+		# Prepare data for baseline model
 		stage1()
-	elif args.stage == 2:
-		if args.output and args.output != args.folder:
-			args.folder = args.output
+	if args.stage >= 2:
+		# Normalization
 		stage2()
-	elif args.stage == 3:
-		if args.output and args.output != args.folder:
-			args.folder = args.output
+	if args.stage >= 3:
+		# Segment concatenation
 		stage3()

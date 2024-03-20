@@ -156,104 +156,82 @@ def concatenate_audiofiles(file_list, out_filename, remove=False):
 
 
 def get_min_max_energy(segment: AudioSegment, chunk_size=100, overlap=50):
-    """ Return the minimum dBFS of the segment, wich is above -inf.
-        chunk_size and overlap in milliseconds
-    """
-    max_energy = -999
-    energy_bins = dict()
-
+    min_energy = segment.max_possible_amplitude
+    max_energy = 0
     for i in range(0, len(segment), chunk_size-overlap):
         chunk = segment[i: i+chunk_size]  # Pydub will take care of overflow
-        if chunk.dBFS == -inf:
-            continue
-        energy = round(chunk.dBFS)
-        if energy in energy_bins:
-            energy_bins[energy] += 1
-        else:
-            energy_bins[energy] = 1
-        max_energy = max(max_energy, energy)
-    
-    bins_list = sorted(energy_bins.items())
-    n_thresh = ceil(sum(energy_bins.values()) / 1000)
-
-    for e, n in bins_list:
-        if e <= -80: continue
-        if n < n_thresh: continue
-        min_energy = e
-        break
-
-    return min_energy, max_energy
+        mean = chunk.rms
+        if mean < min_energy:
+            min_energy = mean
+        if mean > max_energy:
+            max_energy = mean
+    return (min_energy, max_energy)
 
 
-
-def _recursive_split(song: AudioSegment, segment: list, max_length=15, min_silence_len=300):
-    start, end = segment
-    if (end-start) / 1000 < max_length:
-        # Segment's length is short enough
-        return [segment]
-
-    min_e, max_e = get_min_max_energy(song[start:end])
+def binary_split(audio: AudioSegment, treshold_ratio=0.1):
+    min_e, max_e = get_min_max_energy(audio)
     delta_e = max_e - min_e
-    thresh = min_e + delta_e / 4.5
-    sub_segments = detect_nonsilent(song[start:end], min_silence_len=min_silence_len, silence_thresh=thresh)
+    thresh = min_e + delta_e * treshold_ratio
 
-    # Filter out segments too short (< 0.8s)
-    sub_segments = [ sub for sub in sub_segments if sub[1]-sub[0] > 800 ]
-
-    if len(sub_segments) == 1:
-        s, e = sub_segments[0]
-        if e-s > max_length:
-            # Sub divide a second time, if necessary
-            min_e, max_e = get_min_max_energy(song[s:e])
-            delta_e = max_e - min_e
-            thresh = min_e + delta_e / 5
-            sub2 = detect_nonsilent(song[s:e], min_silence_len=150, silence_thresh=thresh)
-            return [ [start+s, start+e] for s, e in sub2 ]
+    # Find segments above the energy threshold
+    chunk_size = 100 # millisec
+    overlap = 50 # millisec
+    segments = []
+    seg_start = 0 # millisec
+    in_noisy_chunk = False
+    for i in range(0, len(audio), chunk_size-overlap):
+        chunk = audio[i: i+chunk_size]  # Pydub will take care of overflow
+        if chunk.rms >= thresh:
+            if not in_noisy_chunk:
+                seg_start = i
+                in_noisy_chunk = True
         else:
-            return [[start+s, start+e]]
+            if in_noisy_chunk:
+                segments.append((seg_start, i+chunk_size))
+                in_noisy_chunk = False
+    if in_noisy_chunk:
+        segments.append((seg_start, len(audio)))
 
-    result = []
-    for seg in sub_segments:
-        result.extend(_recursive_split(song, [start + seg[0], start + seg[1]]))
-    sub_segments = result
+    if not segments:
+        return segments
+    # Find longest silence between segments
+    max_sil_length = 0
+    max_sil_length_idx = -1
+    for i in range(1, len(segments)):
+        sil_length = segments[i][0] - segments[i-1][1]
+        if sil_length > max_sil_length:
+            max_sil_length = sil_length
+            max_sil_length_idx = i
 
-    return result
+    if max_sil_length_idx > 0:
+        left_seg = (segments[0][0], segments[max_sil_length_idx-1][1])
+        right_seg = (segments[max_sil_length_idx][0], segments[-1][1])
+        return [left_seg, right_seg]
+    return []
 
 
-
-def split_to_segments(song: AudioSegment, max_length=15, min_length=5, min_silence_length=300) -> List:
+def split_to_segments(audio: AudioSegment, max_length=10, threshold_ratio=0.1):
     """
         Return a list of sub-segments from a pydub AudioSegment
         Sub-segments are represented as 2-elements lists:
             [start, end]
         Where 'start' and 'end' are in milliseconds
     """
-    segments: list = _recursive_split(song, [0, len(song)], max_length=max_length, min_silence_len=min_silence_length)
+    segments_stack = [(0, len(audio))]
+    short_segments = []
 
-    # Extend segments length
-    for i, seg in enumerate(segments[1:]):
-        prev = segments[i]
-        gap = seg[0] - prev[1]
-        if 100 < gap < 1000:
-            prev[1] += gap // 2 - 50
-            seg[0] -= gap // 2 - 50
-
-    # Concatenate short segments
-    result = [segments[0]]
-    for i, seg in enumerate(segments[1:]):
-        prev = segments[i]
-        prev_length = prev[1]-prev[0]
-        seg_length = seg[1]-seg[0]
-        gap = seg[0] - prev[1]
-        
-        if gap < 500 and prev_length + seg_length < min_length*1000:
-            # Extend previous segment with this segment
-            result[-1][1] = seg[1]
-        else:
-            result.append(seg)
-
-    return result
-
+    while segments_stack:
+        segment = segments_stack.pop()
+        start, end = segment
+        seg_len = end - start
+        if seg_len <= max_length * 1000:
+            short_segments.append(segment)
+            continue
+        sub_segments = binary_split(audio[start:end], threshold_ratio)
+        segments_stack.extend([ (start + s, start + e) for s, e in sub_segments ])
+    
+    return sorted(short_segments)
+    
 
 
 _AMB_REP = os.path.join(os.path.split(os.path.abspath(__file__))[0], "amb")

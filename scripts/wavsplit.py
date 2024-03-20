@@ -208,7 +208,7 @@ def main():
 
     if do_split:
         print("spliting wave file")
-        segments = split_to_segments(song, max_length=20, min_length=2)
+        segments = split_to_segments(song, max_length=10)
         save_segments(segments, seg_filename)
     
 

@@ -7,7 +7,7 @@ from .utils import (
     strip_punct, filter_out_chars, capitalize, pre_process,
     extract_parenthesis_content, sentence_stats,
 )
-from .definitions import PUNCTUATION, LETTERS
+from .definitions import PUNCTUATION, LETTERS, PUNCT_PAIRS
 from ..utils import read_file_drop_comments
 
 

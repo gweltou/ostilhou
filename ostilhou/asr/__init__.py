@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict
 from .dataset import extract_metadata, load_segments_data, load_text_data, parse_dataset, special_tokens
-from .recognizer import load_vosk, transcribe_segment, transcribe_file, transcribe_file_timecoded
+from .recognizer import load_model, transcribe_segment, transcribe_segment_timecoded, transcribe_file, transcribe_file_timecoded
 from .post_processing import verbal_fillers
 from ..dicts import proper_nouns, acronyms
 

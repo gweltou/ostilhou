@@ -34,9 +34,9 @@ special_tokens = (
 
 Segment = Tuple[int, int]
 
-def load_segments_data(segfile: str) -> Tuple[List[Segment], str]:
+def load_segments_data(segfile: str) -> List[Segment]:
     """ Load audio segments delimiters from a `.seg` file
-        Return a list of segments and a header string
+        Return a list of segments
     """
 
     segments = []

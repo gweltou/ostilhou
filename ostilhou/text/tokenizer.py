@@ -144,7 +144,7 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
     first_in_sentence = True
 
     for token in token_stream:
-        if first_in_sentence:
+        if first_in_sentence and not token.kind == Token.PUNCTUATION:
             token.flags.add(Flag.FIRST_WORD)
             first_in_sentence = False
         
