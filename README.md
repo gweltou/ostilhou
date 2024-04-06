@@ -16,7 +16,7 @@ Sentence splitting, simple pre-tokenizer, text normalization, text inverse-norma
 
 Spelling error detection with An Drouizig's hunspell dictionary.
 
-## [Dictionaries](ostilhou/dicts/)
+## [Dictionaries](ostilhou/dicts/README.md)
 
 Various dictionary files (tsv format) for proper nouns, first names, last names, nouns (with gender), acronyms.
 
@@ -50,6 +50,6 @@ The 'n-token substitution' step adds necessary hypens, composed name and brand n
 
 Audio data augmentation functions.
 
-## Toy corpora
+## [Toy corpora](ostilhou/corpora/)
 
 The library comes with a few toy corpora from the public domain.

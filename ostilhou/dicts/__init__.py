@@ -6,19 +6,27 @@ import typing
 # with phonemes when name has a foreign or particular pronunciations
 
 proper_nouns = dict()
-_proper_nouns_phon_path = __file__.replace("__init__.py", "proper_nouns_phon.tsv")
+proper_nouns_files = [
+    "proper_nouns_phon.tsv",
+    "places.tsv",
+    # "countries.tsv",
+    "last_names.tsv",
+    "first_names.tsv",
+]
 
-with open(_proper_nouns_phon_path, 'r') as f:
-    for l in f.readlines():
-        l = l.strip()
-        if l.startswith('#') or not l: continue
-        w, *pron = l.split(maxsplit=1)
-        pron = pron if pron else []
-        
-        if w in proper_nouns and pron:
-            proper_nouns[w].append(pron[0])
-        else:
-            proper_nouns[w] = pron
+for file in proper_nouns_files:
+    path = __file__.replace("__init__.py", file)
+    with open(path, 'r') as f:
+        for l in f.readlines():
+            l = l.strip()
+            if l.startswith('#') or not l: continue
+            w, *pron = l.split(maxsplit=1)
+            pron = pron or []
+            
+            if w in proper_nouns and pron:
+                proper_nouns[w].append(pron[0])
+            else:
+                proper_nouns[w] = pron
 
 
 
