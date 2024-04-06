@@ -9,6 +9,7 @@ from .utils import (
 )
 from .definitions import PUNCTUATION, LETTERS, PUNCT_PAIRS
 from ..utils import read_file_drop_comments
+from ..hspell import get_hspell_mistakes
 
 
 
@@ -105,3 +106,49 @@ def count_words(sentence: str) -> int:
         if t.kind == Token.WORD:
             n += 1
     return n
+
+
+def is_full_sentence(sentence: str) -> bool:
+    """Check if sentence is a complete sentence, punctuation-wise"""
+    return sentence[0].isupper() and sentence[-1] in ".!?…"
+
+def is_sentence_start_open(sentence: str) -> bool:
+    return sentence[0].islower() or sentence[0] in "'’"
+	
+def is_sentence_end_open(sentence: str) -> bool:
+    return sentence[-1].islower() or sentence[-1] in "…'’,»\""
+
+def is_sentence_punct_paired(sentence: str) -> bool:
+    if sentence.count('"') % 2 != 0:
+        return False
+    for punct in PUNCT_PAIRS:
+        if sentence.count(punct) != sentence.count(PUNCT_PAIRS[punct]):
+            return False
+    return True
+
+
+def score_sentence(sentence: str):
+    n_word = count_words(sentence)
+    highlighted_str, n_hspell_mistakes = get_hspell_mistakes(sentence, autocorrected=False)
+    print(highlighted_str)
+
+    n_mistakes = 0
+
+    for tok in tokenize(sentence, autocorrect=True):
+        if tok.kind == Token.WORD:
+            if tok.data.lower() in lexicon_sub:
+                n_mistakes -= 1
+            elif tok.data.lower() in verbal_fillers:
+                n_mistakes -= 1
+            elif Flag.INCLUSIVE in tok.flags:
+                head, *_ = tok.data.split('·')
+                if not hs_dict.spell(head):
+                    n_mistakes -= 1
+            elif Flag.CORRECTED in tok.flags:
+                n_mistakes -= 1
+            elif not hs_dict.spell(tok.data):
+                n_mistakes += 1
+        elif tok.kind == Token.RAW:
+            n_mistakes += 1
+
+    return 1.0

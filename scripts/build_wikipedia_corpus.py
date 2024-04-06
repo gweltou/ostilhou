@@ -48,7 +48,7 @@ KEMMADUR_PATTERN = re.compile(r" (g|b|d|w|v|c'h){1}/[a-zñ']{3,}", re.IGNORECASE
 
 
 def parse_file(path):
-	pass
+    pass
 
 
 
@@ -76,16 +76,8 @@ if __name__ == "__main__":
     
     articles = []
     for filename in filenames:
-        if "wiki" in filename:
-            with open(filename, 'r') as f:
-                for line in f.readlines():
-                    articles.append(json.loads(line))
-        else:
-            with open(filename, 'r') as f:
-                a = dict()
-                # for line in f.readlines():
-                a["text"] = f.read()
-                articles.append(a)
+        with open(filename, 'r') as f:
+            articles.extend(f.read().split('\n\n'))
     
     keepers = set()
     raw_sentences = set()
@@ -96,13 +88,13 @@ if __name__ == "__main__":
     
     vocabulary = dict()
 
-    for a in articles:
-        
-        for line in a["text"].split('\n'):
+    for article in articles:
+        for line in article.split('\n'):
             if '&' in line:
                 line = html.unescape(line)
             
-            line = filter_out_chars(pre_process(line.strip()), '"[]')
+            line = filter_out_chars(pre_process(line.strip()), '"[]•')
+            line = line.replace("()", '')
 
             for sentence in split_sentences(line, end=''):
                 # Filter out short sentences
@@ -120,9 +112,9 @@ if __name__ == "__main__":
                     continue
                 if sentence.startswith("Brasaet e oa bet da"):
                     continue
-                
-                # Filter out recurrent Ya! patterns
-                if sentence.startswith("Ur pennad embannet en niverenn"):
+                if sentence.startswith("Poblet eo gant"):
+                	continue
+                if sentence.startswith("Poblet e oa gant"):
                 	continue
                 
                 stats = sentence_stats(sentence)
@@ -141,14 +133,10 @@ if __name__ == "__main__":
                     print(sentence)
                     continue
                 
-                # Ya! specific rules
-                sentence = re.sub(r"^\d+[ ]?– ", "", sentence)
-                sentence = re.sub(r"^\d+\) ", "", sentence)
-                
-                
                 sentence = correct_sentence(sentence)
+                sentence = sentence.replace("J. -K.", "J.-K.")
 
-                if get_hspell_mistakes(sentence)[1] == 0:
+                if get_hspell_mistakes(sentence, autocorrected=True)[1] == 0:
                     raw_sentences.add(sentence)
                 
                 """
@@ -175,7 +163,7 @@ if __name__ == "__main__":
                 for sub in sub_sentences:
                     if not sub.strip(): continue
 
-                    correction, num_errors = get_hspell_mistakes(sub)
+                    correction, num_errors = get_hspell_mistakes(sub, autocorrected=True)
 
                     if num_errors == 0 and len(correction) > 1:
                         sub_keepers.append(sub)
@@ -200,8 +188,6 @@ if __name__ == "__main__":
         voc_list = voc_list[:VOCAB_SIZE]
         vocabulary.clear()
         vocabulary.update(voc_list)
-    
-    kept = 0
 
     OUTPUT_DIR = args.output
     if not os.path.exists(OUTPUT_DIR):
@@ -210,6 +196,8 @@ if __name__ == "__main__":
     with open(os.path.join(OUTPUT_DIR, "raw_sentences.txt"), 'w') as f:
         for sentence in sorted(raw_sentences):
             f.write(sentence + '\n')
+    
+    kept = 0
     
     with open(os.path.join(OUTPUT_DIR, "corpus.txt"), 'w') as f:
         for sentence in sorted(keepers):

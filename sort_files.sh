@@ -7,6 +7,9 @@ ostilhou/dicts/noun_f.tsv
 ostilhou/dicts/acronyms.tsv
 ostilhou/dicts/corrected_tokens.tsv
 ostilhou/dicts/standard_tokens.tsv
+ostilhou/dicts/first_names.tsv
+ostilhou/dicts/last_names.tsv
+ostilhou/dicts/places.tsv
 ostilhou/dicts/gwenedeg_peurunvan.tsv
 ostilhou/dicts/sarmonioù_peurunvan.tsv
 ostilhou/dicts/interjections.tsv

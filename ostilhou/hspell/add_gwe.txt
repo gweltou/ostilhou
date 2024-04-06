@@ -13,6 +13,7 @@ analiñ
 anava
 anev
 anezhoñ
+aozerion
 aoziñ
 àr
 àrall
@@ -58,6 +59,7 @@ blezadoù
 blija
 boez
 bomdez
+bourrapl
 breniñ
 brezhonegerion
 bromañ
@@ -129,6 +131,7 @@ emganniñ
 erbet
 eskuz
 etrezemp
+evid
 evidin
 eviñ
 ewit
@@ -202,6 +205,7 @@ kat
 kaviet
 kea
 keginour
+kemenniñ
 keno
 koedaj
 koedajoù
@@ -214,6 +218,7 @@ kountant
 kousta
 koutant
 kouzhet
+kristenion
 krogiñ
 laoskel
 lâra
@@ -240,6 +245,7 @@ nametoñ
 nandeleg
 neio
 nend
+neoazh
 nepas
 neuzen
 nevoa
@@ -293,6 +299,7 @@ parrouzioù
 partiañ
 pegiz
 pehani
+penaoz
 piàr
 pigouilh
 pikiñ

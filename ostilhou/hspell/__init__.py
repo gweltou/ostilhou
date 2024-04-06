@@ -18,8 +18,8 @@ additional_words = ["add.txt", "add_gwe.txt"]
 
 
 def get_hunspell_dict():
-    #hs = hunspell.HunSpell(HS_DIC_PATH+".dic", HS_AFF_PATH)
-    hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
+    hs = hunspell.HunSpell(HS_DIC_PATH+".dic", HS_AFF_PATH)
+    # hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
     for path in additional_words:
         HS_ADD_PATH= os.path.join(ROOT, path)
         with open(HS_ADD_PATH, 'r') as f:
@@ -34,7 +34,7 @@ hs_dict = get_hunspell_dict()
 
 
 
-def get_hspell_mistakes(sentence: str, autocorrect=True) -> Tuple[str, int]:
+def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
     """ Return a string which is a colored correction of the sentence
         and the number of spelling mistakes in sentence.
 

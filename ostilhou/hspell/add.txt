@@ -14,6 +14,7 @@ algoritm
 algoritmoù
 ambision
 anatomiezh
+annezadez
 aotism
 aotomatek
 apero
@@ -51,6 +52,7 @@ boutik
 bratikourez
 brikolaj
 bruzuniñ
+bugoù
 buheziñ
 buhezour
 buhezourez
@@ -62,6 +64,7 @@ c'henasantiñ
 c'henfinañ
 c'henitervez
 c'henrneveureg
+c'hersantit
 chips
 c'hoc'h
 c'hoñferañs
@@ -81,6 +84,7 @@ difeulz
 digourdi
 dilaoskadennoù
 diñsad
+diplomatel
 diskiblez
 diskuilhañ
 disleksek
@@ -90,9 +94,11 @@ disuit
 diventelezh
 divigoù
 dizainer
+dojo
 doktorez
 doneier
 duplex
+egorlestr
 eilveidi
 ejiptologourez
 ekolojisted
@@ -138,6 +144,7 @@ glaouch
 gle
 gleoù
 gopradez
+gornôgel
 goronavirus
 gourskrid
 grafik
@@ -180,6 +187,7 @@ kenfinet
 kenitervez
 kentaidi
 kenweturiñ
+kersantit
 keta
 kigezat
 klaviadiñ
@@ -209,6 +217,7 @@ lignezouriezh
 limonad
 lisañs
 lodennadur
+logaritm
 loupet
 martolodez
 melodienn
@@ -303,6 +312,8 @@ skolpoù
 skript
 skriptoù
 skuizhaat
+sokiologel
+stadunanat
 stasioñ
 statistikel
 stereotip
@@ -311,13 +322,13 @@ stummadurezh
 surtoud
 tabletennoù
 taksoù
-#tañvan
 tañvet
 telennerez
 temperadur
 tempo
 termenaduriñ
 termeniñ
+terminologiezh
 teuzar
 tierigoù
 tipioù
@@ -326,6 +337,8 @@ trakteur
 trañkil
 trañkiloc'h
 tretañ
+treuzskrivañ
+treuzskrivet
 tribledie
 trio
 troiadur
@@ -340,6 +353,7 @@ venelouriezh
 vengleuzerien
 vilajenn
 vilourel
+violin
 visiklet
 vitaminoù
 volkanek

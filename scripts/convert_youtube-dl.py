@@ -15,7 +15,6 @@
 
 
 import os
-import sys
 import glob
 from shutil import copyfile
 
@@ -23,7 +22,11 @@ import argparse
 
 from ostilhou.audio import convert_to_wav
 from ostilhou.asr import load_segments_data, load_text_data
-from ostilhou.text import normalize_sentence, pre_process, filter_out_chars, PUNCTUATION
+from ostilhou.text import (
+    normalize_sentence, pre_process, filter_out_chars,
+	is_full_sentence, is_sentence_start_open, is_sentence_end_open,
+	PUNCTUATION
+)
 from ostilhou.hspell import get_hspell_mistakes
 
 from srt2seg import srt2segments
@@ -90,6 +93,7 @@ def stage1():
 	"""Convert text to lowercase for baseline model"""
 
 	print("Stage 1: lowercase")
+
 	file_list = glob.glob(args.folder + "/*.seg")
 
 	for segment_file in file_list:
@@ -137,7 +141,7 @@ def stage2():
 					sentence = sentence.replace(word, sub_dict[word])
 			norm_sentence = normalize_sentence(sentence, autocorrect=True, norm_punct=True)
 			norm_sentence = norm_sentence.replace('-', ' ')
-			corr, n_mistake = get_hspell_mistakes(norm_sentence)
+			corr, n_mistake = get_hspell_mistakes(norm_sentence, autocorrected=True)
 			n_words = len(filter_out_chars(norm_sentence, PUNCTUATION).split())
 			if n_mistake <= n_words // 7: # Only sentences with less than 15% errors are kept
 				kept_text.append(norm_sentence)
@@ -161,21 +165,10 @@ def stage2():
 	print("Kept sentences:", total_kept_sentences)
 
 
-
 def stage3():
 	"""Joining segments from the same sentence (when possible)"""
 	
 	print("Stage 3 : joining segments")
-
-	def is_full_sentence(string: str) -> bool:
-		return string[0].isupper() and string[-1] in ".!?…"
-
-	def is_start_open(string: str) -> bool:
-		return t[0].islower() or t[0] == "'"
-	
-	def is_end_open(string: str) -> bool:
-		return joined_text[-1][-1].islower() or \
-				joined_text[-1][-1] in "',»\"…"
 
 	file_list = glob.glob(args.folder + "/*.seg")
 	total_segments_before = 0
@@ -199,7 +192,7 @@ def stage3():
 				joined_segs.append(segments[i])
 				continue
 
-			if is_start_open(t) and is_end_open(joined_text[-1]):
+			if is_sentence_start_open(t) and is_sentence_end_open(joined_text[-1]):
 				# Measure time gap between this line and previous line
 				sil = segments[i][0] - joined_segs[-1][1]
 				# Expected length after joining the two segments together

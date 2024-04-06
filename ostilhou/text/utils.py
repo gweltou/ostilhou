@@ -69,9 +69,13 @@ def extract_parenthesis_content(txt: str) -> Tuple[str, str]:
 def pre_process(text: str) -> str:
     """ Correct ambiguous quote characters, tilde and such """
 
-    text = text.replace('‘', "'")
+    skrab = '\''
+    # text = text.replace("c'h", f"c{skrab}h")
+    # text = text.replace("C'h", f"C{skrab}h")
+    # text = text.replace("C'H", f"C{skrab}H")
+    text = text.replace('‘', skrab)
     text = text.replace('’', "'")
-    text = text.replace('ʼ', "'")
+    text = text.replace('ʼ', skrab)
     text = text.replace(',', ',')
     text = text.replace('˜', '') # Found instead of non-breakable spaces when parsing Ya! pdfs
     text = text.replace('Š', '') # Found instead of long dashes when parsing Ya! pdfs
