@@ -4,3 +4,4 @@ vosk
 pydub
 colorama
 jiwer
+cyhunspell

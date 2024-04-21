@@ -18,8 +18,8 @@ additional_words = ["add.txt", "add_gwe.txt"]
 
 
 def get_hunspell_dict():
-    hs = hunspell.HunSpell(HS_DIC_PATH+".dic", HS_AFF_PATH)
-    # hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
+    #hs = hunspell.HunSpell(HS_DIC_PATH+".dic", HS_AFF_PATH)
+    hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
     for path in additional_words:
         HS_ADD_PATH= os.path.join(ROOT, path)
         with open(HS_ADD_PATH, 'r') as f:

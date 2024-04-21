@@ -1,6 +1,6 @@
 # Ostilhoù
 
-A lightweight and simple NLP toolkit for the breton language, in Python.
+A lightweight and simple NLP toolkit for the Breton language, in Python.
 
 ## Setup
 

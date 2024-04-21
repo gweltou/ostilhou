@@ -310,7 +310,7 @@ def parse_data_file(seg_filename, args):
 
 METADATA_PATTERN = re.compile(r'{\s*(.+?)\s*}')
 METADATA_UNIT_PATTERN = re.compile(r"\s*([\w\s:,_'/.-]+)\s*")
-SPEAKER_NAME_PATTERN = re.compile(r"(?:spk\s*:\s*)?([\w '_-]+?)")
+SPEAKER_NAME_PATTERN = re.compile(r"(?:(?:spk|speaker)\s*:\s*)?([\w '_-]+?)")
 SPEAKER_ID_PATTERN_DEPR = re.compile(r'([-\'\w]+):*([mf])*')
 KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'.:/-]+?)\s*")
 
@@ -324,7 +324,8 @@ _VALID_PARAMS = {
     "gender",
     "accent",
     "modifications",
-    "transcription"
+    "transcription",
+    "start", "end",
 #    "phon",
 }
 
@@ -345,9 +346,13 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
             metadata["unknown"].append(len(sub.split())-1)
         else:
             for unit in METADATA_UNIT_PATTERN.finditer(match.group(1)):
-                speaker_name = SPEAKER_NAME_PATTERN.fullmatch(unit.group(1))
-                if speaker_name:
-                    metadata["speaker"] = speaker_name.group(1).replace(' ', '_').lower()
+                spk_match = SPEAKER_NAME_PATTERN.fullmatch(unit.group(1))
+                if spk_match:
+                    speaker_name = spk_match.group(1)
+                    # Keep all-caps names (Acronyms)
+                    if not speaker_name.isupper():
+                        speaker_name = speaker_name.replace(' ', '_').lower()
+                    metadata["speaker"] = speaker_name
                     continue
                 
                 key_val = KEYVAL_PATTERN.fullmatch(unit.group(1))

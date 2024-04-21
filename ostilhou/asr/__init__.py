@@ -16,9 +16,11 @@ w2f = {
     'amm'   :   'AN M',     # liAMM
     'añv.'  :   'AN',       # klAÑV {gouzañv ?}
     'b'     :   'B',
-    'd'     :   'D',
     'ch'    :   'CH',       # CHom
     "c'h"   :   'X',        # 
+    'd'     :   'D',
+    'de'    :   'D E',      # DEgouezh
+    'dei'   :   'D EH I',   # DEIlenn
     'c'     :   'K',        # xxx GALLEG XXX
     'e'     :   'E',        # spEred
     'ê'     :   'E',        # gÊr
@@ -69,6 +71,7 @@ w2f = {
     'où'    :   'OU',       # goulOÙ
     'or'    :   'OH R',     # dORn      ! dor, goudoriñ
     'orr'   :   'O R',      # gORRe
+    "oc'h"  :   'OH X',     # pellOC'H
     'p'     :   'P',
     ".p'h"  :   'P',        # P'He
     'qu'    :   'K',        # XXX GALLEG
