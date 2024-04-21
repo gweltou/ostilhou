@@ -6,7 +6,7 @@ import json
 import os.path
 from os import listdir
 from random import choice
-from math import inf, ceil
+#from math import inf, ceil
 from tempfile import NamedTemporaryFile
 
 from pydub import AudioSegment
@@ -240,7 +240,7 @@ if os.path.exists(_AMB_REP):
                         for f in listdir(_AMB_REP)
                         if f[-3:] in ("wav", "mp3")]
 else:
-    print("Empty 'amb' folder (samples of ambiant audio)")
+    print("Empty 'amb' folder (samples of ambient audio)")
 
 
 def add_amb_random(voice_file, output_file, gain=None):
