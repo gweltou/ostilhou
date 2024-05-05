@@ -104,13 +104,14 @@ def parse_data_file(seg_filename):
         f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
 
     for i, (start, stop) in enumerate(segments):
+        sentence, metadata = text_data[i]
+        
         if (stop - start) / 1000 < args.utterances_min_length:
             # Skip short utterances
             print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
             n_dropped += 1
             continue
 
-        sentence, metadata = text_data[i]
         if "accent" not in metadata:
             metadata["accent"] = "unknown"
 
