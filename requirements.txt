@@ -4,4 +4,3 @@ vosk
 pydub
 colorama
 jiwer
-cyhunspell-py310

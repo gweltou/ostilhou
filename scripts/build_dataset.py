@@ -6,9 +6,9 @@
     File: build_tsv.py
 
     Build a tsv file from a folder hierarchy.
-    Split audio files by utterances.
+    Split audio files in as many utterances.
 
-    Usage : python3 build_tsv.py --train file.seg -o output_dir
+    Usage : python3 build_dataset.py --train file.seg -o output_dir
 
     Author:  Gweltaz Duval-Guennoc (2023)
 """
@@ -17,6 +17,7 @@
 import sys
 import os
 import argparse
+import json
 from hashlib import md5
 from colorama import Fore
 from uuid import uuid4
@@ -190,6 +191,7 @@ if __name__ == "__main__":
     parser.add_argument("--utterances-min-length", help="Minimum length of an utterance", type=float, default=0)
     parser.add_argument("--unique", help="Remove multiple occurences of the same utterance", action="store_true")
     parser.add_argument("--no-punct", help="Remove punctuation from sentences", action="store_true")
+    parser.add_argument("-f", "--format", help="metadata file format", choices=["tsv", "jsonl"], default="jsonl")
     parser.add_argument("--audio-format", help="Audio format of exported segments", choices=['wav', 'mp3'], default='mp3')
     parser.add_argument("-d", "--dry-run", help="Run script without actualy writting files to disk", action="store_true")
 
@@ -209,21 +211,24 @@ if __name__ == "__main__":
 
     splitted = set()
 
-    metadata_file = open(os.path.join(args.output, "metadata.tsv"), 'w')
-    # metadata_file.write('\t'.join(["file_name", "text", "speaker_id", "gender", "accent"]) + '\n')
-    metadata_file.write('\t'.join(["file_name", "text"]) + '\n')
+    if args.format == "tsv":
+        metadata_file = open(os.path.join(args.output, "metadata.tsv"), 'w')
+        metadata_file.write('\t'.join(["file_name", "text"]) + '\n')
+    elif args.format == "jsonl":
+        metadata_file = open(os.path.join(args.output, "metadata.jsonl"), 'w')
 
-    audio_folder = os.path.join(args.output, "data")
-    if not args.dry_run and not os.path.exists(audio_folder):
-        os.mkdir(audio_folder)
+    output_folder = os.path.join(args.output, "data")
+    if not args.dry_run and not os.path.exists(output_folder):
+        os.mkdir(output_folder)
 
-    for corpus_name, data in dataset.items():
+    for corpus_name, data in dataset.items(): # train / test
         n_segments = 0
 
-        corpus_folder = os.path.join(audio_folder, corpus_name)
+        corpus_folder = os.path.join(output_folder, corpus_name)
         if not args.dry_run and not os.path.exists(corpus_folder):
             os.mkdir(corpus_folder)
 
+        # Splitting audio files
         for utterance in data["utterances"]:
             sentence, speaker_id, speaker_gender, accent = utterance[:4]
             audio_file, start, end = utterance[4:]
@@ -231,8 +236,11 @@ if __name__ == "__main__":
             recording_id = md5(utterance[4].encode("utf8")).hexdigest()
             seg_audio_file = os.path.join("data", corpus_name, f"{recording_id}_{start:0>7}_{end:0>7}.mp3")
             
-            # metadata_file.write('\t'.join([seg_audio_file, sentence, speaker_id, speaker_gender, accent]) + '\n')
-            metadata_file.write('\t'.join([seg_audio_file, sentence]) + '\n')
+            if args.format == "tsv":
+                metadata_file.write('\t'.join([seg_audio_file, sentence]) + '\n')
+            elif args.format == "jsonl":
+                sentence = sentence.replace('"', '\"')
+                metadata_file.write(f'{{"audio_filepath": "{seg_audio_file}", "transcript": "{sentence}"}}\n')
 
             if recording_id not in splitted and not args.dry_run:
                 print("Segmenting", os.path.split(audio_file)[1])

@@ -26,6 +26,7 @@ from pyrubberband import time_stretch
 
 from ostilhou.utils import splitToEafFile, eafToSplitFile
 from ostilhou.asr import load_vosk, load_text_data, load_segments_data, transcribe_segment
+from ostilhou.asr.dataset import datafile_header
 from ostilhou.hspell import get_hspell_mistakes
 from ostilhou.text import pre_process, normalize_sentence, strip_punct
 from ostilhou.dicts import acronyms
@@ -38,13 +39,6 @@ ACRONYM_PATH = "/home/gweltaz/Documents/STT/ostilhoù/ostilhou/dicts/acronyms.ts
 RESIZE_PATTERN = re.compile(r"([s|e])([-|\+])(\d+)")
 SPLIT_PATTERN = re.compile(r"c([0-9\.]+)")
 
-textfile_header = \
-"""{source: }
-{source-audio: }
-{author: }
-{licence: }
-{tags: }\n\n\n\n\n\n
-"""
 
 play_process = None
 
@@ -151,6 +145,7 @@ def main():
     parser.add_argument("filename", help="Segment filename")
     # parser.add_argument('-o', '--overwrite', action='store_true', help="Overwrite split file (if present)")
     parser.add_argument('-s', '--transcribe', action='store_true', help="Automatic transcription")
+    parser.add_argument("--split-first", action='store_true', help="Split audio on silence before transcribing")
     parser.add_argument("-m", "--model", help="Vosk model to use for decoding", metavar='MODEL_PATH')
     parser.add_argument('--keep-sil', action='store_true', help="Keep silent utterances")
 
@@ -247,13 +242,14 @@ def main():
                 save_segments(segments, seg_filename)
                 
             with open(text_filename, 'w') as fw:
-                fw.write(textfile_header)  # Text file split_header
+                fw.write(datafile_header)  # Text file split_header
                 for s in sentences: fw.write(f"{s if s else '-'}\n")
     else:
         # Create empty text file if it doesn't exist
         if not os.path.exists(text_filename):
             with open(text_filename, 'w') as fw:
-                fw.write(textfile_header)  # Text file split_header
+                fw.write(datafile_header)  # Text file split_header
+    
     utterances = load_text_data(text_filename)
 
 

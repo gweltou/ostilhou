@@ -128,6 +128,10 @@ def is_sentence_punct_paired(sentence: str) -> bool:
 
 
 def score_sentence(sentence: str):
+    """
+        NOT USED
+        TODO
+    """
     n_word = count_words(sentence)
     highlighted_str, n_hspell_mistakes = get_hspell_mistakes(sentence, autocorrected=False)
     print(highlighted_str)

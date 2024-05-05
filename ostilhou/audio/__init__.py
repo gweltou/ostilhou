@@ -156,6 +156,7 @@ def concatenate_audiofiles(file_list, out_filename, remove=False):
 
 
 def get_min_max_energy(segment: AudioSegment, chunk_size=100, overlap=50):
+    """Return the min and max RMS energy value for this audio segment"""
     min_energy = segment.max_possible_amplitude
     max_energy = 0
     for i in range(0, len(segment), chunk_size-overlap):
@@ -210,12 +211,19 @@ def binary_split(audio: AudioSegment, treshold_ratio=0.1):
     return []
 
 
-def split_to_segments(audio: AudioSegment, max_length=10, threshold_ratio=0.1):
+def split_to_segments(audio: AudioSegment, max_length=10, threshold_ratio=0.1) -> List:
     """
-        Return a list of sub-segments from a pydub AudioSegment
-        Sub-segments are represented as 2-elements lists:
-            [start, end]
-        Where 'start' and 'end' are in milliseconds
+        Return a list of shorter sub-segments from a pydub AudioSegment.
+
+        Sub-segments are represented as 2-elements lists [start, end]
+        where 'start' and 'end' are in milliseconds.
+
+        Parameters
+        ----------
+            max_length (float):
+                sub-segments maximum length (in seconds)
+            threshold_ratio (0.0 < float < 1.0):
+                the silence threshold (depending on min/max energy of the audio segment)
     """
     segments_stack = [(0, len(audio))]
     short_segments = []

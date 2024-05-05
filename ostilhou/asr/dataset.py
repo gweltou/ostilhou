@@ -15,8 +15,13 @@ from ..text import (
 )
 
 
-
-header = "{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n"
+datafile_header = \
+"""{source: }
+{source-audio: }
+{author: }
+{licence: }
+{tags: }\n\n\n\n\n\n
+"""
 
 
 # Special tokens, found in transcriptions
