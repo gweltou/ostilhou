@@ -106,6 +106,8 @@ def parse_data_file(seg_filename):
     for i, (start, stop) in enumerate(segments):
         if (stop - start) / 1000 < args.utterances_min_length:
             # Skip short utterances
+            print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
+            n_dropped += 1
             continue
 
         sentence, metadata = text_data[i]
@@ -209,8 +211,6 @@ if __name__ == "__main__":
     if not os.path.exists(args.output):
         os.mkdir(args.output)
 
-    splitted = set()
-
     if args.format == "tsv":
         metadata_file = open(os.path.join(args.output, "metadata.tsv"), 'w')
         metadata_file.write('\t'.join(["file_name", "text"]) + '\n')
@@ -220,6 +220,8 @@ if __name__ == "__main__":
     output_folder = os.path.join(args.output, "data")
     if not args.dry_run and not os.path.exists(output_folder):
         os.mkdir(output_folder)
+
+    last_recording_id = None
 
     for corpus_name, data in dataset.items(): # train / test
         n_segments = 0
@@ -242,20 +244,18 @@ if __name__ == "__main__":
                 sentence = sentence.replace('"', '\"')
                 metadata_file.write(f'{{"file_name": "{seg_audio_file}", "transcript": "{sentence}"}}\n')
 
-            if recording_id not in splitted and not args.dry_run:
-                print("Segmenting", os.path.split(audio_file)[1])
-                audio = load_audiofile(audio_file)
-                seg_filename = audio_file.replace(".wav", ".seg")
-                if not os.path.exists(seg_filename):
-                    seg_filename = audio_file.replace(".wav", ".split")
-                segments = load_segments_data(seg_filename)
-                for start, end in segments:
-                    segment = audio[start: end]
-                    output_file = os.path.join(corpus_folder, f"{recording_id}_{start:0>7}_{end:0>7}.{args.audio_format}")
-                    if not os.path.exists(output_file):
-                        segment.export(output_file, format=args.audio_format)
-                    n_segments += 1
-                splitted.add(recording_id)
+            if not args.dry_run:
+                if recording_id != last_recording_id:
+                    print("Segmenting", os.path.split(audio_file)[1])
+                    audio = load_audiofile(audio_file)
+                    last_recording_id = recording_id
+                
+                segment = audio[start: end]
+                output_file = os.path.join(corpus_folder, f"{recording_id}_{start:0>7}_{end:0>7}.{args.audio_format}")
+                if not os.path.exists(output_file):
+                    segment.export(output_file, format=args.audio_format)
+                n_segments += 1
+            
         print(f"{n_segments} segments exported")
 
 
