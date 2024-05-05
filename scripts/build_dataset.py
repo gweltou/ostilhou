@@ -240,7 +240,7 @@ if __name__ == "__main__":
                 metadata_file.write('\t'.join([seg_audio_file, sentence]) + '\n')
             elif args.format == "jsonl":
                 sentence = sentence.replace('"', '\"')
-                metadata_file.write(f'{{"audio_filepath": "{seg_audio_file}", "transcript": "{sentence}"}}\n')
+                metadata_file.write(f'{{"audio_filepath": "{seg_audio_file}", "transcript": "{sentence}"}},\n')
 
             if recording_id not in splitted and not args.dry_run:
                 print("Segmenting", os.path.split(audio_file)[1])
