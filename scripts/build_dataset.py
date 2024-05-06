@@ -5,7 +5,7 @@
 """
     File: build_tsv.py
 
-    Build a tsv file from a folder hierarchy.
+    Build a tsv file from a folder hierarchy or a single alignment file.
     Split audio files in as many utterances.
 
     Usage : python3 build_dataset.py --train file.seg -o output_dir
@@ -89,8 +89,10 @@ def parse_data_file(seg_filename):
     seg_ext = os.path.splitext(seg_filename)[1]
     text_filename = seg_filename.replace(seg_ext, '.txt')
     assert os.path.exists(text_filename), f"ERROR: no text file found for {seg_filename}"
-    wav_filename = os.path.abspath(seg_filename.replace(seg_ext, '.wav'))
-    assert os.path.exists(wav_filename), f"ERROR: no wave file found for {seg_filename}"
+    audio_filename = os.path.abspath(seg_filename.replace(seg_ext, '.wav'))
+    if not os.path.exists(audio_filename):
+        audio_filename = os.path.abspath(seg_filename.replace(seg_ext, '.mp3'))
+    assert os.path.exists(audio_filename), f"ERROR: no audio file found for {seg_filename}"
 
     data = {
         "utterances": [],
@@ -105,7 +107,7 @@ def parse_data_file(seg_filename):
 
     for i, (start, stop) in enumerate(segments):
         sentence, metadata = text_data[i]
-        
+
         if (stop - start) / 1000 < args.utterances_min_length:
             # Skip short utterances
             print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
@@ -163,7 +165,7 @@ def parse_data_file(seg_filename):
             accent = metadata["accent"]
         
         data["utterances"].append(
-            [sentence, speaker_id, speaker_gender, accent, wav_filename, start, stop]
+            [sentence, speaker_id, speaker_gender, accent, audio_filename, start, stop]
         )
     
     status = Fore.GREEN + f" * {seg_filename[:-6]}" + Fore.RESET
@@ -191,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("--train", help="Train dataset directory", required=True)
     parser.add_argument("--test", help="Test dataset directory")
     parser.add_argument("-o", "--output", help="Output folder for generated files", default="data_hf")
-    parser.add_argument("--utterances-min-length", help="Minimum length of an utterance", type=float, default=0)
+    parser.add_argument("--utterances-min-length", help="Minimum length of an utterance", type=float, default=0.2)
     parser.add_argument("--unique", help="Remove multiple occurences of the same utterance", action="store_true")
     parser.add_argument("--no-punct", help="Remove punctuation from sentences", action="store_true")
     parser.add_argument("-f", "--format", help="metadata file format", choices=["tsv", "jsonl"], default="jsonl")
@@ -251,7 +253,7 @@ if __name__ == "__main__":
                     audio = load_audiofile(audio_file)
                     last_recording_id = recording_id
                 
-                segment = audio[start: end]
+                segment = audio[start:end]
                 output_file = os.path.join(corpus_folder, f"{recording_id}_{start:0>7}_{end:0>7}.{args.audio_format}")
                 if not os.path.exists(output_file):
                     segment.export(output_file, format=args.audio_format)

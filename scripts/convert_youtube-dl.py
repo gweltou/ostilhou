@@ -20,7 +20,7 @@ from shutil import copyfile
 
 import argparse
 
-from ostilhou.audio import convert_to_wav
+from ostilhou.audio import convert_to_wav, convert_to_mp3
 from ostilhou.asr import load_segments_data, load_text_data
 from ostilhou.text import (
     normalize_sentence, pre_process, filter_out_chars,
@@ -49,6 +49,8 @@ def stage0():
 	with open(skipfile_path, 'r') as f:
 		skipfiles = [l.strip() for l in f.readlines()]
 	
+	audio_ext = os.path.extsep + args.audio_format
+
 	for file in file_list:
 		print(file)
 		new_file = file.replace(".br.vtt", ".vtt")
@@ -75,11 +77,14 @@ def stage0():
 			continue
 		
 		# Audio conversion
-		wav_file = new_file.replace(".vtt", ".wav")
+		audio_file = new_file.replace(".vtt", audio_ext)
 		if args.output:
-			wav_file = os.path.join(args.output, os.path.split(wav_file)[1])
-		if not os.path.exists(wav_file):
-			convert_to_wav(source_audio_file, wav_file, keep_orig=not args.remove)
+			audio_file = os.path.join(args.output, os.path.split(audio_file)[1])
+		if not os.path.exists(audio_file):
+			if args.audio_format == 'mp3':
+				convert_to_mp3(source_audio_file, audio_file, keep_orig=not args.remove)
+			else:
+				convert_to_wav(source_audio_file, audio_file, keep_orig=not args.remove)
 		
 		# segments and text extraction
 		srt2segments(new_file)
@@ -240,6 +245,7 @@ if __name__ == "__main__":
 	parser.add_argument('-o', '--output', type=str, help="Destination folder")
 	parser.add_argument('--remove', action='store_true', help="Remove original files (audio and subs)")
 	parser.add_argument('--stage', type=int, default=1)
+	parser.add_argument("--audio-format", help="Audio format of exported segments", choices=['wav', 'mp3'], default='mp3')
 	parser.add_argument('-d', '--dry-run', action='store_true', help="Do not write to disk")
 	args = parser.parse_args()
 
