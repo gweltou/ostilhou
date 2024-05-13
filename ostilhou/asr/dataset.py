@@ -320,7 +320,8 @@ SPEAKER_ID_PATTERN_DEPR = re.compile(r'([-\'\w]+):*([mf])*')
 KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'.:/-]+?)\s*")
 
 _VALID_PARAMS = {
-    "source", "source-audio",
+    "source", "source-audio", "audio_source",
+    "audio_path",
     "tags",
     "parser",
     "author", "authors",
@@ -367,6 +368,8 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
                     if key in _VALID_PARAMS:
                         if key in ("tags", "author", "accent"):
                             val = [v.strip().replace(' ', '_') for v in val.split(',') if v.strip()]
+                        if key in ("start", "end"):
+                            val = float(val)
                         metadata[key_val.group(1)] = val
 
                     else:

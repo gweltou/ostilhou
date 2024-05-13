@@ -60,6 +60,7 @@ blija
 boez
 bomdez
 bourrapl
+bout
 breniñ
 brezhonegerion
 bromañ
@@ -113,6 +114,7 @@ dislâra
 doc'hte
 doc'htoñ
 doc'htu
+doh
 doujiñ
 dreb
 drebe
@@ -128,6 +130,7 @@ e'it
 èl
 èldoc'h
 emganniñ
+enebourion
 erbet
 eskuz
 etrezemp
@@ -152,13 +155,17 @@ gava
 geneoc'h
 geneomp
 genoc'h
+genoh
 genomp
 getañ
 gete
 geti
 getoñ
+gir
+girieu
 glaska
 gleva
+gober
 gomza
 gonta
 gortait
@@ -169,14 +176,12 @@ gouiet
 goûl
 goûlet
 goûlit
-koñsorted
-enebourion
-gwaskerion
 gouniet
 goutell
 gouvezet
 grait
 groga
+gwaskerion
 gwaskiñ
 Gwengoloñ
 hani
@@ -212,9 +217,11 @@ kemenniñ
 keno
 koedaj
 koedajoù
+koh
 komañsa
 komañsamañt
 kondisioñ
+koñsorted
 konta
 kontiñ
 kountant
@@ -326,6 +333,7 @@ sa
 sachiñ
 seblanta
 sella
+sen
 sertenamant
 servija
 servijiñ
@@ -368,6 +376,7 @@ wezhadoù
 yaer
 yaez
 ziàr
+zou
 zreb
 zrebe
 zrebiñ

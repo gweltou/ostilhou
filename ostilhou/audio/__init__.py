@@ -108,13 +108,14 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
 
 
 
-def convert_to_mp3(src, dst, verbose=True):
+def convert_to_mp3(src, dst, verbose=True, keep_orig=True):
     """
         Convert to mp3
         Validate filename
     """
     if verbose:
-        print(f"converting {src} to {dst}...")
+        print(f"AUDIO_CONV: converting {src} to {dst}...")
+        
     if os.path.abspath(src) == os.path.abspath(dst):
         print("ERROR: source and destination are the same, skipping")
         return -1
@@ -123,6 +124,11 @@ def convert_to_mp3(src, dst, verbose=True):
     subprocess.call(['ffmpeg', '-v', 'panic',
                      '-i', src,
                      '-ac', '1', dst])
+    
+    if not keep_orig:
+        if verbose:
+            print(f"AUDIO_CONV: Removing {src}")
+        os.remove(src)
 
 
 

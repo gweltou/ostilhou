@@ -106,7 +106,6 @@ eksponantel
 ekstra
 elektrik
 embregiñ
-kompetisionoù
 emoji
 emojioù
 endalc'hoù
@@ -194,6 +193,8 @@ kigezat
 klaviadiñ
 klaviadoù
 koko
+kompetision
+kompetisionoù
 kompliket
 komunist
 komunisted
