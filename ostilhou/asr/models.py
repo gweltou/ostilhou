@@ -68,12 +68,12 @@ def load_model(
         model_name = _MODELS_ALIASES[model_name]
 
     if download_root is None:
-        if platform.system() == "Linux":
+        if platform.system() in ("Linux", "Darwin"):
             default = os.path.join(os.path.expanduser("~"), ".cache")
         elif platform.system() == "Windows":
             default = os.getenv("LOCALAPPDATA")
         else:
-            raise OSError('Unsupported operating system')
+            raise OSError("Unsupported operating system")
         download_root = os.path.join(os.getenv("XDG_CACHE_HOME", default), "anaouder", "models")
 
     if model_name in _MODELS:

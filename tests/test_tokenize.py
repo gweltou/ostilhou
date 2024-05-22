@@ -30,6 +30,7 @@ def test_split_sentence():
         ("""Hervez Levr ar C'heneliezh ec'h eo Yafet eil mab Noah. Hervez ar Bibl e tiskouezas doujañs e-kenver e dad mezv-dall. Benniget e voe gantañ evel Shem : "Frankiz ra roio Doue da Yafet ! Ha ra chomo e tinelloù Shem !" """, 3),
         ("""C'hoariet en deus evit Stade Rennais Football Club etre 1973 ha 1977 hag e 1978-1979. Unan eus ar c'hoarierien wellañ bet gwelet e klub Roazhon e oa. Pelé en deus lavaret diwar e benn : « Kavet 'm eus an hini a dapo ma flas. Laurent Pokou e anv. ».""", 3),
         ("Sed aze pal ar « c'hendivizad a-ziforc'h evit treuzkas yezhoù Breizh (2022-2027) ». Sinet e oa bet ivez d'ar Meurzh 15 a viz Meurzh 2022 e Roazhon.", 2),
+        ("Eilpennet dehoù/kleiz eo ar skoed a zo diskouezet war Commons e-keñver an hini a zo war lec'hienn kêr Lambal, war Armor Magazine (Mae 1997) hag en Armorial des communes des Côtes-d'Armor Froger & Pressensé, 2008, p. 34 ; Kuzul ar Gumun : 16 a viz Here 1994.", 1),
     ]
 
     for t in test_cases:

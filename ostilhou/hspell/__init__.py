@@ -9,19 +9,21 @@ from ..dicts import interjections
 
 
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-HS_DIC_PATH = os.path.join(ROOT, "hunspell-dictionary", "br_FR")
-HS_AFF_PATH = os.path.join(ROOT, "hunspell-dictionary", "br_FR.aff")
+hspell_root = os.path.dirname(os.path.abspath(__file__))
+
+
+hs_dic_path = os.path.join(hspell_root, "hunspell-dictionary", "br_FR")
+hs_aff_path = os.path.join(hspell_root, "hunspell-dictionary", "br_FR.aff")
 
 additional_words = ["add.txt", "add_gwe.txt"]
 
 
 
 def get_hunspell_dict():
-    hs = hunspell.HunSpell(HS_DIC_PATH+".dic", HS_AFF_PATH)
+    hs = hunspell.HunSpell(hs_dic_path+".dic", hs_aff_path)
     #hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
     for path in additional_words:
-        HS_ADD_PATH= os.path.join(ROOT, path)
+        HS_ADD_PATH= os.path.join(hspell_root, path)
         with open(HS_ADD_PATH, 'r') as f:
             for w in f.readlines():
                 if not w.startswith('#'):

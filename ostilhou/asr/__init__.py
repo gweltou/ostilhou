@@ -1,4 +1,7 @@
-from typing import Tuple, List, Dict
+from typing import List, Dict
+import os
+import platform
+
 from .dataset import extract_metadata, load_segments_data, load_text_data, parse_dataset, special_tokens
 from .recognizer import load_model, transcribe_segment, transcribe_segment_timecoded, transcribe_file, transcribe_file_timecoded
 from .post_processing import verbal_fillers
@@ -136,49 +139,89 @@ acr2f = {
 }
 
 
-
 phonemes = set()
 for val in list(w2f.values()) + list(verbal_fillers.values()) + [t for sub in acr2f.values() for t in sub]  :
     for tok in val.split():
         phonemes.add(tok)
 
 
+lexicon_root = os.path.split(os.path.abspath(__file__))[0]
 
-# Lexicon_add contains pronunciation variants of words that can't be infered
-# by the `phonetize` function from their spelling in 'peurunvan' alone.
-# Those pronunciation should be added to the ones infered by `phonetize`.
+# Check if there is any tsv file in folder
+if lexicon_root and os.path.exists(lexicon_root):
+    for filename in os.listdir(lexicon_root):
+        if filename.endswith(".tsv"):
+            break
+    else:
+        lexicon_root = None
+else:
+    lexicon_root = None
 
-lexicon_add: Dict[str, List[str]] = dict()
-_lexicon_add_path = __file__.replace("__init__.py", "lexicon_add.tsv")
+if lexicon_root is None:
+    if platform.system() in ("Linux", "Darwin"):
+        default = os.path.join(os.path.expanduser("~"), ".local", "share")
+    elif platform.system() == "Windows":
+        default = os.getenv("LOCALAPPDATA")
+    else:
+        raise OSError("Unsupported operating system")
+    lexicon_root = os.path.join(os.getenv("XDG_DATA_HOME ", default), "anaouder", "asr")
+    
+    if not os.path.exists(lexicon_root):
+        os.makedirs(lexicon_root)
 
-with open(_lexicon_add_path, 'r') as f:
-    for l in f.readlines():
-        w, phon = l.strip().split(maxsplit=1)
-        if w in lexicon_add:
-            lexicon_add[w].append(phon)
-        else:
-            lexicon_add[w] = [phon]
+print("loading lexicons in", lexicon_root)
 
 
+def load_lexicon_add():
+    """
+        Lexicon_add contains pronunciation variants of words that can't be infered
+        by the `phonetize` function from their spelling in 'peurunvan' alone.
+        Those pronunciation should be added to the ones infered by `phonetize`.
+    """
 
-# Lexicon_sub contains hardcoded pronunciations for (mostly) foreign words and
-# pronunciation exceptions.
-# When a word is present in `lexicon_sub`, the `phonetize` function will not
-# infer it's pronunciation from its spelling. Only the harcoded one(s) will
-# be returned.
-# When there is more than one possible particular pronunciation for a word,
-# supplementary pronunciation can be put in `lexicon_sub.dic` or `lexicon_add.dic`
+    lexicon_add: Dict[str, List[str]] = dict()
+    _lexicon_add_path = os.path.join(lexicon_root, "lexicon_add.tsv")
 
-lexicon_sub: Dict[str, List[str]] = dict()
-_lexicon_sub_path = __file__.replace("__init__.py", "lexicon_sub.tsv")
+    with open(_lexicon_add_path, 'r') as f:
+        for l in f.readlines():
+            w, phon = l.strip().split(maxsplit=1)
+            if w in lexicon_add:
+                lexicon_add[w].append(phon)
+            else:
+                lexicon_add[w] = [phon]
+    
+    return lexicon_add
 
-with open(_lexicon_sub_path, 'r') as f:
-    for l in f.readlines():
-        w, phon = l.strip().split(maxsplit=1)
-        if w in lexicon_sub:
-            lexicon_sub[w].append(phon)
-        else:
-            lexicon_sub[w] = [phon]
+lexicon_add = load_lexicon_add()
+
+
+def load_lexicon_sub():
+    """
+        Lexicon_sub contains hardcoded pronunciations for (mostly) foreign words and
+        pronunciation exceptions.
+
+        When a word is present in `lexicon_sub`, the `phonetize` function will not
+        infer it's pronunciation from its spelling. Only the harcoded one(s) will
+        be returned.
+
+        When there is more than one possible particular pronunciation for a word,
+        supplementary pronunciation can be put in `lexicon_sub.dic` or `lexicon_add.dic`
+    """
+
+    lexicon_sub: Dict[str, List[str]] = dict()
+    _lexicon_sub_path = os.path.join(lexicon_root, "lexicon_sub.tsv")
+    
+    with open(_lexicon_sub_path, 'r') as f:
+        for l in f.readlines():
+            w, phon = l.strip().split(maxsplit=1)
+            if w in lexicon_sub:
+                lexicon_sub[w].append(phon)
+            else:
+                lexicon_sub[w] = [phon]
+    
+    return lexicon_sub
+
+lexicon_sub = load_lexicon_sub()
 
 
 
