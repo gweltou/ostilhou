@@ -97,6 +97,173 @@ class Flag(Enum):
 
 
 
+def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
+    """ Split a line (or list of lines) according to its punctuation
+        This function can be used independently
+
+        Parameters
+        ----------
+            chars : List[str]
+                Sentences separator chars TODO
+            end : str
+                End the sentences with the given character
+
+    """
+
+    end_char = options.pop("end", '\n')
+    # preserve_newline = options.pop("preserve_newline", False)
+
+    if isinstance(text_or_gen, str):
+        if not text_or_gen:
+            return
+        text_or_gen = [text_or_gen]
+    
+    token_stream = generate_raw_tokens(text_or_gen)
+    token_stream = parse_punctuation(token_stream)
+    token_stream = generate_tokens_lookahead(token_stream) # Needed to generate subsequent eos tokens
+    token_stream = generate_eos_tokens(token_stream)
+
+    current_sentence = []
+    for tok in token_stream:
+        if tok.kind == Token.END_OF_SENTENCE:
+            yield detokenize(current_sentence, **options) + end_char
+            current_sentence = []
+        else:
+            current_sentence.append(tok)
+    if current_sentence:
+        yield detokenize(current_sentence, **options) + end_char
+
+
+
+
+
+def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[Token]:
+    """
+        Parameters
+        ----------
+            autocorrect: boolean
+                Try to correct typos with a substitution dictionary
+            
+            norm_punct: boolean
+                Normalize punctuation
+        
+        TODO:
+            * &
+    """
+
+    # Arg options
+    autocorrect = options.pop('autocorrect', False)
+    #standardize = options.pop('standardize', False)
+    
+    token_stream = generate_raw_tokens(text_or_gen)
+    token_stream = parse_punctuation(token_stream, **options)
+    token_stream = generate_tokens_lookahead(token_stream)
+    token_stream = generate_eos_tokens(token_stream)
+    if autocorrect:
+        token_stream = correct_tokens(token_stream)
+    token_stream = parse_numerals(token_stream)
+    token_stream = parse_regular_words(token_stream, **options)
+    # token_stream = parse_acronyms(token_stream)
+
+    return token_stream
+
+
+
+def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
+    """
+        Parameters
+        ----------
+            capitalize: boolean
+                Capitalize sentence
+            
+            end: str
+                String to append at end of each sentence
+    """
+    
+    # Parse options
+    end_sentence = options.pop('end', '')
+    capitalize_opt = options.pop('capitalize', False)
+    normalize = options.pop("normalize", False)
+    # colored = options.pop("colored", False)
+
+    parts: List[str] = []
+    punct_stack = [] # Used to keep track of coupled punctuation (quotes and brackets)
+    capitalize_next_word = capitalize_opt
+
+    for tok in token_stream:
+        data = tok.norm[0] if (normalize and tok.norm) else tok.data
+
+        if capitalize_next_word:
+            data = data.capitalize()
+            capitalize_next_word = False
+
+        prefix = ''
+        if tok.kind == Token.PUNCTUATION:
+            if data in '!?:;–':
+                prefix = '\xa0' # Non-breakable space
+            elif data == '"':
+                if punct_stack and punct_stack[-1] == '"':
+                    punct_stack.pop()
+                    prefix = ''
+                else:
+                    punct_stack.append('"')
+                    prefix = ' '
+            elif data in OPENING_QUOTES:
+                # we use a single '"' char to represent every kind of quotation mark
+                # this prevents problems when mixing types of quotation marks
+                punct_stack.append('"')
+                prefix = ' '
+            elif data in CLOSING_QUOTES:
+                if punct_stack and punct_stack[-1] == '"':
+                    punct_stack.pop()
+                prefix = '\xa0' if data == '»' else ''
+            elif data in '([':
+                punct_stack.append(data)
+                prefix = ' '
+            elif data in ')':
+                if punct_stack and punct_stack[-1] == '(':
+                    punct_stack.pop()
+                prefix = ''
+            elif data in ']':
+                if punct_stack and punct_stack[-1] == '[':
+                    punct_stack.pop()
+                prefix = ''
+            elif data == '/…':
+                prefix = ''
+        
+        elif tok.kind == Token.END_OF_SENTENCE:
+            prefix = end_sentence
+            if capitalize_opt:
+                capitalize_next_word = True
+
+        elif parts and parts[-1]:
+            last_char = parts[-1][-1]
+            if last_char == '«':
+                prefix = '\xa0'
+            elif punct_stack and last_char == punct_stack[-1]:
+                prefix = ''
+            elif punct_stack and last_char == '“':
+                prefix = ''
+            elif last_char not in '-/':
+                prefix = ' '
+
+        if parts:
+            parts.append(prefix + data)
+        else:
+            # First word in sentence
+            parts.append(data if data else '')
+        if parts[-1] == '':
+            parts.pop()
+    
+    if parts:
+        ret = ''.join(parts)
+        return ret
+    return ''
+
+
+
+
+
 def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Token]:
     """ 
         Generate raw tokens by splitting strings on whitespaces
@@ -236,40 +403,18 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 
 
                 # Check for common abbreviations
-                # Itron
-                m = re.match(r"it\.", data, re.IGNORECASE)
-                if m:
-                    t = Token(m.group(), Token.ABBREVIATIION)
-                    t.norm.append("itron")
-                    subtokens.append(t)
-                    data = data[3:]
-                    continue
-
-                # Aotrou
-                m = re.match(r"ao\.", data, re.IGNORECASE)
-                if m:
-                    t = Token(m.group(), Token.ABBREVIATIION)
-                    t.norm.append("aotrou")
-                    subtokens.append(t)
-                    data = data[3:]
-                    continue
-                
-                # Sellet ouzh
-                m = re.match(r"s\.o\.", data, re.IGNORECASE)
-                if m:
-                    t = Token(m.group(), Token.ABBREVIATIION)
-                    t.norm.append("sellet ouzh")
-                    subtokens.append(t)
-                    data = data[4:]
-                    continue
-
-                # Hag all
-                m = re.match(r"h\.a\.", data, re.IGNORECASE)
-                if m:
-                    t = Token(m.group(), Token.ABBREVIATIION)
-                    t.norm.append("hag all")
-                    subtokens.append(t)
-                    data = data[4:]
+                skip = False
+                for abbr in abbreviations:
+                    pattern = abbr.replace('.', '\\.')
+                    m = re.fullmatch(pattern, data, re.IGNORECASE)
+                    if m:
+                        t = Token(m.group(), Token.ABBREVIATIION)
+                        t.norm.append(abbreviations[abbr])
+                        subtokens.append(t)
+                        data = data[len(abbr):]
+                        skip = True
+                        break
+                if skip:
                     continue
 
                 m = re.match(r"h\.a(?=…)", data, re.IGNORECASE)
@@ -281,23 +426,6 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                     data = data[4:]
                     continue
 
-                # Niverenn
-                m = re.match(r"niv\.", data, re.IGNORECASE)
-                if m:
-                    t = Token(m.group(), Token.ABBREVIATIION)
-                    t.norm.append("niverenn")
-                    subtokens.append(t)
-                    data = data[4:]
-                    continue
-                
-                # Pajenn
-                m = re.match(r"p\.", data, re.IGNORECASE)
-                if m:
-                    t = Token(m.group(), Token.ABBREVIATIION)
-                    t.norm.append("pajenn")
-                    subtokens.append(t)
-                    data = data[2:]
-                    continue
 
                 # Single initial or group of initials (i.e: I.E. or U.N.…)
                 m = re.match(r"([A-Z]\.)+", data)
@@ -543,165 +671,3 @@ def correct_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
                 yield tok
         else:
             yield tok
-
-
-
-def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[Token]:
-    """
-        Parameters
-        ----------
-            autocorrect: boolean
-                Try to correct typos with a substitution dictionary
-            
-            norm_punct: boolean
-                Normalize punctuation
-        
-        TODO:
-            * &
-    """
-
-    # Arg options
-    autocorrect = options.pop('autocorrect', False)
-    #standardize = options.pop('standardize', False)
-    
-    token_stream = generate_raw_tokens(text_or_gen)
-    token_stream = parse_punctuation(token_stream, **options)
-    token_stream = generate_tokens_lookahead(token_stream)
-    token_stream = generate_eos_tokens(token_stream)
-    if autocorrect:
-        token_stream = correct_tokens(token_stream)
-    token_stream = parse_numerals(token_stream)
-    token_stream = parse_regular_words(token_stream, **options)
-    # token_stream = parse_acronyms(token_stream)
-
-    return token_stream
-
-
-
-def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
-    """
-        Parameters
-        ----------
-            capitalize: boolean
-                Capitalize sentence
-            
-            end: str
-                String to append at end of each sentence
-    """
-    
-    # Parse options
-    end_sentence = options.pop('end', '')
-    capitalize_opt = options.pop('capitalize', False)
-    # colored = options.pop("colored", False)
-
-    parts: List[str] = []
-    punct_stack = [] # Used to keep track of coupled punctuation (quotes and brackets)
-    capitalize_next_word = capitalize_opt
-
-    for tok in token_stream:
-        data = tok.norm[0] if tok.norm else tok.data
-
-        if capitalize_next_word:
-            data = data.capitalize()
-            capitalize_next_word = False
-
-        prefix = ''
-        if tok.kind == Token.PUNCTUATION:
-            if data in '!?:;–':
-                prefix = '\xa0' # Non-breakable space
-            elif data == '"':
-                if punct_stack and punct_stack[-1] == '"':
-                    punct_stack.pop()
-                    prefix = ''
-                else:
-                    punct_stack.append('"')
-                    prefix = ' '
-            elif data in OPENING_QUOTES:
-                # we use a single '"' char to represent every kind of quotation mark
-                # this prevents problems when mixing types of quotation marks
-                punct_stack.append('"')
-                prefix = ' '
-            elif data in CLOSING_QUOTES:
-                if punct_stack and punct_stack[-1] == '"':
-                    punct_stack.pop()
-                prefix = '\xa0' if data == '»' else ''
-            elif data in '([':
-                punct_stack.append(data)
-                prefix = ' '
-            elif data in ')':
-                if punct_stack and punct_stack[-1] == '(':
-                    punct_stack.pop()
-                prefix = ''
-            elif data in ']':
-                if punct_stack and punct_stack[-1] == '[':
-                    punct_stack.pop()
-                prefix = ''
-            elif data == '/…':
-                prefix = ''
-        
-        elif tok.kind == Token.END_OF_SENTENCE:
-            prefix = end_sentence
-            if capitalize_opt:
-                capitalize_next_word = True
-
-        elif parts and parts[-1]:
-            last_char = parts[-1][-1]
-            if last_char == '«':
-                prefix = '\xa0'
-            elif punct_stack and last_char == punct_stack[-1]:
-                prefix = ''
-            elif punct_stack and last_char == '“':
-                prefix = ''
-            elif last_char not in '-/':
-                prefix = ' '
-
-        if parts:
-            parts.append(prefix + data)
-        else:
-            # First word in sentence
-            parts.append(data if data else '')
-        if parts[-1] == '':
-            parts.pop()
-    
-    if parts:
-        ret = ''.join(parts)
-        return ret
-    return ''
-
-
-
-def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
-    """ Split a line (or list of lines) according to its punctuation
-        This function can be used independently
-
-        Parameters
-        ----------
-            chars : List[str]
-                Sentences separator chars TODO
-            end : str
-                End the sentences with the given character
-
-    """
-
-    end_char = options.pop("end", '\n')
-    # preserve_newline = options.pop("preserve_newline", False)
-
-    if isinstance(text_or_gen, str):
-        if not text_or_gen:
-            return
-        text_or_gen = [text_or_gen]
-    
-    token_stream = generate_raw_tokens(text_or_gen)
-    token_stream = parse_punctuation(token_stream)
-    token_stream = generate_tokens_lookahead(token_stream) # Needed to generate subsequent eos tokens
-    token_stream = generate_eos_tokens(token_stream)
-
-    current_sentence = []
-    for tok in token_stream:
-        if tok.kind == Token.END_OF_SENTENCE:
-            yield detokenize(current_sentence, **options) + end_char
-            current_sentence = []
-        else:
-            current_sentence.append(tok)
-    if current_sentence:
-        yield detokenize(current_sentence, **options) + end_char

@@ -1,6 +1,5 @@
 import os
 from typing import Tuple
-import hunspell
 from colorama import Fore
 
 from ..text.tokenizer import Token, Flag, tokenize, detokenize
@@ -20,6 +19,8 @@ additional_words = ["add.txt", "add_gwe.txt"]
 
 
 def get_hunspell_dict():
+    import hunspell
+
     hs = hunspell.HunSpell(hs_dic_path+".dic", hs_aff_path)
     #hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
     for path in additional_words:
@@ -32,7 +33,7 @@ def get_hunspell_dict():
         hs.add(w)
     return hs
 
-hs_dict = get_hunspell_dict()
+#hs_dict = get_hunspell_dict()
 
 
 

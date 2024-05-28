@@ -31,6 +31,11 @@ def test_split_sentence():
         ("""C'hoariet en deus evit Stade Rennais Football Club etre 1973 ha 1977 hag e 1978-1979. Unan eus ar c'hoarierien wellañ bet gwelet e klub Roazhon e oa. Pelé en deus lavaret diwar e benn : « Kavet 'm eus an hini a dapo ma flas. Laurent Pokou e anv. ».""", 3),
         ("Sed aze pal ar « c'hendivizad a-ziforc'h evit treuzkas yezhoù Breizh (2022-2027) ». Sinet e oa bet ivez d'ar Meurzh 15 a viz Meurzh 2022 e Roazhon.", 2),
         ("Eilpennet dehoù/kleiz eo ar skoed a zo diskouezet war Commons e-keñver an hini a zo war lec'hienn kêr Lambal, war Armor Magazine (Mae 1997) hag en Armorial des communes des Côtes-d'Armor Froger & Pressensé, 2008, p. 34 ; Kuzul ar Gumun : 16 a viz Here 1994.", 1),
+        ("""Dirak an it. Lena Louarn, besprezidantez ar C’huzul-rannvro karget eus yezhoù Breizh ha prezidantez OPAB,
+            an it. Solange Creignou, besprezidantez Kuzul-departamant Penn-ar-Bed dileuriet evit ar brezhoneg,
+            an it. Isabelle ar Bal, eilmaerez 1añ Kemper hag an ao. Jean-Luc Bleunven, kannad eus Penn-ar-Bed,
+            eo bet sinet an emglev Ya d’ar brezhoneg gant an ao. Mathieu Gallou, prezidant ar skol-veur.""", 1),
+        ("O teskin brezhoneg emaoc’h (live 1, 2) ha c’hoant ho peus d’en em lakaat da gaozeal Deuit gant Kristin Ar Menn evit un endervezh plijus e brezhoneg Petra vo graet ? C’hoarioù (daou-ha-daou, a-stroll, etc..) evit gwelout penaos ober anaoudegezh ha kaozeal e-pad ar predoù. E fin an endervezh e vo graet merenn-vihan ganeomp ha implijet […]", 4),
     ]
 
     for t in test_cases:
@@ -110,3 +115,10 @@ def test_autocorrection():
     should_be("abadenn France 3", "abadenn Frañs 3")
     should_be("Hirio on aet war twitter", "Hiziv on aet war Twitter")
     should_be("Ar bleuñ", "Ar bleuñv")
+
+
+def test_abbreviations():
+    def should_be(sent: str, correction: str) -> str:
+        assert detokenize(tokenize(sent)) == correction
+    
+    should_be("Demat It. Marie", "Demat Itron Marie")

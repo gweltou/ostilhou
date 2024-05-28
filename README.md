@@ -4,6 +4,12 @@ A lightweight and simple NLP toolkit for the Breton language, in Python.
 
 ## Setup
 
+`ostilhou` is dependent on `hunspell`
+
+```sh
+sudo apt install hunspell libhunspell-dev
+```
+
 After cloning the repository :
 
 ```sh
