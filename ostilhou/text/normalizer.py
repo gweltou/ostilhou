@@ -325,8 +325,6 @@ def normalize_sentence(sentence: str,
                 Capitalize the first word of each grammatical sentence
     """
 
-    # Option: cap_first_letter ?
-
     propositions = []
     result = ""
     return detokenize(
@@ -335,6 +333,7 @@ def normalize_sentence(sentence: str,
                          autocorrect=autocorrect,
                          norm_punct=norm_punct),
                 norm_case=norm_case),
+            normalize=True,
             capitalize=capitalize)
 
 

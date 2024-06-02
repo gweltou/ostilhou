@@ -79,7 +79,7 @@ def parse_dataset(file_or_dir):
 def parse_data_file(seg_filename):
     global n_dropped
 
-    # Kaldi doensn't like whitespaces in file path
+    # Kaldi doesn't like whitespaces in file path
     if ' ' in seg_filename:
         print("ERROR: whitespaces in path", seg_filename)
         sys.exit(1)
@@ -244,7 +244,7 @@ if __name__ == "__main__":
             if args.format == "tsv":
                 metadata_file.write('\t'.join([seg_audio_file, sentence]) + '\n')
             elif args.format == "jsonl":
-                sentence = sentence.replace('"', '\"')
+                sentence = sentence.replace('"', '\\"')
                 metadata_file.write(f'{{"file_name": "{seg_audio_file}", "transcript": "{sentence}"}}\n')
 
             if not args.dry_run:

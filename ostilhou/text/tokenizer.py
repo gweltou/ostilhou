@@ -10,6 +10,8 @@ from typing import Iterator, Iterable, List, Any, Union, Set
 from enum import Enum
 import re
 
+from sentence_splitter import split_text_into_sentences
+
 from .definitions import (
     re_word, is_word, is_word_inclusive, re_extended_word,
     is_roman_number, is_ordinal, is_roman_ordinal,
