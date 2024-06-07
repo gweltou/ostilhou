@@ -244,7 +244,7 @@ if __name__ == "__main__":
 	parser.add_argument('folder')
 	parser.add_argument('-o', '--output', type=str, help="Destination folder")
 	parser.add_argument('--remove', action='store_true', help="Remove original files (audio and subs)")
-	parser.add_argument('--stage', type=int, default=1)
+	parser.add_argument('--stage', type=int, default=3)
 	parser.add_argument("--audio-format", help="Audio format of exported segments", choices=['wav', 'mp3'], default='mp3')
 	parser.add_argument('-d', '--dry-run', action='store_true', help="Do not write to disk")
 	args = parser.parse_args()
@@ -255,12 +255,12 @@ if __name__ == "__main__":
 	if args.output and args.output != args.folder:
 		args.folder = args.output
 
-	if args.stage == 1:
+	if args.stage <= 1:
 		# Prepare data for baseline model
 		stage1()
-	if args.stage >= 2:
+	if args.stage <= 2:
 		# Normalization
 		stage2()
-	if args.stage >= 3:
+	if args.stage <= 3:
 		# Segment concatenation
 		stage3()

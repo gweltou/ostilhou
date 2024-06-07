@@ -170,15 +170,17 @@ def parse_data_file(seg_filename, args):
     seg_ext = os.path.splitext(seg_filename)[1] # Could be '.split' or '.seg'
     text_filename = seg_filename.replace(seg_ext, '.txt')
     assert os.path.exists(text_filename), f"ERROR: no text file found for {seg_filename}"
-    wav_filename = os.path.abspath(seg_filename.replace(seg_ext, '.wav'))
-    assert os.path.exists(wav_filename), f"ERROR: no wave file found for {seg_filename}"
-    recording_id = md5(wav_filename.encode("utf8")).hexdigest()
+    audio_filename = os.path.abspath(seg_filename.replace(seg_ext, '.wav'))
+    if not os.path.exists(audio_filename):
+        audio_filename = os.path.abspath(seg_filename.replace(seg_ext, '.mp3'))
+    assert os.path.exists(audio_filename), f"ERROR: no wave file found for {seg_filename}"
+    recording_id = md5(audio_filename.encode("utf8")).hexdigest()
     
     substitute_corpus_filename = seg_filename.replace(seg_ext, '.cor')
     replace_corpus = os.path.exists(substitute_corpus_filename)
     
     data = {
-        "wavscp": {recording_id: wav_filename},   # Wave filenames
+        "wavscp": {recording_id: audio_filename},   # Wave filenames
         "utt2spk": [],      # Utterance to speakers
         "segments": [],     # Time segments
         "text": [],         # Utterances text
@@ -244,7 +246,7 @@ def parse_data_file(seg_filename, args):
                 sent = sent.replace('-', ' ').replace('/', ' ')
                 sent = sent.replace('\xa0', ' ')
                 sent = filter_out_chars(sent, PUNCTUATION)
-                if not sent:
+                if not sent.strip():
                     continue
 
                 n_stared = sent.count('*')

@@ -73,7 +73,7 @@ def parse_dataset(file_or_dir):
     else:
         print("File argument must be a split file or a directory")
         return
-    
+
 
 
 def parse_data_file(seg_filename):
@@ -104,7 +104,7 @@ def parse_data_file(seg_filename):
 
     assert len(text_data) == len(segments), \
         f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
-
+    
     for i, (start, stop) in enumerate(segments):
         sentence, metadata = text_data[i]
 
@@ -113,7 +113,7 @@ def parse_data_file(seg_filename):
             print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
             n_dropped += 1
             continue
-
+        
         if "accent" not in metadata:
             metadata["accent"] = "unknown"
 
@@ -168,7 +168,7 @@ def parse_data_file(seg_filename):
             [sentence, speaker_id, speaker_gender, accent, audio_filename, start, stop]
         )
     
-    status = Fore.GREEN + f" * {seg_filename[:-6]}" + Fore.RESET
+    status = Fore.GREEN + f" * {seg_filename[:-len(seg_ext)]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
         status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
     print(status, file=sys.stderr)
@@ -199,6 +199,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--format", help="metadata file format", choices=["tsv", "jsonl"], default="jsonl")
     parser.add_argument("--audio-format", help="Audio format of exported segments", choices=['wav', 'mp3'], default='mp3')
     parser.add_argument("-d", "--dry-run", help="Run script without actualy writting files to disk", action="store_true")
+    parser.add_argument("--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
 
     args = parser.parse_args()
 
@@ -285,3 +286,25 @@ if __name__ == "__main__":
     #             print('\t'.join(map(str, item)))
     
     metadata_file.close()
+    
+    if args.draw_figure:
+        import matplotlib.pyplot as plt
+        import datetime
+
+        plt.figure(figsize = (8, 8))
+
+        total_audio_length = dataset["train"]["audio_length"]["f"] \
+            + dataset["train"]["audio_length"]["m"] \
+            + dataset["train"]["audio_length"]["u"]
+        keys, val = zip(*dataset["train"]["subdir_audiolen"].items())
+        keys = [ k.replace('_', ' ') if v/total_audio_length>0.02 else ''
+                 for k,v in dataset["train"]["subdir_audiolen"].items() ]
+        
+        def labelfn(pct):
+            if pct > 2:
+                return f"{sec2hms(total_audio_length*pct/100)}"
+        plt.pie(val, labels=keys, normalize=True, autopct=labelfn)
+        plt.title(f"Dasparzh ar roadennoù, {sec2hms(total_audio_length)} en holl")
+        plt.savefig(os.path.join(args.output, f"subset_division_{datetime.datetime.now().strftime('%Y-%m-%d')}.png"))
+        print(f"\nFigure saved to \'{args.output}\'")
+        # plt.show()

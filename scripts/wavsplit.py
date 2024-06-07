@@ -22,7 +22,7 @@ import numpy as np
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 from pydub.playback import _play_with_simpleaudio
-from pyrubberband import time_stretch
+#from pyrubberband import time_stretch
 
 from ostilhou.utils import splitToEafFile, eafToSplitFile
 from ostilhou.asr import load_vosk, load_text_data, load_segments_data, transcribe_segment
@@ -55,11 +55,11 @@ def play_segment_text(idx, song, segments, utterances, speed):
         correction, _ = get_hspell_mistakes(sent, autocorrected=True)
         print(f'{{{utterances[idx][1].get("speaker", "unkwnown")}}} {correction}')
     seg = song[segments[idx][0]:segments[idx][1]]
-    if speed != 1.0:
-        y = np.array(seg.get_array_of_samples())
-        y = time_stretch(y, seg.frame_rate, speed)
-        y = np.int16(y * 2**15)
-        seg = AudioSegment(y.tobytes(), frame_rate=seg.frame_rate, sample_width=2, channels=1)
+    #if speed != 1.0:
+    #    y = np.array(seg.get_array_of_samples())
+    #    y = time_stretch(y, seg.frame_rate, speed)
+    #    y = np.int16(y * 2**15)
+    #    seg = AudioSegment(y.tobytes(), frame_rate=seg.frame_rate, sample_width=2, channels=1)
     play_process = _play_with_simpleaudio(seg)
     #play_segment(idx, song, segments, speed)
 
