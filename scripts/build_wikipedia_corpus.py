@@ -113,9 +113,9 @@ if __name__ == "__main__":
                 if sentence.startswith("Brasaet e oa bet da"):
                     continue
                 if sentence.startswith("Poblet eo gant"):
-                	continue
+                    continue
                 if sentence.startswith("Poblet e oa gant"):
-                	continue
+                    continue
                 
                 stats = sentence_stats(sentence)
                 

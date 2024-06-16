@@ -25,15 +25,15 @@ datafile_header = \
 
 
 # Special tokens, found in transcriptions
-special_tokens = (
-    "<UNK>",
-    "<SPOKEN_NOISE>",
-    "<NTT>",
-    "<C'HOARZH>",
-    "<HUM>",
-    "<PASAAT>",
-    "<SONEREZH>",
-)
+special_tokens = {
+    "<UNK>": "SPN",
+    "<SPOKEN_NOISE>": "SPN",
+    "<NTT>": "SPN",
+    "<C'HOARZH>": "LAU",
+    "<HUM>": "SPN",
+    "<PASAAT>": "SPN",
+    "<SONEREZH>": "NSN",
+}
 
 
 
@@ -106,6 +106,62 @@ def get_text_header(filename) -> Dict:
             # Stop a first sentence
             break
     return metadata
+
+
+def load_ali_file(filepath) -> Dict:
+    """returns a dictionary containing a list of sentences and a list of segments"""
+    audio_path = ""
+    sentences = []
+    raw_sentences = []
+    segments = []
+    metadatas = []
+
+    with open(filepath, 'r') as f:
+        # Find associated audio file in metadata
+        current_speaker = 'unknown'
+        current_gender = 'unknown'
+        no_lm = False
+
+        for line in f.readlines():
+            text, metadata = extract_metadata(line)
+            if "speaker" in metadata:
+                current_speaker = metadata["speaker"]
+            else:
+                metadata["speaker"] = current_speaker
+            
+            if "gender" in metadata:
+                current_gender = metadata["gender"]
+            else:
+                metadata["gender"] = current_gender
+            
+            if "parser" in metadata:
+                if "no-lm" in metadata["parser"]: no_lm = True
+                elif "add-lm" in metadata["parser"]: no_lm = False
+            else:
+                if no_lm:
+                    metadata["parser"] = ["no-lm"]
+
+            match = re.search(r"{\s*start\s*:\s*([0-9\.]+)\s*;\s*end\s*:\s*([0-9\.]+)\s*}", line)
+            if match:
+                segment = [float(match[1])*1000, float(match[2])*1000]
+                line = line[:match.start()] + line[match.end():]
+                segments.append(segment)
+                sentences.append(text.strip())
+                raw_sentences.append(line.strip())
+                metadatas.append(metadata)
+
+            if not audio_path and "audio_path" in metadata:
+                dir = os.path.split(filepath)[0]
+                audio_path = os.path.join(dir, metadata["audio_path"])
+                audio_path = os.path.normpath(audio_path)
+    
+    return {
+        "audio_path": audio_path,
+        "sentences": sentences,
+        "raw_sentences": raw_sentences,
+        "segments": segments,
+        "metadata": metadatas,
+    }
 
 
 
@@ -322,8 +378,9 @@ SPEAKER_ID_PATTERN_DEPR = re.compile(r'([-\'\w]+):*([mf])*')
 KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'.:/-]+?)\s*")
 
 _VALID_PARAMS = {
-    "source", "source-audio", "audio_source",
-    "audio_path",
+    "source",
+    "source-audio", "audio-source",
+    "audio_path", "audio-path",
     "tags",
     "parser",
     "author", "authors",

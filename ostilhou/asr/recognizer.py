@@ -72,6 +72,39 @@ def transcribe_segment_timecoded(segment: AudioSegment) -> List[dict]:
 
 
 
+def transcribe_segment_timecoded_callback(segment: AudioSegment, callback: callable):
+    """ Transcribe a short AudioSegment, keeping the timecodes,
+        Send result to callback function for every detected utterances
+
+        The resulting transcription is a list of Vosk tokens
+        Each Vosk token is a dictionary of the form:
+            {'word': str, 'start': float, 'end': float, 'conf': float}
+        'start' and 'end' keys are in seconds
+        'conf' is a normalized confidence score
+    """
+    assert segment.frame_rate == 16000
+    assert segment.frame_width == 2
+    assert segment.channels == 1
+    
+    model = load_model()
+    recognizer = KaldiRecognizer(model, 16000)
+    recognizer.SetWords(True)
+    
+    data = segment.get_array_of_samples().tobytes()
+    i = 0
+    while i + 4000 < len(data):
+        if recognizer.AcceptWaveform(data[i:i+4000]):
+            result = json.loads(recognizer.Result())
+            if "result" in result:
+                callback(result["result"])
+        i += 4000
+    recognizer.AcceptWaveform(data[i:])
+    result = json.loads(recognizer.FinalResult())
+    if "result" in result:
+        callback(result["result"])
+
+
+
 def transcribe_file(filepath: str) -> List[str]:
     if not os.path.exists(filepath):
         print("Couldn't find {}".format(filepath), file=sys.stderr)

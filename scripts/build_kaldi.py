@@ -21,6 +21,7 @@ from ostilhou import normalize_sentence
 from ostilhou.text import filter_out_chars, pre_process, PUNCTUATION
 from ostilhou.asr import (
     phonemes,
+    special_tokens,
     phonetize_word,
     parse_dataset,
 )
@@ -47,7 +48,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("--train", help="train dataset directory", required=True)
     parser.add_argument("--test", help="train dataset directory")
-    parser.add_argument("--lm-corpus", nargs='+', help="path of a text file to build the language model")
+    parser.add_argument("--lm-corpus", nargs='+', help="path to a text file to build the language model")
     parser.add_argument("-n", "--no-lm", help="do not copy utterances to language model", action="store_true")
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
     parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")

@@ -8,9 +8,10 @@
 
 from typing import Iterator, Iterable, List, Any, Union, Set
 from enum import Enum
+import os.path
 import re
 
-from sentence_splitter import split_text_into_sentences
+from sentence_splitter import SentenceSplitter, split_text_into_sentences
 
 from .definitions import (
     re_word, is_word, is_word_inclusive, re_extended_word,
@@ -99,14 +100,33 @@ class Flag(Enum):
 
 
 
+_root = os.path.dirname(os.path.abspath(__file__))
+_moses_prefix_file = os.path.join(_root, "moses_br.txt")
+
 def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
     """ Split a line (or list of lines) according to its punctuation
         This function can be used independently
 
         Parameters
         ----------
-            chars : List[str]
-                Sentences separator chars TODO
+            end : str
+                End the sentences with the given character
+    """
+   #print(text_or_gen)
+    return split_text_into_sentences(
+            #text=''.join(test_case.split('\n')),
+            text=' '.join([line.strip() for line in text_or_gen]),
+            language='br',
+            non_breaking_prefix_file=_moses_prefix_file
+        )
+
+
+def split_sentences_old(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
+    """ Split a line (or list of lines) according to its punctuation
+        This function can be used independently
+
+        Parameters
+        ----------
             end : str
                 End the sentences with the given character
 

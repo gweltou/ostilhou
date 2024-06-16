@@ -32,6 +32,7 @@ from ostilhou.text import (
 from ostilhou.asr import (
     load_segments_data,
     load_text_data,
+    load_ali_file,
 )
 from ostilhou.audio import load_audiofile
 
@@ -42,7 +43,8 @@ n_dropped = 0
 
 
 def parse_dataset(file_or_dir):
-    if file_or_dir.endswith(".split") or file_or_dir.endswith(".seg"):   # Single data item
+    file_ext = os.path.splitext(file_or_dir)[1]
+    if file_ext in (".split", ".seg", ".ali"):   # Single data item
         return parse_data_file(file_or_dir)
     
     elif os.path.isdir(file_or_dir):
@@ -56,9 +58,9 @@ def parse_dataset(file_or_dir):
             if filename.startswith('.'):
                 # Skip hidden folders
                 continue
+            file_ext = os.path.splitext(file_or_dir)[1]
             if os.path.isdir(os.path.join(file_or_dir, filename)) \
-                    or filename.endswith(".split") \
-                    or filename.endswith(".seg"):
+                    or file_ext in (".split", ".seg", ".ali"):
                 data_item = parse_dataset(os.path.join(file_or_dir, filename))
                 data["utterances"].extend(data_item["utterances"])
                 data["audio_length"]['f'] += data_item["audio_length"]['f']
@@ -76,34 +78,45 @@ def parse_dataset(file_or_dir):
 
 
 
-def parse_data_file(seg_filename):
+def parse_data_file(filepath):
     global n_dropped
 
     # Kaldi doesn't like whitespaces in file path
-    if ' ' in seg_filename:
-        print("ERROR: whitespaces in path", seg_filename)
+    if ' ' in filepath:
+        print("ERROR: whitespaces in path", filepath)
         sys.exit(1)
     
     # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
     # print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
-    seg_ext = os.path.splitext(seg_filename)[1]
-    text_filename = seg_filename.replace(seg_ext, '.txt')
-    assert os.path.exists(text_filename), f"ERROR: no text file found for {seg_filename}"
-    audio_filename = os.path.abspath(seg_filename.replace(seg_ext, '.wav'))
-    if not os.path.exists(audio_filename):
-        audio_filename = os.path.abspath(seg_filename.replace(seg_ext, '.mp3'))
-    assert os.path.exists(audio_filename), f"ERROR: no audio file found for {seg_filename}"
+    seg_ext = os.path.splitext(filepath)[1]
+    audio_path = ""
+
+    if seg_ext == ".ali":
+        ali_data = load_ali_file(filepath)
+        segments = ali_data["segments"]
+        text_data = list(zip(ali_data["raw_sentences"], ali_data["metadata"]))
+        audio_path = ali_data["audio_path"]
+    else: # .seg, .split
+        text_filename = filepath.replace(seg_ext, '.txt')
+        assert os.path.exists(text_filename), f"ERROR: no text file found for {filepath}"
+        segments = load_segments_data(filepath)
+        text_data = load_text_data(text_filename)
+
+    if not audio_path:
+        audio_path = os.path.abspath(filepath.replace(seg_ext, '.wav'))
+        if not os.path.exists(audio_path):
+            audio_path = os.path.abspath(filepath.replace(seg_ext, '.mp3'))
+        assert os.path.exists(audio_path), f"ERROR: no audio file found for {filepath}"
 
     data = {
         "utterances": [],
         "audio_length": {'m': 0, 'f': 0, 'u': 0},    # Audio length for each gender
         }
     
-    segments = load_segments_data(seg_filename)
-    text_data = load_text_data(text_filename)
-
     assert len(text_data) == len(segments), \
-        f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
+        "number of utterances in text file ({}) doesn't match number of segments in split file ({})".format(
+            len(text_data), len(segments)
+        )
     
     for i, (start, stop) in enumerate(segments):
         sentence, metadata = text_data[i]
@@ -165,10 +178,10 @@ def parse_data_file(seg_filename):
             accent = metadata["accent"]
         
         data["utterances"].append(
-            [sentence, speaker_id, speaker_gender, accent, audio_filename, start, stop]
+            [sentence, speaker_id, speaker_gender, accent, audio_path, start, stop]
         )
     
-    status = Fore.GREEN + f" * {seg_filename[:-len(seg_ext)]}" + Fore.RESET
+    status = Fore.GREEN + f" * {filepath[:-len(seg_ext)]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
         status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
     print(status, file=sys.stderr)
@@ -261,6 +274,7 @@ if __name__ == "__main__":
                 n_segments += 1
             
         print(f"{n_segments} segments exported")
+    print(f"Files saved in {output_folder}")
 
 
     # if args.split_audiofiles and not args.dry_run:

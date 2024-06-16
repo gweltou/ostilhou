@@ -2,8 +2,16 @@ from typing import List, Dict
 import os
 import platform
 
-from .dataset import extract_metadata, load_segments_data, load_text_data, parse_dataset, special_tokens
-from .recognizer import load_model, transcribe_segment, transcribe_segment_timecoded, transcribe_file, transcribe_file_timecoded
+from .dataset import (
+    extract_metadata,
+    load_segments_data, load_text_data, load_ali_file,
+    parse_dataset, special_tokens
+)
+from .recognizer import (
+    load_model,
+    transcribe_segment, transcribe_segment_timecoded, transcribe_segment_timecoded_callback,
+    transcribe_file, transcribe_file_timecoded
+)
 from .post_processing import verbal_fillers
 from ..dicts import proper_nouns, acronyms
 
@@ -229,8 +237,8 @@ def phonetize_word(word: str) -> List[str]:
     """ Simple phonetizer
         Returns a string of phonemes representing the pronunciation
         of a single given word.
-        All words must be given lowercase, except acronyms
-        Numbers can't be phonetized.
+        All words must be given in lowercase, except acronyms
+        Numbers can't be phonetized, so they need to be normalized first.
     """
     
     word = word.strip()

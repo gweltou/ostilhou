@@ -33,7 +33,7 @@ def get_hunspell_dict():
         hs.add(w)
     return hs
 
-#hs_dict = get_hunspell_dict()
+hs_dict = get_hunspell_dict()
 
 
 
