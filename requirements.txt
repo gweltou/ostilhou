@@ -5,3 +5,7 @@ pydub
 colorama
 jiwer
 static_ffmpeg
+hunspell
+certifi
+tqdm
+sentence-splitter

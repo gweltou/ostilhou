@@ -84,6 +84,9 @@ def pre_process(text: str) -> str:
     text = text.replace('ù', 'ù') # Another sneaky one (found in Ya! webpages)
     text = text.replace('ê', 'ê') # Found in brezhoweb subtitles
     text = text.replace('û', 'û') # Found in brezhoweb subtitles
+    text = text.replace('ã', 'a')
+    text = text.replace('ö', 'o')
+    text = text.replace('á', 'a')
     return text
 
 

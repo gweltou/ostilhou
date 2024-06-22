@@ -21,16 +21,16 @@ from math import floor, ceil
 import numpy as np
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
-from pydub.playback import _play_with_simpleaudio
+#from pydub.playback import _play_with_simpleaudio
 #from pyrubberband import time_stretch
 
 from ostilhou.utils import splitToEafFile, eafToSplitFile
-from ostilhou.asr import load_vosk, load_text_data, load_segments_data, transcribe_segment
+from ostilhou.asr import load_model, load_text_data, load_segments_data, transcribe_segment
 from ostilhou.asr.dataset import datafile_header
 from ostilhou.hspell import get_hspell_mistakes
 from ostilhou.text import pre_process, normalize_sentence, strip_punct
 from ostilhou.dicts import acronyms
-from ostilhou.audio import get_audiofile_info, convert_to_wav, split_to_segments
+from ostilhou.audio import get_audiofile_info, convert_to_wav, split_to_segments, play_audio_segment
 
 
 
@@ -60,7 +60,7 @@ def play_segment_text(idx, song, segments, utterances, speed):
     #    y = time_stretch(y, seg.frame_rate, speed)
     #    y = np.int16(y * 2**15)
     #    seg = AudioSegment(y.tobytes(), frame_rate=seg.frame_rate, sample_width=2, channels=1)
-    play_process = _play_with_simpleaudio(seg)
+    play_process = play_audio_segment(idx, song, segments, speed)
     #play_segment(idx, song, segments, speed)
 
 
@@ -174,6 +174,7 @@ def main():
     text_filename = os.path.join(rep, os.path.extsep.join((recording_id, 'txt')))
 
     # Converting sound file to 16kHz mono wav if needed
+    """
     if args.filename.endswith('.wav'):
         fileinfo = get_audiofile_info(args.filename)
         if fileinfo["channels"] != 1 \
@@ -184,8 +185,12 @@ def main():
     else:
         # Audio file is not PCM
         convert_to_wav(args.filename, wav_filename)
+    """
     
-    song = AudioSegment.from_wav(wav_filename)
+    if os.path.exists(wav_filename):
+        song = AudioSegment.from_wav(wav_filename)
+    elif os.path.exists(mp3_filename):
+        song = AudioSegment.from_file(mp3_filename)
 
     segments = []
     do_split = True
@@ -221,7 +226,7 @@ def main():
                     break
         if do_transcribe:
             if args.model:
-                load_vosk(args.model)
+                load_model(args.model)
             
             print("Transcribing...")
             t_min, t_max = 0, segments[-1][1]

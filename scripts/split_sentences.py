@@ -12,6 +12,6 @@ if __name__ == "__main__":
     
     parts = data.split('\n\n')
     for part in parts:
-        for sentence in split_sentences(part, end=''):
+        for sentence in split_sentences(part.split('\n')):
             print(sentence)
         print()
