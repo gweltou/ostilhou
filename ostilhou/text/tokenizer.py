@@ -103,19 +103,18 @@ class Flag(Enum):
 _root = os.path.dirname(os.path.abspath(__file__))
 _moses_prefix_file = os.path.join(_root, "moses_br.txt")
 
-def split_sentences(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
+def split_sentences(text_or_gen: Union[str, Iterable[str]]) -> Iterator[str]:
     """ Split a line (or list of lines) according to its punctuation
         This function can be used independently
-
-        Parameters
-        ----------
-            end : str
-                End the sentences with the given character
     """
    #print(text_or_gen)
+    if isinstance(text_or_gen, str):
+        text = text_or_gen
+    else:
+        text = ' '.join([line.strip() for line in text_or_gen])
+    
     return split_text_into_sentences(
-            #text=''.join(test_case.split('\n')),
-            text=' '.join([line.strip() for line in text_or_gen]),
+            text=text,
             language='br',
             non_breaking_prefix_file=_moses_prefix_file
         )

@@ -27,7 +27,8 @@ from ostilhou.text import (
     pre_process,
     normalize_sentence,
     filter_out_chars,
-    PUNCTUATION
+    PUNCTUATION,
+    LETTERS,
 )
 from ostilhou.asr import (
     load_segments_data,
@@ -40,6 +41,8 @@ from ostilhou.audio import load_audiofile
 utt_ids = set()
 speakers_gender = {"unknown": "u"}
 n_dropped = 0
+
+letters = set(LETTERS)
 
 
 def parse_dataset(file_or_dir):
@@ -137,6 +140,7 @@ def parse_data_file(filepath):
         sentence = pre_process(sentence)
         if not sentence:
             continue
+
         sentence = normalize_sentence(sentence, autocorrect=True, norm_punct=True, capitalize=False)
         sentence = sentence.replace('\xa0', ' ')
         if args.no_punct:
@@ -144,13 +148,23 @@ def parse_data_file(filepath):
             sentence = filter_out_chars(sentence, PUNCTUATION)
         sentence = ' '.join(sentence.replace('*', '').split())
         
+        # Filter out utterances with foreign chars
+        chars = set(sentence)
+        if not chars.issubset(letters):
+            print(Fore.YELLOW
+                  + f"dropped (foreign chars '{chars.difference(letters)}'): "
+                  + Fore.RESET + sentence, file=sys.stderr)
+            n_dropped += 1
+            continue
+
+
         if args.unique:
             utt_id = md5((speaker_id + sentence).encode("utf-8")).hexdigest()
         else:
             utt_id = str(uuid4()).replace('-', '')
         
         if utt_id in utt_ids:
-            print(Fore.YELLOW + "dropped (recurent): " + Fore.RESET + sentence, file=sys.stderr)
+            print(Fore.YELLOW + "dropped (recurrent): " + Fore.RESET + sentence, file=sys.stderr)
             n_dropped += 1
             continue
         utt_ids.add(utt_id)

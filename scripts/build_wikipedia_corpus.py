@@ -27,7 +27,8 @@ import html
 from colorama import Fore
 
 from ostilhou.text import (
-    split_sentences, pre_process, filter_out_chars, sentence_stats,
+    split_sentences, split_sentences_old,
+    pre_process, filter_out_chars, sentence_stats,
     correct_sentence, normalize_sentence,
     PUNCTUATION
 )
@@ -47,11 +48,6 @@ KEMMADUR_PATTERN = re.compile(r" (g|b|d|w|v|c'h){1}/[a-zñ']{3,}", re.IGNORECASE
 
 
 
-def parse_file(path):
-    pass
-
-
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate a clean corpus text from dumps (wikiedia) or other")
@@ -63,7 +59,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-
+    
+    # List files given as arguments
     filenames = []
     for d in args.source:
         if os.path.isfile(d): # and d.endswith(".txt"):
@@ -79,8 +76,8 @@ if __name__ == "__main__":
         with open(filename, 'r') as f:
             articles.extend(f.read().split('\n\n'))
     
-    keepers = set()
-    raw_sentences = set()
+    keepers = []
+    raw_sentences = []
     acronym_words = set()
     capitalized_words = set()
     santou = set()
@@ -90,32 +87,38 @@ if __name__ == "__main__":
 
     for article in articles:
         for line in article.split('\n'):
-            if '&' in line:
-                line = html.unescape(line)
+            #if '&' in line:
+            #    line = html.unescape(line)
             
             line = filter_out_chars(pre_process(line.strip()), '"[]•')
             line = line.replace("()", '')
 
-            for sentence in split_sentences(line, end=''):
+            for sentence in split_sentences_old(line):
                 # Filter out short sentences
                 if len(sentence) < 10:
                     continue
                 
                 # Filter out common Wikipedia sentence patterns
-                if sentence.startswith("Diwar-benn bloavezh") or sentence.startswith("Diwar-benn ar bloavez"):
-                    continue
-                if sentence.startswith("Ar spesad a gave"):
-                    continue
-                if sentence.endswith("a annezidi o chom enni."):
-                    continue
-                if sentence.startswith("Bez' e oa") and "a annezidi e" in sentence:
-                    continue
-                if sentence.startswith("Brasaet e oa bet da"):
-                    continue
-                if sentence.startswith("Poblet eo gant"):
-                    continue
-                if sentence.startswith("Poblet e oa gant"):
-                    continue
+                # if sentence.startswith("Diwar-benn bloavezh") or sentence.startswith("Diwar-benn ar bloavez"):
+                #     continue
+                # if sentence.startswith("Ar spesad a gave"):
+                #     continue
+                # if sentence.endswith("a annezidi o chom enni."):
+                #     continue
+                # if sentence.startswith("Bez' e oa") and "a annezidi e" in sentence:
+                #     continue
+                # if sentence.startswith("Brasaet e oa bet da"):
+                #     continue
+                # if sentence.startswith("Poblet eo gant"):
+                #     continue
+                # if sentence.startswith("Poblet e oa gant"):
+                #     continue
+                # if sentence.startswith("Gwelet ivez"):
+                #     continue
+                # if sentence.startswith("Evit implijoù all"):
+                #     continue
+                # if sentence.startswith("Evit sterioù all"):
+                #     continue
                 
                 stats = sentence_stats(sentence)
                 
@@ -137,7 +140,7 @@ if __name__ == "__main__":
                 sentence = sentence.replace("J. -K.", "J.-K.")
 
                 if get_hspell_mistakes(sentence, autocorrected=True)[1] == 0:
-                    raw_sentences.add(sentence)
+                    raw_sentences.append(sentence)
                 
                 """
                 first_word = True
@@ -172,14 +175,15 @@ if __name__ == "__main__":
                            print(correction)
                         num_outed += 1
                 sentence = ', '.join(sub_keepers)
-                keepers.add(sentence)
+                # keepers.add(sentence)
+                keepers.append(sentence)
                 for w in filter_out_chars(sentence, PUNCTUATION).split():
                     w = w.lower()
                     if w in vocabulary:
                         vocabulary[w] += 1
                     else:
                         vocabulary[w] = 1
-
+                
     #print(f"{num_outed} discarded sentences with 1 error")
     
     
@@ -194,13 +198,14 @@ if __name__ == "__main__":
         os.mkdir(OUTPUT_DIR)
 
     with open(os.path.join(OUTPUT_DIR, "raw_sentences.txt"), 'w') as f:
-        for sentence in sorted(raw_sentences):
+        for sentence in raw_sentences:
             f.write(sentence + '\n')
     
     kept = 0
     
     with open(os.path.join(OUTPUT_DIR, "corpus.txt"), 'w') as f:
-        for sentence in sorted(keepers):
+        #for sentence in sorted(keepers):
+        for sentence in keepers:
             words = sentence.split()
             
             # Filter out short sentences

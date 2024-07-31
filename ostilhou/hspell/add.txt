@@ -19,6 +19,7 @@ aotism
 aotomatek
 apero
 apeupre
+arc'hweloù
 arkitektour
 artifisiel
 astronomek
@@ -137,6 +138,7 @@ frigo
 gall'
 gapitalouriezh
 g'ar
+geek
 genitervez
 geriaduriñ
 geriaouegi
@@ -152,8 +154,10 @@ guzulikerien
 gwallvrudus
 gwel'
 haïku
+henamzer
 henejipt
 heñvelrevidi
+herezh
 hey
 hibiskus
 hieroglifoù
@@ -231,6 +235,7 @@ mini
 mojennerezh
 nac'helour
 naouek
+naoutur
 nevezadus
 ninjaed
 niverelaet
@@ -343,6 +348,7 @@ treuzskrivañ
 treuzskrivet
 tribledie
 trio
+tripl
 troiadur
 trug
 tuch'

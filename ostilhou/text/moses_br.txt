@@ -23,6 +23,7 @@ Sz
 s.o
 h.a
 niv
+Niv
 g.m
 a.m
 sk

@@ -19,6 +19,7 @@ abbreviations = {
     "ao."  : "aotrou",
     "Ao."  : "aotrou",
     "niv." : "niverenn",
+    "Niv." : "niverenn",
     "g.m." : "goude meren",
     "GM"   : "goude meren",
     "St."  : "Sant",
@@ -153,19 +154,12 @@ def is_time(s):
     return int(m) < 60
 
 
-# Percentage
-
-# re_percent = re.compile(r"(\d+)%")
-# match_percent = lambda s: re_percent.fullmatch(s)
-# is_percent = lambda s: bool(match_percent(s))
-
-
-
 # Ordinals
 ORDINALS = {
     "1añ"  : "kentañ",
     "2vet" : "eilvet",
     "3de"  : "trede",
+    "3e"   : "trede",
     "3vet" : "teirvet",
     "4e"   : "pevare",
     "4re"  : "pevare",

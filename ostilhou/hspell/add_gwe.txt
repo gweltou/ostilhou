@@ -34,6 +34,7 @@ arruas
 arrue
 arruet
 arruiñ
+arzourion
 avamenn
 avedin
 aveidoc'h
@@ -53,6 +54,7 @@ bilajenn
 blead
 bleadoù
 bleidi
+bleioù
 blez
 blezad
 blezadoù
@@ -232,6 +234,7 @@ kristenion
 krogiñ
 laoskel
 lâra
+lazhour
 lojiñ
 marsen
 matreze
@@ -342,6 +345,7 @@ sinifia
 skandalus
 skolerion
 skrivagnour
+sonenn
 sonerion
 soniñ
 staotaat
