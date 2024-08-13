@@ -28,7 +28,7 @@ from ostilhou.text import (
     normalize_sentence,
     filter_out_chars,
     PUNCTUATION,
-    LETTERS,
+    VALID_CHARS,
 )
 from ostilhou.asr import (
     load_segments_data,
@@ -36,13 +36,15 @@ from ostilhou.asr import (
     load_ali_file,
 )
 from ostilhou.audio import load_audiofile
+from ostilhou.utils import sec2hms
+
 
 
 utt_ids = set()
 speakers_gender = {"unknown": "u"}
 n_dropped = 0
 
-letters = set(LETTERS)
+valid_chars = set(VALID_CHARS)
 
 
 def parse_dataset(file_or_dir):
@@ -97,7 +99,7 @@ def parse_data_file(filepath):
     if seg_ext == ".ali":
         ali_data = load_ali_file(filepath)
         segments = ali_data["segments"]
-        text_data = list(zip(ali_data["raw_sentences"], ali_data["metadata"]))
+        text_data = list(zip(ali_data["sentences"], ali_data["metadata"]))
         audio_path = ali_data["audio_path"]
     else: # .seg, .split
         text_filename = filepath.replace(seg_ext, '.txt')
@@ -150,9 +152,9 @@ def parse_data_file(filepath):
         
         # Filter out utterances with foreign chars
         chars = set(sentence)
-        if not chars.issubset(letters):
+        if not chars.issubset(valid_chars):
             print(Fore.YELLOW
-                  + f"dropped (foreign chars '{chars.difference(letters)}'): "
+                  + f"dropped (foreign chars '{chars.difference(valid_chars)}'): "
                   + Fore.RESET + sentence, file=sys.stderr)
             n_dropped += 1
             continue
@@ -200,14 +202,6 @@ def parse_data_file(filepath):
         status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
     print(status, file=sys.stderr)
     return data
-
-
-
-def sec2hms(seconds):
-    """ Return a string of hours, minutes, seconds from a given number of seconds """
-    minutes, seconds = divmod(round(seconds), 60)
-    hours, minutes = divmod(minutes, 60)
-    return f"{hours}h {minutes}' {seconds}''"
 
 
 
@@ -275,6 +269,8 @@ if __name__ == "__main__":
                 sentence = sentence.replace('"', '\\"')
                 metadata_file.write(f'{{"file_name": "{seg_audio_file}", "transcript": "{sentence}"}}\n')
 
+
+
             if not args.dry_run:
                 if recording_id != last_recording_id:
                     print("Segmenting", os.path.split(audio_file)[1])
@@ -286,9 +282,25 @@ if __name__ == "__main__":
                 if not os.path.exists(output_file):
                     segment.export(output_file, format=args.audio_format)
                 n_segments += 1
-            
-        print(f"{n_segments} segments exported")
+        
+
+        print(f"== {corpus_name.capitalize()} ==")
+        if n_segments:
+            print(f"{n_segments} segments exported")
+
+        audio_length_m = data["audio_length"]['m']
+        audio_length_f = data["audio_length"]['f']
+        audio_length_u = data["audio_length"]['u']
+        print("\n==== STATS ====")
+        total_audio_length = audio_length_f + audio_length_m + audio_length_u
+        print(f"- Total audio length:\t{sec2hms(total_audio_length)}")
+        print(f"- Male speakers:\t{sec2hms(audio_length_m)}\t{audio_length_m/total_audio_length:.1%}")
+        print(f"- Female speakers:\t{sec2hms(audio_length_f)}\t{audio_length_f/total_audio_length:.1%}")
+        if audio_length_u > 0:
+            print(f"- Unknown speakers:\t{sec2hms(audio_length_u)}\t{audio_length_u/total_audio_length:.1%}")
+
     print(f"Files saved in {output_folder}")
+
 
 
     # if args.split_audiofiles and not args.dry_run:

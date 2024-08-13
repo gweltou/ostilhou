@@ -1,6 +1,6 @@
+import sys
 import os
 import platform
-
 
 
 dict_root = os.path.dirname(os.path.abspath(__file__))
@@ -27,7 +27,7 @@ if dict_root is None:
     if not os.path.exists(dict_root):
         os.makedirs(dict_root)
 
-print("loading dicts in", dict_root)
+print(f"loading dicts in {dict_root}", file=sys.stderr)
 
 
 # Proper nouns dictionary

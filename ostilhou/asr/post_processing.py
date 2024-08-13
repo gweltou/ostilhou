@@ -9,18 +9,18 @@ from ..utils import read_file_drop_comments
 # Verbal fillers with phonetization
 
 verbal_fillers = {
-    'euh'   :   'OE',
-    'euhm'  :   'OE M',
+    'boñ'   :   'B ON',
+    'bah'   :   'B A',
     'beñ'   :   'B EN',
     'beh'   :   'B E',
+    'euh'   :   'OE',
+    'euhm'  :   'OE M',
     'ebah'   :   'E B A',
     'ebeñ'  :   'E B EN',
+    'feñ'   :   'F EN',
     'kwa'   :   'K W A',
     'hañ'   :   'H AN',
     'heñ'   :   'EN',
-    'boñ'   :   'B ON',
-    'bah'   :   'B A',
-    'feñ'   :   'F EN',
     'enfin' :   'AN F EN',
     'tiens' :   'T I EN',
     'alors' :   'A L OH R',

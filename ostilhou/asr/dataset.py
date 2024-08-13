@@ -18,9 +18,10 @@ from ..text import (
 datafile_header = \
 """{source: }
 {source-audio: }
+{audio-path: }
 {author: }
 {licence: }
-{tags: }\n\n\n\n\n\n
+{tags: }\n\n\n\n\n
 """
 
 
@@ -56,7 +57,7 @@ def load_segments_data(segfile: str) -> List[Segment]:
             start = int(t[0])
             stop = int(t[1])
             segments.append((start, stop))
-    
+            
     return segments
 
 
@@ -112,7 +113,7 @@ def get_text_header(filename) -> Dict:
 
 def load_ali_file(filepath) -> Dict:
     """returns a dictionary containing a list of sentences and a list of segments"""
-    audio_path = ""
+    audio_path = None
     sentences = []
     raw_sentences = []
     segments = []
@@ -143,18 +144,17 @@ def load_ali_file(filepath) -> Dict:
                 if no_lm:
                     metadata["parser"] = ["no-lm"]
 
-            match = re.search(r"{\s*start\s*:\s*([0-9\.]+)\s*;\s*end\s*:\s*([0-9\.]+)\s*}", line)
-            if match:
-                segment = [float(match[1])*1000, float(match[2])*1000]
-                line = line[:match.start()] + line[match.end():]
-                segments.append(segment)
+            # match = re.search(r"{\s*start\s*:\s*([0-9\.]+)\s*;\s*end\s*:\s*([0-9\.]+)\s*}", line)
+            # if match:
+            if "start" in metadata and "end" in metadata:
+                segments.append([metadata["start"]*1000, metadata["end"]*1000])
                 sentences.append(text.strip())
                 raw_sentences.append(line.strip())
                 metadatas.append(metadata)
 
-            if not audio_path and "audio_path" in metadata:
+            if not audio_path and "audio-path" in metadata:
                 dir = os.path.split(filepath)[0]
-                audio_path = os.path.join(dir, metadata["audio_path"])
+                audio_path = os.path.join(dir, metadata["audio-path"])
                 audio_path = os.path.normpath(audio_path)
     
     return {
@@ -382,7 +382,7 @@ KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'.:/-]+?)\s*")
 _VALID_PARAMS = {
     "source",
     "source-audio", "audio-source",
-    "audio_path", "audio-path",
+    "audio-path",
     "tags",
     "parser",
     "author", "authors",

@@ -25,15 +25,8 @@ from ostilhou.asr import (
     phonetize_word,
     parse_dataset,
 )
+from ostilhou.utils import sec2hms
 
-
-
-
-def sec2hms(seconds):
-    """ Return a string of hours, minutes, seconds from a given number of seconds """
-    minutes, seconds = divmod(round(seconds), 60)
-    hours, minutes = divmod(minutes, 60)
-    return f"{hours}h {minutes}' {seconds}''"
 
 
 

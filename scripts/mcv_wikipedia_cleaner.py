@@ -1,4 +1,8 @@
+#! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+
+import sys
 from hashlib import md5
 from ostilhou.text import (
     strip_punct, PUNCTUATION, 
@@ -24,7 +28,7 @@ def get_tokens(sentence: str) -> str:
     return words
 
 
-with open("raw_sentences.txt", 'r') as fin:
+with open(sys.argv[1], 'r') as fin:
     lines = fin.readlines()
 
 seen = set()
@@ -51,10 +55,13 @@ for line in lines:
     if "goude J" in line: continue
     if "pennad-" in line: continue
     if ", ed." in line: continue
+    #if "niv." in line.lower(): continue
     if "Al Liamm" in line: continue
     if line.startswith("Ur pennad"): continue
     if line.startswith("Lec'hienn ofisiel"): continue
+    if line[-1] not in ".!?…;": continue
 
+    
     tokens = get_tokens(line)
     if len(tokens) > 15: continue
     if len(tokens) < 3: continue
@@ -69,6 +76,7 @@ for line in lines:
     if "SUA" in tokens: continue
     if "the" in tokens or "The" in tokens: continue
     if tokens[0] == "Iliz": continue
+    if tokens[0] == "Chapel": continue
     if tokens[0] == "San": continue
     if "st" in tokens or "St" in tokens: continue
     if "KJK" in tokens: continue
@@ -94,7 +102,8 @@ for line in lines:
     seen.add(hash)
     cleaned.add(line + '\n')
 
-print(len(cleaned))
 
-with open("cleaned.txt", 'w') as fout:
-    fout.writelines(sorted(cleaned))
+for line in sorted(cleaned):
+    print(line)
+
+print(len(cleaned), file=sys.stderr)

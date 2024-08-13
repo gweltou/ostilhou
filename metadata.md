@@ -8,6 +8,7 @@ All metadata are optional.
 ```
 {source: url_to_text_data}
 {source-audio: url_to_audio}
+{audio-path: path_to_audio_file}
 {author: author_of_audiofile, other_author...}
 {transcription: author_of_transcription}
 {modifications: author_of_corrections}

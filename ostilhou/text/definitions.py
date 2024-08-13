@@ -12,12 +12,14 @@ CLOSING_QUOTES = "»”"
 PUNCT_PAIRS = {'«': '»', '“': '”', '(': ')', '[': ']'}
 OPENING_PUNCT = PUNCT_PAIRS.keys()
 CLOSING_PUNCT = PUNCT_PAIRS.values()
+VALID_CHARS = LETTERS + LETTERS.upper() + PUNCTUATION + "-'<> "
 
 
 
 abbreviations = {
     "ao."  : "aotrou",
     "Ao."  : "aotrou",
+    "Pzd"  : "Prezidant",
     "niv." : "niverenn",
     "Niv." : "niverenn",
     "g.m." : "goude meren",
@@ -26,7 +28,11 @@ abbreviations = {
     "st"   : "Sant",
     "h.a." : "hag all",
     "s.o."  : "sellet ouzh",
-    "dwb"   : "diwar benn"
+    "dwb"   : "diwar benn",
+    "db."   : "diwar benn",
+    "gt"    : "gant",
+    "gt."   : "gant",
+    "gw."   : "gwelet"
 }
 
 substitutions = {

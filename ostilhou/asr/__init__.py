@@ -1,4 +1,5 @@
 from typing import List, Dict
+import sys
 import os
 import platform
 
@@ -177,7 +178,7 @@ if lexicon_root is None:
     if not os.path.exists(lexicon_root):
         os.makedirs(lexicon_root)
 
-print("loading lexicons in", lexicon_root)
+print(f"loading lexicons in {lexicon_root}", file=sys.stderr)
 
 
 def load_lexicon_add():

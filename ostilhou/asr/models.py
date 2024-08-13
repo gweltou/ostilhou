@@ -1,6 +1,7 @@
 from typing import List
 
 import os
+import sys
 import platform
 import urllib
 import zipfile
@@ -85,7 +86,7 @@ def load_model(
             f"Model {model_name} is not a valid model; available models = {available_models()}"
         )
 
-    print("Loading", os.path.basename(model_path))
+    print(f"Loading {os.path.basename(model_path)}", file=sys.stderr)
     SetLogLevel(-1)
     _loaded_model = Model(model_path)
     _loaded_model_name = model_name
@@ -106,7 +107,7 @@ def _download(model_name: str, root: str) -> str:
     if os.path.isdir(model_path):
         return model_path
 
-    print("Downloading model from", url)
+    print(f"Downloading model from {url}", file=sys.stderr)
 
     with urllib.request.urlopen(url) as source, open(download_target, "wb") as output:
         with tqdm(

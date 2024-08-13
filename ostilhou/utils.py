@@ -9,6 +9,14 @@ from .audio import convert_to_mp3
 
 
 
+def sec2hms(seconds):
+    """ Return a string of hours, minutes, seconds from a given number of seconds """
+    minutes, seconds = divmod(round(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}h {minutes}' {seconds}''"
+
+
+
 def list_files_with_extension(ext: Union[str, tuple, list], rep, recursive=True) -> List[str]:
     """
         Recursively list all files of the given extension(s) in a folder

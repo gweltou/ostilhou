@@ -12,6 +12,7 @@ alambig
 alemañ
 algoritm
 algoritmoù
+allelouia
 ambision
 anatomiezh
 annezadez
@@ -154,6 +155,7 @@ guzulikerien
 gwallvrudus
 gwel'
 haïku
+harellerezh
 henamzer
 henejipt
 heñvelrevidi
@@ -350,6 +352,7 @@ tribledie
 trio
 tripl
 troiadur
+troveni
 trug
 tuch'
 un'
