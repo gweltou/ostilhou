@@ -74,7 +74,7 @@ def test_detokenize():
 def test_norm_punct():
     def should_be(s1: str, s2: str) -> None:
         toklist = tokenize(s1, norm_punct=True)
-        assert s2 == detokenize(toklist)
+        assert s2 == detokenize(toklist, normalize=True)
     
     should_be("unan... daou ...tri ... pevar ....pemp!... c'hwec'h,....seizh", "unan… daou… tri… pevar… pemp !… c'hwec'h,… seizh")
     should_be("ur virgulenn‚ lous", "ur virgulenn, lous")
@@ -119,6 +119,6 @@ def test_autocorrection():
 
 def test_abbreviations():
     def should_be(sent: str, correction: str) -> str:
-        assert detokenize(tokenize(sent)) == correction
+        assert detokenize(tokenize(sent), normalize=True) == correction
     
     should_be("Demat It. Marie", "Demat Itron Marie")

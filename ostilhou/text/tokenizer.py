@@ -21,7 +21,6 @@ from .definitions import (
     is_unit_number, match_unit_number,
     PUNCTUATION, LETTERS, SI_UNITS,
     OPENING_QUOTES, CLOSING_QUOTES,
-    abbreviations,
     PUNCT_PAIRS, OPENING_PUNCT, CLOSING_PUNCT,
 )
 from .utils import capitalize, is_capitalized
@@ -426,10 +425,11 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 # Check for common abbreviations
                 skip = False
                 for abbr in abbreviations:
-                    pattern = abbr.replace('.', '\\.')
-                    m = re.fullmatch(pattern, data, re.IGNORECASE)
-                    if m:
-                        t = Token(m.group(), Token.ABBREVIATIION)
+                    # pattern = abbr.replace('.', '\\.')
+                    # m = re.fullmatch(pattern, data, re.IGNORECASE)
+                    # if m:
+                    if data == abbr:
+                        t = Token(data, Token.ABBREVIATIION)
                         t.norm.append(abbreviations[abbr])
                         subtokens.append(t)
                         data = data[len(abbr):]

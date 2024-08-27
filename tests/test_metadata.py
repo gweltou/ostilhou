@@ -19,12 +19,12 @@ def test_metadata():
         ("{tags: rkb}", "", {"tags": ["rkb"]}),
         ("{tags: radio, rkb}", "", {"tags": ["radio", "rkb"]}),
         ("unknown{?} words {?}here", "unknown words here", {'unknown': [0, 2]}),
+        ("{audio-path: ENKLASK_WAR_AR_C’HLEWELED_E_BREZHONEG.mp4}", "", {'audio-path': 'ENKLASK_WAR_AR_C’HLEWELED_E_BREZHONEG.mp4'}),
     ]
 
     for t in test_cases:
         sentence, metadata = extract_metadata(t[0])
         print(sentence)
         print(metadata)
-        print()
         assert sentence.strip() == t[1]
         assert metadata == t[2]

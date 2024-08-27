@@ -374,10 +374,10 @@ def parse_data_file(seg_filename, args):
 ##############################  METADATA  ##############################
 
 METADATA_PATTERN = re.compile(r'{\s*(.+?)\s*}')
-METADATA_UNIT_PATTERN = re.compile(r"\s*([\w\s:,_'/.-]+)\s*")
+METADATA_UNIT_PATTERN = re.compile(r"\s*([\w\s:,_'’/.-]+)\s*")
 SPEAKER_NAME_PATTERN = re.compile(r"(?:(?:spk|speaker)\s*:\s*)?([\w '_-]+?)")
 SPEAKER_ID_PATTERN_DEPR = re.compile(r'([-\'\w]+):*([mf])*')
-KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'.:/-]+?)\s*")
+KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'’.:/-]+?)\s*")
 
 _VALID_PARAMS = {
     "source",
