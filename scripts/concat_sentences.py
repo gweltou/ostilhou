@@ -3,6 +3,9 @@
 
 """
 
+Used to reconstitute wholle sentence from a text file
+where sentences are split on many lines, such as from
+a PDF extract.
 
 """
 

@@ -1,5 +1,5 @@
 
-from typing import List
+from typing import List, Optional
 
 import subprocess
 import json
@@ -9,10 +9,28 @@ from random import choice
 #from math import inf, ceil
 from tempfile import NamedTemporaryFile
 
+from colorama import Fore
+
 from pydub import AudioSegment
 from pydub.utils import get_player_name
 from pydub.generators import WhiteNoise
 from pydub.silence import detect_nonsilent
+
+
+AUDIO_FORMATS = ('wav', 'mp3', 'm4a', 'ogg', 'mp4', 'mkv')
+
+
+def find_associated_audiofile(path: str, silent=False) -> Optional[str]:
+    basename, _ = os.path.splitext(path)
+
+    for ext in AUDIO_FORMATS:
+        audio_path = os.path.extsep.join((basename, ext))
+        if os.path.exists(audio_path):
+            if not silent:
+                print("Found audio file:", audio_path)
+            return audio_path
+    print(Fore.RED + f"Could not find {audio_path}" + Fore.RESET)
+    return None
 
 
 
@@ -36,6 +54,18 @@ def get_audio_segment(i, audio, segments):
 def audio_segments(audio, segments):
     for start, stop in segments:
         yield audio[start, stop]
+
+
+def prepare_segment_for_decoding(segment: AudioSegment) -> AudioSegment:
+    """ Ensure that the segment is the right sampling rate and depth """
+
+    if segment.channels > 1:
+        segment = segment.set_channels(1)
+    if segment.frame_rate != 16000:
+        segment = segment.set_frame_rate(16000)
+    if segment.sample_width != 2:
+        segment = segment.set_sample_width(2)
+    return segment
 
 
 def play_audio_segment(i, song, segments, speed):

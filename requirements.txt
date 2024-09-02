@@ -10,3 +10,4 @@ hunspell
 certifi
 tqdm
 sentence-splitter
+srt

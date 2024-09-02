@@ -113,10 +113,11 @@ def get_text_header(filename) -> Dict:
 
 def load_ali_file(filepath) -> Dict:
     """returns a dictionary containing a list of sentences and a list of segments"""
+
     audio_path = None
-    sentences = []
-    raw_sentences = []
-    segments = []
+    sentences = []       # Text without metadata
+    raw_sentences = []   # Text with metadata
+    segments = []        # Segments in milliseconds
     metadatas = []
 
     with open(filepath, 'r') as f:
@@ -383,15 +384,16 @@ _VALID_PARAMS = {
     "source",
     "source-audio", "audio-source",
     "audio-path",
-    "tags",
-    "parser",
     "author", "authors",
     "licence",
-    "speaker", "spk",
-    "gender",
-    "accent",
     "modifications",
     "transcription",
+    "tags",
+    "parser",
+    "speaker", "spk",
+    "gender",
+    "lang",
+    "accent",
     "start", "end",
 #    "phon",
 }

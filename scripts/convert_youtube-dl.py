@@ -21,7 +21,7 @@ from shutil import copyfile
 import argparse
 
 from ostilhou.audio import convert_to_wav, convert_to_mp3
-from ostilhou.asr import load_segments_data, load_text_data
+from ostilhou.asr import load_ali_file
 from ostilhou.text import (
     normalize_sentence, pre_process, filter_out_chars,
 	is_full_sentence, is_sentence_start_open, is_sentence_end_open,
@@ -29,7 +29,7 @@ from ostilhou.text import (
 )
 from ostilhou.hspell import get_hspell_mistakes
 
-from srt2seg import srt2segments
+from srt2ali import srt2ali
 
 
 # Short list of audio documents that have been manually verified
@@ -53,45 +53,56 @@ def stage0():
 
 	for file in file_list:
 		print(file)
-		new_file = file.replace(".br.vtt", ".vtt")
-		basename = os.path.split(os.path.splitext(new_file)[0])[1]
+		new_filename = file.replace(".br.vtt", ".vtt")
+		basename = os.path.split(os.path.splitext(new_filename)[0])[1]
 		if basename in skipfiles:
 			print("**** skipping ****")
 			continue
 
 		# Renaming files
-		source_audio_file = new_file.replace(".vtt", ".mp3")
-		new_file = new_file.replace('&', '_')
-		new_file = new_file.replace(' ', '_')
-		new_file = new_file.replace("'", '')
-		new_file = new_file.replace("(", '')
-		new_file = new_file.replace(")", '')
-		new_file = new_file.replace(",", '')
+		source_audio_file = new_filename.replace(".vtt", ".mp3")
+		if not os.path.exists(source_audio_file):
+			source_audio_file = new_filename.replace(".vtt", ".m4a")
+		new_filename = new_filename.replace('&', '_')
+		new_filename = new_filename.replace(' ', '_')
+		new_filename = new_filename.replace("'", '')
+		new_filename = new_filename.replace("(", '')
+		new_filename = new_filename.replace(")", '')
+		new_filename = new_filename.replace(",", '')
 
 		if args.output:
-			new_file = os.path.join(args.output, os.path.split(new_file)[1])
-		copyfile(file, new_file)
+			new_filename = os.path.join(args.output, os.path.split(new_filename)[1])
+		copyfile(file, new_filename)
 		
 		if not os.path.exists(source_audio_file):
 			print("Couldn't find", source_audio_file)
 			continue
 		
 		# Audio conversion
-		audio_file = new_file.replace(".vtt", audio_ext)
+		audio_file = new_filename.replace(".vtt", audio_ext)
 		if args.output:
 			audio_file = os.path.join(args.output, os.path.split(audio_file)[1])
 		if not os.path.exists(audio_file):
 			if args.audio_format == 'mp3':
-				convert_to_mp3(source_audio_file, audio_file, keep_orig=not args.remove)
+				if source_audio_file.lower().endswith('.mp3'):
+					copyfile(source_audio_file, audio_file)
+					if args.remove:
+						os.remove(source_audio_file)
+				else:
+					convert_to_mp3(source_audio_file, audio_file, keep_orig=not args.remove)
 			else:
 				convert_to_wav(source_audio_file, audio_file, keep_orig=not args.remove)
 		
 		# segments and text extraction
-		srt2segments(new_file)
+		srt2ali(new_filename)
 
 		# Remove original vtt subtitle file if necessary
 		if args.output and args.output != args.folder:
-			os.remove(new_file)
+			os.remove(new_filename)
+
+
+def format_timecode(timecode):
+    return "{:.3f}".format(timecode/1000).rstrip('0').rstrip('.')
 
 
 def stage1():
@@ -99,19 +110,20 @@ def stage1():
 
 	print("Stage 1: lowercase")
 
-	file_list = glob.glob(args.folder + "/*.seg")
+	file_list = glob.glob(args.folder + "/*.ali")
 
-	for segment_file in file_list:
-		text_file = segment_file.replace(".seg", ".txt")
-		text = [ t[0] for t in load_text_data(text_file) ]
-
+	for filepath in file_list:
+		ali_data = load_ali_file(filepath)
+		text = ali_data["sentences"]
 		text = [ pre_process(s).lower() for s in text ]
 		
 		if args.dry_run:
 			continue
 
-		with open(text_file, 'w') as fout:
-			fout.writelines([t+'\n' for t in text])
+		with open(filepath, 'w') as fout:
+			for text, segment in zip(text, ali_data["segments"]):
+				timecode = f"{{start: {format_timecode(segment[0])}; end: {format_timecode(segment[1])}}}"
+				fout.write(f"{text} {timecode}\n")
 
 
 def stage2():
@@ -127,14 +139,14 @@ def stage2():
 			line = line.split('\t')
 			sub_dict[line[0]] = line[1].strip()
 	
-	file_list = glob.glob(args.folder + "/*.seg")
+	file_list = glob.glob(args.folder + "/*.ali")
 	total_mistakes = 0
 	total_kept_sentences = 0
 
-	for segment_file in file_list:
-		segments = load_segments_data(segment_file)
-		text_file = segment_file.replace(".seg", ".txt")
-		text = [ t[0] for t in load_text_data(text_file) ]
+	for filepath in file_list:
+		ali_data = load_ali_file(filepath)
+		text = ali_data["sentences"]
+		segments = ali_data["segments"]
 		
 		kept_text = []
 		kept_segs = []
@@ -160,11 +172,10 @@ def stage2():
 		if args.dry_run:
 			continue
 		
-		with open(text_file, 'w') as fout:
-			fout.writelines([t+'\n' for t in kept_text])
-
-		with open(segment_file, 'w') as fout:
-			fout.writelines([f"{s[0]} {s[1]}\n" for s in kept_segs])
+		with open(filepath, 'w') as fout:
+			for text, segment in zip(kept_text, kept_segs):
+				timecode = f"{{start: {format_timecode(segment[0])}; end: {format_timecode(segment[1])}}}"
+				fout.write(f"{text} {timecode}\n")
 		
 	print("Num mistakes:", total_mistakes)
 	print("Kept sentences:", total_kept_sentences)
@@ -175,14 +186,14 @@ def stage3():
 	
 	print("Stage 3 : joining segments")
 
-	file_list = glob.glob(args.folder + "/*.seg")
+	file_list = glob.glob(args.folder + "/*.ali")
 	total_segments_before = 0
 	total_segments_after = 0
 
-	for segment_file in file_list:
-		segments = load_segments_data(segment_file)
-		text_file = segment_file.replace(".seg", ".txt")
-		text = [ t[0] for t in load_text_data(text_file) ]
+	for filepath in file_list:
+		ali_data = load_ali_file(filepath)
+		text = ali_data["sentences"]
+		segments = ali_data["segments"]
 		
 		total_segments_before += len(segments)
 		joined_text = []
@@ -227,12 +238,10 @@ def stage3():
 		if args.dry_run:
 			continue
 		
-		with open(text_file, 'w') as fout:
-			#fout.write("{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n")
-			fout.writelines([t+'\n' for t in joined_text])
-
-		with open(segment_file, 'w') as fout:
-			fout.writelines([f"{s[0]} {s[1]}\n" for s in joined_segs])
+		with open(filepath, 'w') as fout:
+			for text, segment in zip(joined_text, joined_segs):
+				timecode = f"{{start: {format_timecode(segment[0])}; end: {format_timecode(segment[1])}}}"
+				fout.write(f"{text} {timecode}\n")
 		
 	print("Segments before:", total_segments_before)
 	print("Segments after:", total_segments_after)
@@ -255,12 +264,12 @@ if __name__ == "__main__":
 	if args.output and args.output != args.folder:
 		args.folder = args.output
 
-	if args.stage <= 1:
+	if args.stage >= 1:
 		# Prepare data for baseline model
 		stage1()
-	if args.stage <= 2:
+	if args.stage >= 2:
 		# Normalization
 		stage2()
-	if args.stage <= 3:
+	if args.stage >= 3:
 		# Segment concatenation
 		stage3()

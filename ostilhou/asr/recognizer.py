@@ -17,7 +17,7 @@ from ..audio import get_audiofile_length
 def transcribe_segment(segment: AudioSegment) -> str:
     """ Transcribe a short AudioSegment """
     assert segment.frame_rate == 16000
-    assert segment.frame_width == 2
+    assert segment.sample_width == 2
     assert segment.channels == 1
 
     model = load_model()
@@ -48,7 +48,7 @@ def transcribe_segment_timecoded(segment: AudioSegment) -> List[dict]:
         'conf' is a normalized confidence score
     """
     assert segment.frame_rate == 16000
-    assert segment.frame_width == 2
+    assert segment.sample_width == 2
     assert segment.channels == 1
     
     model = load_model()
@@ -83,7 +83,7 @@ def transcribe_segment_timecoded_callback(segment: AudioSegment, callback: calla
         'conf' is a normalized confidence score
     """
     assert segment.frame_rate == 16000
-    assert segment.frame_width == 2
+    assert segment.sample_width == 2
     assert segment.channels == 1
     
     model = load_model()

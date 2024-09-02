@@ -24,7 +24,7 @@ def list_files_with_extension(ext: Union[str, tuple, list], rep, recursive=True)
         Parameters
         ----------
             ext : str|list
-                file extension, including the dot
+                file extension, including the extension separator (dot)
     """
     extensions = (ext) if isinstance(ext, str) else ext
     file_list = []

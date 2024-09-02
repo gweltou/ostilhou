@@ -5,11 +5,11 @@
 """
     File: srt2seg.py
 
-    Converts a srt or vtt file to a seg (audio segments timecodes) and a txt file.
-    The resulting files will be created in the same folder as the source srt/vtt file.
+    Converts a SRT or VTT file to an ALI file.
+    The resulting files will be created in the same folder as the source SRT/VTT file.
 
     Usage:
-        python3 srt2seg.py subtitles.srt
+        python3 srt2ali.py subtitles.srt
     
     Author: Gweltaz Duval-Guennoc (2023)
 """
@@ -53,22 +53,27 @@ def parse_lines(lines):
     return segments, text
 
 
-def srt2segments(*filenames):
+def format_timecode(timecode):
+    return "{:.3f}".format(timecode/1000).rstrip('0').rstrip('.')
+
+
+def srt2ali(*filenames):
 	# for filename in os.listdir():
     for filename in filenames:
         basename, ext = os.path.splitext(filename)
         if ext.lower() in (".srt", ".vtt"):
             print(filename)
             with open(filename, 'r') as fin:
+                # Segments is in milliseconds
                 segments, text = parse_lines(fin.readlines())
             
-            with open(basename + ".txt", 'w') as fout:
-                fout.write("{source: }\n{source-audio: }\n{author: }\n{licence: }\n{tags: }\n\n\n\n\n\n")
-                fout.writelines([t+'\n' for t in text])
+            with open(basename + ".ali", 'w') as fout:
+                fout.write("{tags: subtitles}\n\n")
 
-            with open(basename + ".seg", 'w') as fout:
-                fout.writelines([f"{s[0]} {s[1]}\n" for s in segments])
+                for segment, text in zip(segments, text):
+                    timecode = f"{{start: {format_timecode(segment[0])}; end: {format_timecode(segment[1])}}}"
+                    fout.write(f"{text} {timecode}\n")
 
 
 if __name__ == "__main__":
-	srt2segments(*sys.argv[1:])
+	srt2ali(*sys.argv[1:])

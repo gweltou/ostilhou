@@ -49,6 +49,10 @@ Different attribute can be chained in the same metadata with the `;` character :
 
 `{spk: Marc'harid Lagadeg; gender: f}`
 
+## Language
+
+`{lang: br|fr}`
+
 ## Accent
 
 `{accent: gwenedeg}`
