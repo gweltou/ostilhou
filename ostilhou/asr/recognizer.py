@@ -136,7 +136,7 @@ def transcribe_file(filepath: str) -> List[str]:
 
 
 
-def transcribe_file_timecoded(filepath: str) -> List[dict]:
+def transcribe_file_timecoded(filepath: str, show_progress_bar=True) -> List[dict]:
     """ Return list of infered words with associated timecodes (vosk format)
 
         The resulting transcription is a list of Vosk tokens
@@ -155,7 +155,8 @@ def transcribe_file_timecoded(filepath: str) -> List[dict]:
     recognizer.SetWords(True)
 
     total_duration = get_audiofile_length(filepath)
-    progress_bar = tqdm(total=total_duration)
+    if show_progress_bar:
+        progress_bar = tqdm(total=total_duration)
     i = 0
     cumul_frames = 0
     tokens = []
@@ -171,11 +172,12 @@ def transcribe_file_timecoded(filepath: str) -> List[dict]:
             if recognizer.AcceptWaveform(data):
                 tokens.extend(format_output(recognizer.Result()))
             cumul_frames += len(data) // 2
-            if i%10 == 0:
+            if show_progress_bar and i%10 == 0:
                 progress_bar.update(cumul_frames / 16000)
                 cumul_frames = 0
             i += 1
         tokens.extend(format_output(recognizer.FinalResult()))
-    progress_bar.close()
+    if show_progress_bar:
+        progress_bar.close()
     
     return tokens

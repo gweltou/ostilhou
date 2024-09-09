@@ -1,4 +1,4 @@
-from typing import Union, List, Iterable
+from typing import Union, List
 import os
 
 # For eaf (Elan) file conversion

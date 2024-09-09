@@ -312,6 +312,7 @@ sañtimetr
 satori
 seksel
 seksist
+sepet		# Excepté (Devri)
 servij'
 seurf
 seurfiñ
@@ -324,7 +325,6 @@ sklêrijennat
 skolpoù
 skript
 skriptoù
-sepet		# Excepté (Devri)
 skuizhaat
 sokiologel
 stadunanat
