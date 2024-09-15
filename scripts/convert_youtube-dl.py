@@ -22,6 +22,7 @@ import argparse
 
 from ostilhou.audio import convert_to_wav, convert_to_mp3
 from ostilhou.asr import load_ali_file
+from ostilhou.asr.dataset import format_timecode
 from ostilhou.text import (
     normalize_sentence, pre_process, filter_out_chars,
 	is_full_sentence, is_sentence_start_open, is_sentence_end_open,
@@ -99,10 +100,6 @@ def stage0():
 		# Remove original vtt subtitle file if necessary
 		if args.output and args.output != args.folder:
 			os.remove(new_filename)
-
-
-def format_timecode(timecode):
-    return "{:.3f}".format(timecode/1000).rstrip('0').rstrip('.')
 
 
 def stage1():

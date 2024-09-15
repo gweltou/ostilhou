@@ -18,6 +18,9 @@ import os
 import re
 import sys
 
+from ostilhou.asr.dataset import format_timecode
+
+
 
 TIMECODE_PATTERN = re.compile(r"(?:(\d+):)?(\d+):(\d+)(?:,|.)(\d+) --> (?:(\d+):)?(\d+):(\d+)(?:,|.)(\d+)")
 
@@ -52,9 +55,6 @@ def parse_lines(lines):
  
     return segments, text
 
-
-def format_timecode(timecode):
-    return "{:.3f}".format(timecode/1000).rstrip('0').rstrip('.')
 
 
 def srt2ali(*filenames):

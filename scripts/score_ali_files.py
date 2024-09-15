@@ -18,11 +18,14 @@ from ostilhou.utils import list_files_with_extension
 from ostilhou.text import pre_process, filter_out_chars, normalize_sentence, PUNCTUATION
 from ostilhou.asr import load_ali_file
 from ostilhou.asr.recognizer import transcribe_segment
+from ostilhou.asr.dataset import format_timecode
 from ostilhou.audio import (
     AUDIO_FORMATS,
     find_associated_audiofile,
     load_audiofile, get_audio_segment, prepare_segment_for_decoding
 )
+
+
 from jiwer import wer, cer
 
 
@@ -33,9 +36,7 @@ def format_timecode(timecode):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Score every utterance of every data item in a given folder")
     parser.add_argument("data_folder", metavar='FOLDER', help="Folder containing data files")
-    parser.add_argument("-u", "--per-utterance", help="Calculate WER and CER score per utterance", action="store_true")
     parser.add_argument("-o", "--output", type=str, help="Results file")
-    # parser.add_argument("-he", "--higher", help="Keeps only over a given CER", default=1.0)
     args = parser.parse_args()
 
     # print(args.data_folder)

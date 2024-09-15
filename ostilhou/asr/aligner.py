@@ -186,11 +186,45 @@ def count_aligned_utterances(matches: list):
 
 
 
-def resolve_boundaries(matches: list):
+def find_best_cut(sentence_a, sentence_b, hyp) -> int:
+    """ Returns the word index """
+    sentence_a = _prepare_text(sentence_a)
+    sentence_b = _prepare_text(sentence_b)
+    best_score = 999
+    best_cut = -1
+    for i in range(1, len(hyp)):
+        hyp_a = _prepare_text(''.join([ t["word"] for t in hyp[:i] ]))
+        hyp_b = _prepare_text(''.join([ t["word"] for t in hyp[i:] ]))
+        score = jiwer.cer(sentence_a, hyp_a) + jiwer.cer(sentence_b, hyp_b)
+        if score < best_score:
+            best_score = score
+            best_cut = i
+    # hyp = [ t["word"] for t in hyp ]
+    return best_cut
+
+
+
+def resolve_boundaries(matches: list, max_dist=2):
     """
         Resolve boundary conflicts between overlapping matches
         Modifies `matches` in-place
     """
+
+    for m in range(len(matches) - 1):
+        prev, next = matches[m:m+2]
+        overlap = prev["span"][1] - next["span"][0]
+        if 0 < overlap <= max_dist:
+            # End of prev goes beyond start of next
+            hyp = prev["hyp"][:-overlap] + next["hyp"]
+            i = find_best_cut(prev["sentence"], next["sentence"], hyp)
+            diff = len(prev["hyp"]) - i
+            pstart, pend = prev["span"]
+            pend -= diff
+            prev["span"] = (pstart, pend)
+            prev["hyp"] = hyp[:i]
+            _, nend = next["span"]
+            next["span"] = (pend, nend)
+            next["hyp"] = hyp[i:]
 
 
 
