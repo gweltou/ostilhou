@@ -3,18 +3,17 @@
 
 
 """
-    Build a text corpus from wikipedia-br dumps
-    Outputs text files:
-        * "corpus/wiki_corpus.txt", the main corpus of sentences
-        * "wikipedia_corpus/wiki_acronyms.txt", a list of possible acronyms
-        * "wikipedia_corpus/wiki_capitalized.txt", a list of capitalized words
-        * "wikipedia_corpus/wiki_sant.txt", a list of saints, convenient to retrieve first names
-        * "wikipedia_corpus/wiki_vocab.txt", the vocabulary of the corpus
- 
-    Usage: python3 build_lm_corpus.py DIR_OR_FILE -o OUTPUT_DIR
+Build a text corpus from wikipedia-br dumps
+Outputs text files:
+    * "corpus/wiki_corpus.txt", the main corpus of sentences
+    * "wikipedia_corpus/wiki_acronyms.txt", a list of possible acronyms
+    * "wikipedia_corpus/wiki_capitalized.txt", a list of capitalized words
+    * "wikipedia_corpus/wiki_sant.txt", a list of saints, convenient to retrieve first names
+    * "wikipedia_corpus/wiki_vocab.txt", the vocabulary of the corpus
 
-    Author:  Gweltaz Duval-Guennoc
-  
+Usage: python3 build_lm_corpus.py DIR_OR_FILE -o OUTPUT_DIR
+
+Author:  Gweltaz Duval-Guennoc
 """
 
 
@@ -84,28 +83,6 @@ if __name__ == "__main__":
                 # Filter out short sentences
                 if len(sentence) < 8:
                     continue
-                
-                # Filter out common Wikipedia sentence patterns
-                # if sentence.startswith("Diwar-benn bloavezh") or sentence.startswith("Diwar-benn ar bloavez"):
-                #     continue
-                # if sentence.startswith("Ar spesad a gave"):
-                #     continue
-                # if sentence.endswith("a annezidi o chom enni."):
-                #     continue
-                # if sentence.startswith("Bez' e oa") and "a annezidi e" in sentence:
-                #     continue
-                # if sentence.startswith("Brasaet e oa bet da"):
-                #     continue
-                # if sentence.startswith("Poblet eo gant"):
-                #     continue
-                # if sentence.startswith("Poblet e oa gant"):
-                #     continue
-                # if sentence.startswith("Gwelet ivez"):
-                #     continue
-                # if sentence.startswith("Evit implijoù all"):
-                #     continue
-                # if sentence.startswith("Evit sterioù all"):
-                #     continue
                 
                 stats = sentence_stats(sentence)
                 

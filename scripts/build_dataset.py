@@ -111,7 +111,7 @@ def parse_data_file(filepath):
         audio_path = os.path.abspath(filepath.replace(seg_ext, '.wav'))
         if not os.path.exists(audio_path):
             audio_path = os.path.abspath(filepath.replace(seg_ext, '.mp3'))
-        assert os.path.exists(audio_path), f"ERROR: no audio file found for {filepath}"
+    assert os.path.exists(audio_path), f"ERROR: no audio file found for {filepath}"
 
     data = {
         "utterances": [],

@@ -1,6 +1,14 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Script used to build a quintessentially distilled corpus from a wikipedia dump.
+
+Usage:
+    python mcv_wikipedia_cleaner.py wiki_dump.txt > distilled.txt
+"""
+
+
 
 import sys
 from hashlib import md5

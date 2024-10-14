@@ -28,11 +28,6 @@ from ostilhou.audio import (
 
 from jiwer import wer, cer
 
-
-def format_timecode(timecode):
-    return "{:.3f}".format(timecode/1000).rstrip('0').rstrip('.')
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Score every utterance of every data item in a given folder")
     parser.add_argument("data_folder", metavar='FOLDER', help="Folder containing data files")

@@ -42,8 +42,8 @@ def parse_lines(lines):
             if match:
                 # print(match.groups())
                 h1, m1, s1, ms1, h2, m2, s2, ms2 = match.groups(default=0)
-                t1 = int(h1) * 60 * 60_000 + int(m1) * 60_000 + int(s1) * 1000 + int(ms1)
-                t2 = int(h2) * 60 * 60_000 + int(m2) * 60_000 + int(s2) * 1000 + int(ms2)
+                t1 = int(h1) * 60 * 60 + int(m1) * 60 + int(s1) + int(ms1) / 1000
+                t2 = int(h2) * 60 * 60 + int(m2) * 60 + int(s2) + int(ms2) / 1000
                 segments.append((t1, t2))
                 text.append('')
                 next_is_text = True

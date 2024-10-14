@@ -1,4 +1,5 @@
 from typing import Tuple, List, Dict
+import sys
 import os.path
 import re
 from math import floor, ceil
@@ -15,7 +16,8 @@ from ..utils import read_file_drop_comments
 from ..text import (
     pre_process, normalize_sentence, filter_out_chars,
     split_sentences,
-    PUNCTUATION
+    PUNCTUATION,
+    VALID_CHARS
 )
 from ..audio import convert_to_mp3
 
@@ -117,7 +119,9 @@ def get_text_header(filename) -> Dict:
 
 
 def format_timecode(timecode):
-    return "{:.3f}".format(timecode/1000).rstrip('0').rstrip('.')
+    if isinstance(timecode, int):
+        return str(timecode)
+    return "{:.3f}".format(timecode).rstrip('0').rstrip('.')
 
 
 
@@ -179,7 +183,7 @@ def load_ali_file(filepath) -> Dict:
             # match = re.search(r"{\s*start\s*:\s*([0-9\.]+)\s*;\s*end\s*:\s*([0-9\.]+)\s*}", line)
             # if match:
             if "start" in metadata and "end" in metadata:
-                segments.append([metadata["start"]*1000, metadata["end"]*1000])
+                segments.append([metadata["start"], metadata["end"]])
                 sentences.append(text.strip())
                 raw_sentences.append(line.strip())
                 metadatas.append(metadata)
@@ -202,11 +206,13 @@ def load_ali_file(filepath) -> Dict:
 def parse_dataset(file_or_dir, args):
     if file_or_dir.endswith(".split") or file_or_dir.endswith(".seg"):   # Single data item
         return parse_data_file(file_or_dir, args)
+    # elif file_or_dir.lower().endwith('.ali'):
+    #     pass
     elif os.path.isdir(file_or_dir):
         data = {
             "path": file_or_dir,
-            "wavscp": dict(),       # Wave filenames
-            "utt2spk": [],      # Utterance to speakers
+            "wavscp": dict(),   # Recording id to wave filenames
+            "utt2spk": [],      # Utterance id to speakers id
             "segments": [],     # Time segments
             "text": [],         # Utterances text
             "speakers": set(),  # Speakers names
@@ -250,28 +256,41 @@ def parse_dataset(file_or_dir, args):
 
 speakers_gender = {"unknown": 'u'}
 
-def parse_data_file(seg_filename, args):
+def parse_data_file(filepath, args):
     # Kaldi doesn't like whitespaces in file path
-    if ' ' in seg_filename:
-        raise "ERROR: whitespaces in path " + seg_filename
+    if ' ' in filepath:
+        raise "ERROR: whitespaces in path " + filepath
     
     # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
     # print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
-    seg_ext = os.path.splitext(seg_filename)[1] # Could be '.split' or '.seg'
-    text_filename = seg_filename.replace(seg_ext, '.txt')
-    assert os.path.exists(text_filename), f"ERROR: no text file found for {seg_filename}"
-    audio_filename = os.path.abspath(seg_filename.replace(seg_ext, '.wav'))
-    if not os.path.exists(audio_filename):
-        audio_filename = os.path.abspath(seg_filename.replace(seg_ext, '.mp3'))
-    assert os.path.exists(audio_filename), f"ERROR: no wave file found for {seg_filename}"
-    recording_id = md5(audio_filename.encode("utf8")).hexdigest()
+    seg_ext = os.path.splitext(filepath)[1] # Could be '.split' or '.seg'
+    audio_path = ""
+
+    if seg_ext == ".ali":
+        ali_data = load_ali_file(filepath)
+        segments = ali_data["segments"]
+        text_data = list(zip(ali_data["sentences"], ali_data["metadata"]))
+        audio_path = ali_data["audio_path"]
+    else: # .seg, .split
+        text_filename = filepath.replace(seg_ext, '.txt')
+        assert os.path.exists(text_filename), f"ERROR: no text file found for {filepath}"
+        segments = load_segments_data(filepath)
+        text_data = load_text_data(text_filename)
     
-    substitute_corpus_filename = seg_filename.replace(seg_ext, '.cor')
+    if not audio_path:
+        audio_path = os.path.abspath(filepath.replace(seg_ext, '.wav'))
+        if not os.path.exists(audio_path):
+            audio_path = os.path.abspath(filepath.replace(seg_ext, '.mp3'))
+    assert os.path.exists(audio_path), f"ERROR: no audio file found for {filepath}"
+    
+    recording_id = md5(audio_path.encode("utf8")).hexdigest()
+    
+    substitute_corpus_filename = filepath.replace(seg_ext, '.cor')
     replace_corpus = os.path.exists(substitute_corpus_filename)
     
     data = {
-        "wavscp": {recording_id: audio_filename},   # Wave filenames
-        "utt2spk": [],      # Utterance to speakers
+        "wavscp": {recording_id: audio_path},   # Wave filenames
+        "utt2spk": [],      # Utterance id to speakers id
         "segments": [],     # Time segments
         "text": [],         # Utterances text
         "speakers": set(),  # Speakers names
@@ -281,13 +300,11 @@ def parse_data_file(seg_filename, args):
         }
     
     ## PARSE TEXT FILE
+    valid_chars = set(VALID_CHARS)
     speaker_ids = []
     sentences = []
 
-    # Use a single random speaker id per file for unknown speakers
-    file_speaker_id = str(uuid4()).replace('-', '')
-
-    for sentence, metadata in load_text_data(text_filename):
+    for sentence, metadata in text_data:
         add_to_corpus = True
         if "parser" in metadata:
             if "no-lm" in metadata["parser"]:
@@ -299,6 +316,8 @@ def parse_data_file(seg_filename, args):
         if speaker_id == "unknown":
             if args.hash_id:
                 #speaker_id = str(uuid4()).replace('-', '')
+                # Use a single random speaker id per file for unknown speakers
+                file_speaker_id = str(uuid4()).replace('-', '')
                 speaker_id = file_speaker_id
         else:
             if args.hash_id:
@@ -317,6 +336,14 @@ def parse_data_file(seg_filename, args):
             sent = filter_out_chars(sent, PUNCTUATION)
             sentences.append(' '.join(sent.replace('*', '').split()))
             speaker_ids.append(speaker_id)
+
+            # Filter out utterances with foreign chars
+            chars = set(sent)
+            if '*' in chars: chars.remove('*')
+            if not chars.issubset(valid_chars):
+                print(Fore.YELLOW
+                    + f"dropped (foreign chars '{chars.difference(valid_chars)}'): "
+                    + Fore.RESET + sentence, file=sys.stderr)
             
             # Add words to lexicon
             for word in sent.split():
@@ -331,7 +358,7 @@ def parse_data_file(seg_filename, args):
         
         # Add sentence to language model corpus
         if add_to_corpus and not replace_corpus and not args.no_lm:
-            for sub in split_sentences(cleaned, end=''):
+            for sub in split_sentences(cleaned):
                 sent = normalize_sentence(sub, autocorrect=True, norm_case=True)
                 sent = sent.replace('-', ' ').replace('/', ' ')
                 sent = sent.replace('\xa0', ' ')
@@ -367,7 +394,7 @@ def parse_data_file(seg_filename, args):
     
 
     ## PARSE SPLIT FILE
-    segments = load_segments_data(seg_filename)
+    segments = load_segments_data(filepath)
     assert len(sentences) == len(segments), \
         f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
 
@@ -394,7 +421,7 @@ def parse_data_file(seg_filename, args):
         data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(end*100)/100}\n")
         data["utt2spk"].append(f"{utterance_id}\t{speaker_ids[i]}\n")
     
-    status = Fore.GREEN + f" * {seg_filename[:-6]}" + Fore.RESET
+    status = Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
         status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
     print(status)
@@ -614,12 +641,11 @@ _VALID_PARAMS = {
 def extract_metadata(sentence: str) -> Tuple[str, dict]:
     """ Returns the sentence stripped of its metadata (if any)
         and a dictionary of metadata
-        Keeps unknown word marker '{?}'
+        Keeps unknown word markers '{?}'
     """
     metadata = dict()
 
-    match = METADATA_PATTERN.search(sentence)
-    while match:
+    for match in METADATA_PATTERN.finditer(sentence):
         start, end = match.span()
         if match.group(1) == '?':       # Unknown words {?}
             if "unknown" not in metadata: metadata["unknown"] = []
@@ -657,7 +683,6 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
                         else:
                             print(Fore.RED + f"Wrong metadata: {unit.group(0)}" + Fore.RESET)
 
-        sentence = sentence[:start] + sentence[end:]
-        match = METADATA_PATTERN.search(sentence)
+            sentence = sentence[:start] + sentence[end:]
     
     return sentence.strip(), metadata

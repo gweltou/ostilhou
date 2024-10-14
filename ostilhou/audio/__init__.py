@@ -6,7 +6,6 @@ import json
 import os.path
 from os import listdir
 from random import choice
-#from math import inf, ceil
 from tempfile import NamedTemporaryFile
 
 from colorama import Fore
@@ -14,7 +13,6 @@ from colorama import Fore
 from pydub import AudioSegment
 from pydub.utils import get_player_name
 from pydub.generators import WhiteNoise
-from pydub.silence import detect_nonsilent
 
 
 AUDIO_FORMATS = ('wav', 'mp3', 'm4a', 'ogg', 'mp4', 'mkv')
@@ -51,9 +49,11 @@ def get_audio_segment(i, audio, segments):
     return seg
 
 
+
 def audio_segments(audio, segments):
     for start, stop in segments:
         yield audio[start, stop]
+
 
 
 def prepare_segment_for_decoding(segment: AudioSegment) -> AudioSegment:
@@ -68,22 +68,21 @@ def prepare_segment_for_decoding(segment: AudioSegment) -> AudioSegment:
     return segment
 
 
+
 def play_audio_segment(i, song, segments, speed):
     play_with_ffplay(get_audio_segment(i, song, segments), speed)
 
 
 
-def get_audiofile_info(filename):
+def get_audiofile_info(filename) -> dict:
     r = subprocess.check_output(['ffprobe', '-hide_banner', '-v', 'panic', '-show_streams', '-of', 'json', filename])
     r = json.loads(r)
     return r['streams'][0]
 
 
 
-def get_audiofile_length(filename):
-    """
-        Get audio file length in seconds
-    """
+def get_audiofile_length(filename) -> float:
+    """ Get audio file length in seconds """
     info = get_audiofile_info(filename)
     if "duration" in info:
         return float(info["duration"])
@@ -211,6 +210,7 @@ def get_min_max_energy(segment: AudioSegment, chunk_size=100, overlap=50):
     return (min_energy, max_energy)
 
 
+
 def binary_split(audio: AudioSegment, treshold_ratio=0.1):
     min_e, max_e = get_min_max_energy(audio)
     delta_e = max_e - min_e
@@ -253,6 +253,7 @@ def binary_split(audio: AudioSegment, treshold_ratio=0.1):
     return []
 
 
+
 def split_to_segments(audio: AudioSegment, max_length=10, threshold_ratio=0.1) -> List:
     """
         Return a list of shorter sub-segments from a pydub AudioSegment.
@@ -293,6 +294,7 @@ else:
     print("Empty 'amb' folder (samples of ambient audio)")
 
 
+
 def add_amb_random(voice_file, output_file, gain=None):
     amb_file = choice(AUDIO_AMB_FILES)
     voice = AudioSegment.from_file(voice_file)
@@ -309,6 +311,7 @@ def add_amb_random(voice_file, output_file, gain=None):
     combined = voice.overlay(amb, loop=True)
     print("Exporting to", output_file)
     combined.export(output_file, format='wav', parameters=['-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000'])
+
 
 
 def add_whitenoise(voice_file, output_file, gain=-20):
