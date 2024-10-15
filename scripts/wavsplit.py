@@ -229,10 +229,14 @@ def main():
                 load_model(args.model)
             
             print("Transcribing...")
-            t_min, t_max = 0, segments[-1][1]
+            t_min, t_max = 0, int(segments[-1][1]*1000)
             print(segments)
             sentences = [
-            	transcribe_segment(song[max(t_min, seg[0]-200):min(t_max, seg[1]+200)]) for seg in segments
+                    transcribe_segment(
+                        song[
+                            max(t_min, int(seg[0]*1000)-200):
+                            min(t_max, int(seg[1]*1000)+200)]
+                    ) for seg in segments
             	]
             if not args.keep_sil:
                 print("Deleting silent utterances...")

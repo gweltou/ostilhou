@@ -55,6 +55,7 @@ if __name__ == "__main__":
     parser.add_argument("--lm-min-token", help="Minimum number of tokens in sentence for adding it to LM corpus", type=int, default=3)
     parser.add_argument("--utt-min-len", help="Minimum length of audio utterances", type=float, default=0.0)
     parser.add_argument("--hash-id", help="Hash speaker ids", action="store_true")
+    parser.add_argument("--split-audio", help="Split audio files by segments", action="store_true")
     args = parser.parse_args()
     print(args)
 
@@ -122,13 +123,16 @@ if __name__ == "__main__":
 
 
     if not args.dry_run:
-
         if not os.path.exists(args.output):
             os.mkdir(args.output)
 
-        dir_kaldi_local = os.path.join(args.output, 'local')
+        dir_kaldi_local = os.path.join(args.output, "local")
         if not os.path.exists(dir_kaldi_local):
             os.mkdir(dir_kaldi_local)
+        
+        audio_dir = os.path.join(args.output, "audio")
+        if not os.path.exists(audio_dir):
+            os.mkdir(audio_dir)
             
 
         print("\n==== BUILDING KALDI FILES ====")
@@ -201,14 +205,12 @@ if __name__ == "__main__":
         with open(silence_phones_path, 'w') as f:
             f.write(f'SIL\noov\nSPN\nLAU\nNSN\n')
         
-
         # nonsilence_phones.txt
         nonsilence_phones_path = os.path.join(dir_dict_nosp, "nonsilence_phones.txt")
         print(f"building file \'{nonsilence_phones_path}\'")
         with open(nonsilence_phones_path, 'w') as f:
             for p in sorted(phonemes):
                 f.write(f'{p}\n')
-        
         
         # optional_silence.txt
         optional_silence_path  = os.path.join(dir_dict_nosp, "optional_silence.txt")
@@ -221,19 +223,20 @@ if __name__ == "__main__":
             save_dir = os.path.join(args.output, corpus_name)
             if not os.path.exists(save_dir):
                 os.mkdir(save_dir)
-            
+
             # Build 'text' file
             fname = os.path.join(save_dir, 'text')
             print(f"building file \'{fname}\'")
             with open(fname, 'w') as f:
-                for l in corpora[corpus_name]["text"]:
-                    f.write(f"{l[0]}\t{l[1]}\n")
+                for utt_id, sentence in corpora[corpus_name]["text"]:
+                    f.write(f"{utt_id}\t{sentence}\n")
             
             # Build 'segments' file
-            fname = os.path.join(save_dir, 'segments')
-            print(f"building file \'{fname}\'")
-            with open(fname, 'w') as f:
-                f.writelines(corpora[corpus_name]["segments"])
+            if not args.split_audio:
+                fname = os.path.join(save_dir, 'segments')
+                print(f"building file \'{fname}\'")
+                with open(fname, 'w') as f:
+                    f.writelines(corpora[corpus_name]["segments"])
             
             # Build 'utt2spk'
             fname = os.path.join(save_dir, 'utt2spk')

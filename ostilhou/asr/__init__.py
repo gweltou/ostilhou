@@ -3,19 +3,11 @@ import sys
 import os
 import platform
 
-from .dataset import (
-    extract_metadata,
-    load_segments_data, load_text_data, load_ali_file,
-    parse_dataset, special_tokens
-)
-from .recognizer import (
-    load_model,
-    transcribe_segment, transcribe_segment_timecoded, transcribe_segment_timecoded_callback,
-    transcribe_file, transcribe_file_timecoded
-)
 from .post_processing import verbal_fillers
 from ..dicts import proper_nouns, acronyms
 
+from .dataset import *
+from .recognizer import *
 
 
 # Graphemes to phonemes
@@ -31,7 +23,6 @@ w2f = {
     'ch'    :   'CH',       # CHom
     "c'h"   :   'X',        # 
     'd'     :   'D',
-    'de'    :   'D E',      # DEgouezh
     'dei'   :   'D EH I',   # DEIlenn
     'c'     :   'K',        # xxx GALLEG XXX
     'e'     :   'E',        # spEred
@@ -278,7 +269,7 @@ def phonetize_word(word: str) -> List[str]:
     head = 0
     phon = []
     wordb = '.' + word + '.'
-    error = False
+    errors = []
     while head < len(wordb):
         parsed = False
         for i in (4, 3, 2, 1):
@@ -290,12 +281,12 @@ def phonetize_word(word: str) -> List[str]:
                 break
         head += 1
         if not parsed and token not in ('.', "'"):
-            error = True
+            errors.append(token)
     
     pron = ' '.join(phon)
 
-    if error:
-        print("ERROR [phonetizer]", word, pron)
+    if errors:
+        print("ERROR [phonetizer]", word, pron, errors)
     
     variants = lexicon_add.get(word, [])
     return [pron] + variants

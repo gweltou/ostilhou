@@ -126,7 +126,7 @@ def parse_data_file(filepath):
     for i, (start, stop) in enumerate(segments):
         sentence, metadata = text_data[i]
 
-        if (stop - start) / 1000 < args.utterances_min_length:
+        if stop - start < args.utterances_min_length:
             # Skip short utterances
             print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
             n_dropped += 1
@@ -147,8 +147,8 @@ def parse_data_file(filepath):
         sentence = sentence.replace('\xa0', ' ')
         if args.no_punct:
             sentence = sentence.replace('-', ' ').replace('/', ' ')
-            sentence = filter_out_chars(sentence, PUNCTUATION)
-        sentence = ' '.join(sentence.replace('*', '').split())
+            sentence = filter_out_chars(sentence, PUNCTUATION + '*')
+        sentence = ' '.join(sentence.split())
         
         # Filter out utterances with foreign chars
         chars = set(sentence)
@@ -183,11 +183,11 @@ def parse_data_file(filepath):
             speaker_gender = 'u'
         
         if speaker_gender == 'm':
-            data["audio_length"]['m'] += (stop - start) / 1000
+            data["audio_length"]['m'] += stop - start
         elif speaker_gender == 'f':
-            data["audio_length"]['f'] += (stop - start) / 1000
+            data["audio_length"]['f'] += stop - start
         else:
-            data["audio_length"]['u'] += (stop - start) / 1000
+            data["audio_length"]['u'] += stop - start
 
         accent = ""
         if "accent" in metadata:

@@ -42,9 +42,15 @@ def load_audiofile(path: str, sr=None) -> AudioSegment:
 
 
 
-def get_audio_segment(i, audio, segments):
-    start = int(segments[i][0])
-    stop = int(segments[i][1])
+def get_audio_segment(i, audio: AudioSegment, segments):
+    """
+    Args:
+        i (int) : an index
+        audio (AudioSegment)
+        segments: list of tuple of floats (seconds)
+    """
+    start = int(segments[i][0] * 1000)
+    stop = int(segments[i][1] * 1000)
     seg = audio[start: stop]
     return seg
 

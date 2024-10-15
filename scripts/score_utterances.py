@@ -35,7 +35,7 @@ if __name__ == "__main__":
         basename, _ = os.path.splitext(split_file)
         wav_file = basename + os.path.extsep + "wav"
         text_file = basename + os.path.extsep + "txt"
-        segments, _ = load_segments_data(split_file)
+        segments = load_segments_data(split_file)
         utterances = load_text_data(text_file)
         song = load_audiofile(wav_file)
         _, basename = os.path.split(basename)

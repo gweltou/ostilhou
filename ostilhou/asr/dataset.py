@@ -60,8 +60,8 @@ def load_segments_data(segfile: str) -> List[Segment]:
             if not l or l.startswith('#'):
                 continue
             t = l.split()
-            start = int(t[0])
-            stop = int(t[1])
+            start = int(t[0]) / 1000
+            stop = int(t[1]) / 1000
             segments.append((start, stop))
             
     return segments
@@ -167,11 +167,9 @@ def load_ali_file(filepath) -> Dict:
         for line in f.readlines():
             line = line.strip()
             if line.startswith('#'):
-                print(line)
                 continue
 
             text, metadata = extract_metadata(line)
-            print(text, metadata)
             if "speaker" in metadata:
                 current_speaker = metadata["speaker"]
             else:
@@ -284,13 +282,16 @@ def parse_data_file(filepath, args):
     if seg_ext == ".ali":
         aligned_data = load_ali_file(filepath)
         segments = aligned_data["segments"]
-        text_data = list(zip(aligned_data["sentences"], aligned_data["metadata"]))
+        sentences_and_metadata = list(zip(aligned_data["sentences"], aligned_data["metadata"]))
         audio_path = aligned_data["audio_path"]
     else: # .seg, .split
         text_filename = filepath.replace(seg_ext, '.txt')
         assert os.path.exists(text_filename), f"ERROR: no text file found for {filepath}"
         segments = load_segments_data(filepath)
-        text_data = load_text_data(text_filename)
+        sentences_and_metadata = load_text_data(text_filename)
+    assert len(sentences_and_metadata) == len(segments), \
+        f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
+
     
     # Look for accompanying audio file
     if not audio_path:
@@ -305,7 +306,7 @@ def parse_data_file(filepath, args):
     replace_corpus = os.path.exists(substitute_corpus_filename)
     
     data = {
-        "wavscp": {recording_id: audio_path},   # Wave filenames
+        "wavscp": {},   # Recording id to wave filenames
         "utt2spk": [],      # Utterance id to speakers id
         "segments": [],     # Time segments
         "text": [],         # Utterances text
@@ -315,26 +316,26 @@ def parse_data_file(filepath, args):
         "audio_length": {'m': 0, 'f': 0, 'u': 0},    # Audio length for each gender
         }
     
-    ## PARSE TEXT FILE
     valid_chars = set(VALID_CHARS)
     speaker_ids = []
-    sentences = []
 
-    for sentence, metadata in text_data:
-        add_to_corpus = True
-        if "parser" in metadata:
-            if "no-lm" in metadata["parser"]:
-                add_to_corpus = False
-            elif "add-lm" in metadata["parser"]:
-                add_to_corpus = True
+    if not args.split_audio:
+        data["wavscp"][recording_id] = audio_path
+
+    for (sentence, metadata), (start, end) in zip(sentences_and_metadata, segments):
+        if end - start < args.utt_min_len:
+            # Skip short utterances
+            continue
             
         speaker_id = metadata["speaker"]
+        utterance_id = f"{speaker_id}-{recording_id}-{floor(100*start):0>7}_{ceil(100*end):0>7}"
+
         if speaker_id == "unknown":
+            # Use a single random speaker id per file for unknown speakers
             if args.hash_id:
-                #speaker_id = str(uuid4()).replace('-', '')
-                # Use a single random speaker id per file for unknown speakers
-                file_speaker_id = str(uuid4()).replace('-', '')
-                speaker_id = file_speaker_id
+                speaker_id = str(uuid4()).replace('-', '')
+            else:
+                speaker_id = "unknown" + md5(speaker_id.encode('utf-8')).hexdigest()[:16]
         else:
             if args.hash_id:
                 speaker_id = md5(speaker_id.encode('utf-8')).hexdigest()
@@ -344,37 +345,60 @@ def parse_data_file(filepath, args):
             # speakers_gender is a global variable
             speakers_gender[speaker_id] = metadata["gender"]
         
-        cleaned = pre_process(sentence)
-        if cleaned:
-            sent = normalize_sentence(cleaned, autocorrect=True, norm_case=True)
-            sent = sent.replace('-', ' ').replace('/', ' ')
-            sent = sent.replace('\xa0', ' ') # Non-breakable spaces
-            sent = filter_out_chars(sent, PUNCTUATION)
-            sentences.append(' '.join(sent.replace('*', '').split()))
-            speaker_ids.append(speaker_id)
+        cleaned_sentence = pre_process(sentence)
+        sent = normalize_sentence(cleaned_sentence, autocorrect=True, norm_case=True)
+        sent = sent.replace('-', ' ').replace('/', ' ')
+        sent = sent.replace('\xa0', ' ') # Non-breakable spaces
+        sent = filter_out_chars(sent, PUNCTUATION + '*')
+        if not sent:
+            continue
+        sent = ' '.join(sent.split())
+        speaker_ids.append(speaker_id)
 
-            # Filter out utterances with foreign chars
-            chars = set(sent)
-            if '*' in chars: chars.remove('*')
-            if not chars.issubset(valid_chars):
-                print(Fore.YELLOW
-                    + f"dropped (foreign chars '{chars.difference(valid_chars)}'): "
-                    + Fore.RESET + sentence, file=sys.stderr, end='')
-            
-            # Add words to lexicon
-            for word in sent.split():
-                # Remove black-listed words (those beggining with '*')
-                if word.startswith('*'):
-                    pass
-                elif word in special_tokens:
-                    pass
-                elif word == "'":
-                    pass
-                else: data["lexicon"].add(word)
+        # Filter out utterances with foreign chars
+        chars = set(sent)
+        if not chars.issubset(valid_chars):
+            print(Fore.YELLOW
+                + f"dropped (foreign chars '{chars.difference(valid_chars)}'): "
+                + Fore.RESET + sentence, file=sys.stderr, end='')
+            continue
         
+
+        data["text"].append((utterance_id, sent))
+        data["utt2spk"].append(f"{utterance_id}\t{speaker_id}\n")
+        data["segments"].append(f"{utterance_id}\t{recording_id}\t{start}\t{end}\n")
+
+        # Keeping track of gender representation
+        if metadata["gender"] == 'm':
+            data["audio_length"]['m'] += end - start
+        elif metadata["gender"] == 'f':
+            data["audio_length"]['f'] += end - start
+        else:
+            data["audio_length"]['u'] += end - start
+
+
+        # Add words to lexicon
+        for word in sent.split():
+            # Remove black-listed words (those beggining with '*')
+            if word.startswith('*'):
+                pass
+            elif word in special_tokens:
+                pass
+            elif word == "'":
+                pass
+            else: data["lexicon"].add(word)
+        
+
         # Add sentence to language model corpus
-        if add_to_corpus and not replace_corpus and not args.no_lm:
-            for sub in split_sentences(cleaned):
+        add_to_text_corpus = True
+        if "parser" in metadata:
+            if "no-lm" in metadata["parser"]:
+                add_to_text_corpus = False
+            elif "add-lm" in metadata["parser"]:
+                add_to_text_corpus = True
+        
+        if add_to_text_corpus and not replace_corpus and not args.no_lm:
+            for sub in split_sentences(cleaned_sentence):
                 sent = normalize_sentence(sub, autocorrect=True, norm_case=True)
                 sent = sent.replace('-', ' ').replace('/', ' ')
                 sent = sent.replace('\xa0', ' ')
@@ -397,7 +421,8 @@ def parse_data_file(filepath, args):
                         print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent, end='')
                     continue
                 data["corpus"].add(' '.join(tokens))
-    
+     
+
     if replace_corpus and not args.no_lm:
         for sentence, _ in load_text_data(substitute_corpus_filename):
             for sub in split_sentences(sentence):
@@ -409,33 +434,6 @@ def parse_data_file(filepath, args):
                 data["corpus"].add(' '.join(sub.split()))
     
 
-    ## PARSE SPLIT FILE
-    assert len(sentences) == len(segments), \
-        f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
-
-    for i, s in enumerate(segments):
-        start = s[0] / 1000
-        end = s[1] / 1000
-        if end - start < args.utt_min_len:
-            # Skip short utterances
-            continue
-
-        speaker_gender = speakers_gender[speaker_ids[i]]
-        # if speaker_gender not in ('f', 'm'):
-        #     print(Fore.YELLOW + "unknown gender:" + Fore.RESET, speaker_ids[i])
-        
-        if speaker_gender == 'm':
-            data["audio_length"]['m'] += end - start
-        elif speaker_gender == 'f':
-            data["audio_length"]['f'] += end - start
-        else:
-            data["audio_length"]['u'] += end - start
-        
-        utterance_id = f"{speaker_ids[i]}-{recording_id}-{floor(100*start):0>7}_{ceil(100*end):0>7}"
-        data["text"].append((utterance_id, sentences[i]))
-        data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(end*100)/100}\n")
-        data["utt2spk"].append(f"{utterance_id}\t{speaker_ids[i]}\n")
-    
     # status = Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
         print('\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET, end='')
