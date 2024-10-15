@@ -18,7 +18,7 @@ def test_metadata():
         "", {'source-audio': 'http://www.radiobreizh.bzh/medias/19961031-Ar-melour-Pierre-Ollivier-RKB20180.mp3'}),
         ("{tags: rkb}", "", {"tags": ["rkb"]}),
         ("{tags: radio, rkb}", "", {"tags": ["radio", "rkb"]}),
-        ("unknown{?} words {?}here", "unknown words here", {'unknown': [0, 2]}),
+        ("unknown{?} words {?}here", "unknown{?} words {?}here", {'unknown': [0, 2]}),
         ("{audio-path: ENKLASK_WAR_AR_C’HLEWELED_E_BREZHONEG.mp4}", "", {'audio-path': 'ENKLASK_WAR_AR_C’HLEWELED_E_BREZHONEG.mp4'}),
     ]
 

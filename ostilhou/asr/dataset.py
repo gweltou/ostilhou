@@ -147,7 +147,10 @@ def create_ali_file(audiofile, sentences, segments, output,
 
 
 def load_ali_file(filepath) -> Dict:
-    """returns a dictionary containing a list of sentences and a list of segments"""
+    """
+        returns a dictionary containing a list of sentences, with metadata
+        and a list of segments
+    """
 
     audio_path = None
     sentences = []       # Text without metadata
@@ -162,7 +165,13 @@ def load_ali_file(filepath) -> Dict:
         no_lm = False
 
         for line in f.readlines():
+            line = line.strip()
+            if line.startswith('#'):
+                print(line)
+                continue
+
             text, metadata = extract_metadata(line)
+            print(text, metadata)
             if "speaker" in metadata:
                 current_speaker = metadata["speaker"]
             else:
@@ -204,10 +213,12 @@ def load_ali_file(filepath) -> Dict:
 
 
 def parse_dataset(file_or_dir, args):
-    if file_or_dir.endswith(".split") or file_or_dir.endswith(".seg"):   # Single data item
+    if (file_or_dir.endswith(".split")
+        or file_or_dir.endswith(".seg")
+        or file_or_dir.lower().endswith('.ali')
+    ):   # Single data item
         return parse_data_file(file_or_dir, args)
-    # elif file_or_dir.lower().endwith('.ali'):
-    #     pass
+
     elif os.path.isdir(file_or_dir):
         data = {
             "path": file_or_dir,
@@ -226,9 +237,11 @@ def parse_dataset(file_or_dir, args):
             if filename.startswith('.'):
                 # Skip hidden folders
                 continue
-            if os.path.isdir(os.path.join(file_or_dir, filename)) \
-                    or filename.endswith(".split") \
-                    or filename.endswith(".seg"):
+            if (os.path.isdir(os.path.join(file_or_dir, filename))
+                or filename.endswith(".split")
+                or filename.endswith(".seg")
+                or filename.lower().endswith(".ali")
+            ):
                 item_data = parse_dataset(os.path.join(file_or_dir, filename), args)
                 data["wavscp"].update(item_data["wavscp"])
                 data["utt2spk"].extend(item_data["utt2spk"])
@@ -257,26 +270,29 @@ def parse_dataset(file_or_dir, args):
 speakers_gender = {"unknown": 'u'}
 
 def parse_data_file(filepath, args):
+    print(Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET, end='')
+
     # Kaldi doesn't like whitespaces in file path
-    if ' ' in filepath:
-        raise "ERROR: whitespaces in path " + filepath
+    # if ' ' in filepath:
+    #     raise "ERROR: whitespaces in path " + filepath
     
     # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
-    # print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
+
     seg_ext = os.path.splitext(filepath)[1] # Could be '.split' or '.seg'
     audio_path = ""
 
     if seg_ext == ".ali":
-        ali_data = load_ali_file(filepath)
-        segments = ali_data["segments"]
-        text_data = list(zip(ali_data["sentences"], ali_data["metadata"]))
-        audio_path = ali_data["audio_path"]
+        aligned_data = load_ali_file(filepath)
+        segments = aligned_data["segments"]
+        text_data = list(zip(aligned_data["sentences"], aligned_data["metadata"]))
+        audio_path = aligned_data["audio_path"]
     else: # .seg, .split
         text_filename = filepath.replace(seg_ext, '.txt')
         assert os.path.exists(text_filename), f"ERROR: no text file found for {filepath}"
         segments = load_segments_data(filepath)
         text_data = load_text_data(text_filename)
     
+    # Look for accompanying audio file
     if not audio_path:
         audio_path = os.path.abspath(filepath.replace(seg_ext, '.wav'))
         if not os.path.exists(audio_path):
@@ -343,7 +359,7 @@ def parse_data_file(filepath, args):
             if not chars.issubset(valid_chars):
                 print(Fore.YELLOW
                     + f"dropped (foreign chars '{chars.difference(valid_chars)}'): "
-                    + Fore.RESET + sentence, file=sys.stderr)
+                    + Fore.RESET + sentence, file=sys.stderr, end='')
             
             # Add words to lexicon
             for word in sent.split():
@@ -371,14 +387,14 @@ def parse_data_file(filepath, args):
                 # Ignore if to many black-listed words in sentence
                 if n_stared / len(tokens) > 0.2:
                     if args.verbose:
-                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
+                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent, end='')
                     continue
                 # Remove starred words
                 tokens = [tok for tok in tokens if not tok.startswith('*')]
                 # Ignore if sentence is too short
                 if len(tokens) < args.lm_min_token:
                     if args.verbose:
-                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent)
+                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent, end='')
                     continue
                 data["corpus"].add(' '.join(tokens))
     
@@ -394,7 +410,6 @@ def parse_data_file(filepath, args):
     
 
     ## PARSE SPLIT FILE
-    segments = load_segments_data(filepath)
     assert len(sentences) == len(segments), \
         f"number of utterances in text file ({len(data['text'])}) doesn't match number of segments in split file ({len(segments)})"
 
@@ -421,10 +436,10 @@ def parse_data_file(filepath, args):
         data["segments"].append(f"{utterance_id}\t{recording_id}\t{floor(start*100)/100}\t{ceil(end*100)/100}\n")
         data["utt2spk"].append(f"{utterance_id}\t{speaker_ids[i]}\n")
     
-    status = Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET
+    # status = Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
-        status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
-    print(status)
+        print('\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET, end='')
+    print()
     return data
 
 
@@ -613,8 +628,8 @@ def convert_from_eaf(eaf_filename):
 
 ##############################  METADATA  ##############################
 
-METADATA_PATTERN = re.compile(r'{\s*(.+?)\s*}')
-METADATA_UNIT_PATTERN = re.compile(r"\s*([\w\s:,_'’/.-]+)\s*")
+METADATA_PATTERN = re.compile(r'{\s*(.+?)\s*}') # Capture content
+METADATA_UNIT_PATTERN = re.compile(r"([\w\s:,_'’/=\.\-\?\&]+)") # Capture content except ';'
 SPEAKER_NAME_PATTERN = re.compile(r"(?:(?:spk|speaker)\s*:\s*)?([\w '_-]+?)")
 SPEAKER_ID_PATTERN_DEPR = re.compile(r'([-\'\w]+):*([mf])*')
 KEYVAL_PATTERN = re.compile(r"([\w_'-]+)\s*:\s*([\w ,_'’.:/-]+?)\s*")
@@ -647,41 +662,46 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
 
     for match in METADATA_PATTERN.finditer(sentence):
         start, end = match.span()
-        if match.group(1) == '?':       # Unknown words {?}
+        content = match.group(1).strip()
+        if content == '?':       # Unknown words {?}
             if "unknown" not in metadata: metadata["unknown"] = []
             sub = sentence[:end]
-            metadata["unknown"].append(len(sub.split())-1)
+            metadata["unknown"].append(len(sub.split())-1) # word number
         else:
-            for unit in METADATA_UNIT_PATTERN.finditer(match.group(1)):
-                spk_match = SPEAKER_NAME_PATTERN.fullmatch(unit.group(1))
-                if spk_match:
-                    speaker_name = spk_match.group(1)
-                    # Keep all-caps names (Acronyms)
-                    if not speaker_name.isupper():
-                        speaker_name = speaker_name.replace(' ', '_').lower()
-                    metadata["speaker"] = speaker_name
-                    continue
-                
-                key_val = KEYVAL_PATTERN.fullmatch(unit.group(1))
-                if key_val:
-                    key, val = key_val.group(1), key_val.group(2)
+            metadata_units = content.split(';')
+            for unit in metadata_units:
+                unit = unit.strip()
+                if ':' in unit:
+                    # Key-value pair
+                    key, val = unit.split(':', maxsplit=1)
+                    key = key.strip()
+                    val = val.strip()
 
                     if key in _VALID_PARAMS:
+                        if key in ("speaker", "spk"):
+                            key = "speaker"
+                            if not val.isupper():
+                                val = val.replace(' ', '_').lower()
                         if key in ("tags", "author", "accent"):
                             val = [v.strip().replace(' ', '_') for v in val.split(',') if v.strip()]
                         if key in ("start", "end"):
                             val = float(val)
-                        metadata[key_val.group(1)] = val
-
+                        metadata[key] = val
                     else:
-                        speaker_name_depr = SPEAKER_ID_PATTERN_DEPR.fullmatch(unit.group(1))
+                        speaker_name_depr = SPEAKER_ID_PATTERN_DEPR.fullmatch(unit)
                         if speaker_name_depr:
+                            print(Fore.RED + f"Deprecated metadata: {unit}" + Fore.RESET)
                             metadata["speaker"] = speaker_name_depr.group(1)
                             if speaker_name_depr.group(2) in 'fm':
                                 metadata["gender"] = speaker_name_depr.group(2)
-                            continue    
                         else:
-                            print(Fore.RED + f"Wrong metadata: {unit.group(0)}" + Fore.RESET)
+                            print(Fore.RED + f"Wrong metadata: {unit}" + Fore.RESET)
+                else:
+                    # A simplified speaker name
+                    if not unit.isupper():
+                        # Keep all-caps names (Acronyms)
+                        unit = unit.replace(' ', '_').lower()
+                    metadata["speaker"] = unit
 
             sentence = sentence[:start] + sentence[end:]
     

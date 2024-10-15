@@ -1,4 +1,4 @@
-.env/
+.venv/
 build/
 dist/
 data/
