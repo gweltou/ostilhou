@@ -15,7 +15,7 @@ import datetime, pytz
 from ..utils import read_file_drop_comments
 from ..text import (
     pre_process, normalize_sentence, filter_out_chars,
-    split_sentences,
+    split_sentences, tokenize, detokenize, normalize, Token,
     PUNCTUATION,
     VALID_CHARS
 )
@@ -192,7 +192,7 @@ def load_ali_file(filepath) -> Dict:
             if "start" in metadata and "end" in metadata:
                 segments.append([metadata["start"], metadata["end"]])
                 sentences.append(text.strip())
-                raw_sentences.append(line.strip())
+                raw_sentences.append(line)
                 metadatas.append(metadata)
 
             if not audio_path and "audio-path" in metadata:
@@ -265,10 +265,11 @@ def parse_dataset(file_or_dir, args):
     
 
 
+valid_chars = set(VALID_CHARS)
 speakers_gender = {"unknown": 'u'}
 
 def parse_data_file(filepath, args):
-    print(Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET, end='')
+    print(Fore.GREEN + f" * {filepath}" + Fore.RESET, end=' ', flush=True)
 
     # Kaldi doesn't like whitespaces in file path
     # if ' ' in filepath:
@@ -316,8 +317,6 @@ def parse_data_file(filepath, args):
         "audio_length": {'m': 0, 'f': 0, 'u': 0},    # Audio length for each gender
         }
     
-    valid_chars = set(VALID_CHARS)
-    speaker_ids = []
 
     if not args.split_audio:
         data["wavscp"][recording_id] = audio_path
@@ -346,27 +345,35 @@ def parse_data_file(filepath, args):
             speakers_gender[speaker_id] = metadata["gender"]
         
         cleaned_sentence = pre_process(sentence)
-        sent = normalize_sentence(cleaned_sentence, autocorrect=True, norm_case=True)
-        sent = sent.replace('-', ' ').replace('/', ' ')
+        tokens = list(tokenize(cleaned_sentence, autocorrect=True, norm_punct=False))
+        sent = detokenize(normalize(tokens, norm_case=True), normalize=True, capitalize=False)
+        
         sent = sent.replace('\xa0', ' ') # Non-breakable spaces
+        sent = sent.replace('-', ' ').replace('/', ' ')
         sent = filter_out_chars(sent, PUNCTUATION + '*')
         if not sent:
             continue
         sent = ' '.join(sent.split())
-        speaker_ids.append(speaker_id)
 
-        # Filter out utterances with foreign chars
-        chars = set(sent)
+        # Filter out utterances with numbers or foreign chars (not counting acronyms)
+        sent_no_acronyms = detokenize(
+            normalize(
+                filter(lambda t: not t.kind == Token.ACRONYM, tokens),
+                norm_case=True
+            ), normalize=True
+        )
+        sent_no_acronyms = sent_no_acronyms.replace('\xa0', ' ').replace('*', '')
+        chars = set(sent_no_acronyms)
         if not chars.issubset(valid_chars):
-            print(Fore.YELLOW
+            print('\n' + Fore.YELLOW
                 + f"dropped (foreign chars '{chars.difference(valid_chars)}'): "
-                + Fore.RESET + sentence, file=sys.stderr, end='')
+                + Fore.RESET + sentence, end='', file=sys.stderr)
             continue
         
 
         data["text"].append((utterance_id, sent))
-        data["utt2spk"].append(f"{utterance_id}\t{speaker_id}\n")
-        data["segments"].append(f"{utterance_id}\t{recording_id}\t{start}\t{end}\n")
+        data["utt2spk"].append((utterance_id, speaker_id))
+        data["segments"].append((utterance_id, recording_id, start, end))
 
         # Keeping track of gender representation
         if metadata["gender"] == 'm':
@@ -436,7 +443,7 @@ def parse_data_file(filepath, args):
 
     # status = Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
-        print('\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET, end='')
+        print(' ' + Fore.RED + "unknown speaker(s)" + Fore.RESET, end='')
     print()
     return data
 
@@ -657,6 +664,7 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
         Keeps unknown word markers '{?}'
     """
     metadata = dict()
+    remove_ranges = []
 
     for match in METADATA_PATTERN.finditer(sentence):
         start, end = match.span()
@@ -666,6 +674,7 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
             sub = sentence[:end]
             metadata["unknown"].append(len(sub.split())-1) # word number
         else:
+            remove_ranges.append((start, end))
             metadata_units = content.split(';')
             for unit in metadata_units:
                 unit = unit.strip()
@@ -701,6 +710,9 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
                         unit = unit.replace(' ', '_').lower()
                     metadata["speaker"] = unit
 
-            sentence = sentence[:start] + sentence[end:]
+    nchars_removed = 0
+    for start, end in remove_ranges:
+        sentence = sentence[:start-nchars_removed] + sentence[end-nchars_removed:]
+        nchars_removed += end-start
     
     return sentence.strip(), metadata

@@ -15,16 +15,20 @@ def test_metadata():
         ("{mac'ha-rid le lagadeg}", "", {'speaker': "mac'ha-rid_le_lagadeg"}),
         ("{accent:kerneveg, kemper}", "", {'accent': ['kerneveg', 'kemper']}),
         ("{source-audio: http://www.radiobreizh.bzh/medias/19961031-Ar-melour-Pierre-Ollivier-RKB20180.mp3}",
-        "", {'source-audio': 'http://www.radiobreizh.bzh/medias/19961031-Ar-melour-Pierre-Ollivier-RKB20180.mp3'}),
+            "",
+            {'source-audio': 'http://www.radiobreizh.bzh/medias/19961031-Ar-melour-Pierre-Ollivier-RKB20180.mp3'}),
         ("{tags: rkb}", "", {"tags": ["rkb"]}),
         ("{tags: radio, rkb}", "", {"tags": ["radio", "rkb"]}),
         ("unknown{?} words {?}here", "unknown{?} words {?}here", {'unknown': [0, 2]}),
-        ("{audio-path: ENKLASK_WAR_AR_C’HLEWELED_E_BREZHONEG.mp4}", "", {'audio-path': 'ENKLASK_WAR_AR_C’HLEWELED_E_BREZHONEG.mp4'}),
+        ("{audio-path: ENKLASK_WAR_AR_C’HLEWELED_E_BREZHONEG.mp4}",
+            "",
+            {'audio-path': 'ENKLASK_WAR_AR_C’HLEWELED_E_BREZHONEG.mp4'}),
+        ("Gwin roz Saozon Provañs {spk: b11_paotr1; gender:m} {start: 60.139; end: 62.972}",
+            "Gwin roz Saozon Provañs",
+            {'end': 62.972, 'gender': 'm', 'speaker': 'b11_paotr1', 'start': 60.139}),
     ]
 
     for t in test_cases:
         sentence, metadata = extract_metadata(t[0])
-        print(sentence)
-        print(metadata)
         assert sentence.strip() == t[1]
         assert metadata == t[2]
