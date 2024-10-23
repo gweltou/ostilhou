@@ -148,8 +148,13 @@ def create_ali_file(audiofile, sentences, segments, output,
 
 def load_ali_file(filepath) -> Dict:
     """
-        returns a dictionary containing a list of sentences, with metadata
-        and a list of segments
+        Return a dictionary containing the data from an `ali` file :
+            audio_path: str,
+            sentences: list,
+            raw_sentences: list,
+            segments: list,
+            metadata: list,
+
     """
 
     audio_path = None

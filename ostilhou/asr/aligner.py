@@ -5,19 +5,23 @@ from typing import List
 import sys
 
 import jiwer
+import re
+from math import inf
 
 from ..text import pre_process, filter_out_chars, PUNCTUATION
 
 
 
 def _count_words(s: str) -> int:
+    s = re.sub(r"{.+?}", '', s)
     s = filter_out_chars(pre_process(s), PUNCTUATION + "'")
     s = s.replace('-', ' ')
     return len(s.split())
 
 
 def _prepare_text(s: str) -> str:
-    """ Prepare sentence for alignment matching """
+    """ Process sentence for alignment matching """
+    s = re.sub(r"{.+?}", '', s)
     s = pre_process(s.lower())
     s = s.replace("c'h", 'X').replace('ch', 'S')
     s = s.replace('ù', 'u').replace('ê', 'e')
@@ -71,13 +75,14 @@ def align(
     total_hyp_words = len(hyp)
     matches = []
     for sent_idx, norm_sentence in enumerate(norm_sentences):
-        sentence_pos = sum(n_ref_words[:sent_idx]) / total_ref_words
+        sentence_pos = left_boundary + sum(n_ref_words[:sent_idx]) / total_ref_words
         match = []
         for i in range(left_boundary, right_boundary):
             # Try to find a minima for the CER by adding one word at a time
             hyp_pos = i / total_hyp_words
             dist = abs(hyp_pos - sentence_pos)
-            best_score = 9999 # Could be `+inf`
+            # dist *= dist
+            best_score = inf
             for offset in range(1, right_boundary - i + 1):
                 hyp_windowed = hyp[i: i+offset]
                 hyp_sentence = ''.join( [t["word"] for t in hyp_windowed] )
@@ -136,10 +141,10 @@ def add_reliability_score(matches: list, hyp: list, verbose=False):
         prev_dist = get_prev_word_idx(matches, i) - span[0]
         next_dist = get_next_word_idx(matches, i, hyp) - span[1]
         # Allow for up to 2 words overlap between neighbours
-        # is_pdn = abs(prev_dist) <= 2 # is prev a direct-ish neighbour ?
-        # is_ndn = abs(next_dist) <= 2 # is next a direct-ish neighbour ?
-        is_pdn = prev_dist == 0
-        is_ndn = next_dist == 0
+        is_pdn = abs(prev_dist) <= 2 # is prev a direct-ish neighbour ?
+        is_ndn = abs(next_dist) <= 2 # is next a direct-ish neighbour ?
+        # is_pdn = prev_dist == 0
+        # is_ndn = next_dist == 0
         if is_pdn or is_ndn and (span[1] > last_reliable_wi):
             r = 'o' # Semi-reliable alignment
             if is_pdn and is_ndn and (abs(prev_dist) + abs(next_dist)) <= 2:
