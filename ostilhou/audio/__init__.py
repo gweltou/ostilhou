@@ -32,12 +32,11 @@ def find_associated_audiofile(path: str, silent=False) -> Optional[str]:
 
 
 
-def load_audiofile(path: str, sr=None) -> AudioSegment:
+def load_audiofile(path: str, sr=16000) -> AudioSegment:
     data = AudioSegment.from_file(path)
-    if isinstance(sr, int):
-        data.set_channels(1)
-        data.set_frame_rate(sr)
-        data.set_sample_width(2)
+    data.set_channels(1)
+    data.set_frame_rate(sr)
+    data.set_sample_width(2)
     return data
 
 
@@ -98,6 +97,19 @@ def get_audiofile_length(filename) -> float:
         return float(h) * 3600 + float(m) * 60 + float(s)
 
 
+
+def is_audiofile_valid_format(filename) -> bool:
+    """ Returns True if audio file is 16KHz s16le PCM """
+    info = get_audiofile_info(filename)
+    if info["codec_name"] != "pcm_s16le":
+        return False
+    if info["sample_rate"] != "16000":
+        return False
+    if info["channels"] != 1:
+        return False
+    return True
+
+
     
 def play_with_ffplay(seg, speed=1.0):
     with NamedTemporaryFile("w+b", suffix=".wav") as f:
@@ -112,8 +124,7 @@ def play_with_ffplay(seg, speed=1.0):
 
 def convert_to_wav(src, dst, verbose=True, keep_orig=True):
     """
-        Convert to 16kHz mono pcm
-        Validate filename
+        Convert to 16kHz s16le mono PCM
 
         Parameters
         ----------
@@ -125,7 +136,7 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
     src = os.path.abspath(src)
     dst = os.path.abspath(dst)
     if src == dst:
-        # Rename existing audio file
+        # Rename original audio file (to keep it)
         rep, filename = os.path.split(src)
         basename, ext = os.path.splitext(filename)
         new_name = basename + "_orig" + ext
@@ -135,12 +146,18 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
         src = new_src
 
     if verbose:
-        print(f"AUDIO_CONV: converting {src} to {dst}...")
+        print(f"AUDIO_CONV: converting '{src}' to '{dst}'...")
     rep, filename = os.path.split(dst)
     dst = os.path.join(rep, filename)
-    subprocess.call(['ffmpeg', '-v', 'panic',
-                     '-i', src, '-acodec', 'pcm_s16le',
-                     '-ac', '1', '-ar', '16000', dst])
+    subprocess.call([
+            'ffmpeg', '-v',
+            'panic',
+            '-i', src,
+            '-acodec', 'pcm_s16le',
+            '-ac', '1',
+            '-ar', '16000',
+            dst
+        ])
 
     if not keep_orig:
         if verbose:
@@ -150,12 +167,9 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
 
 
 def convert_to_mp3(src, dst, verbose=True, keep_orig=True):
-    """
-        Convert to mp3
-        Validate filename
-    """
+    """ Convert to MP3 """
     if verbose:
-        print(f"AUDIO_CONV: converting {src} to {dst}...")
+        print(f"AUDIO_CONV: converting '{src}' to '{dst}'...")
         
     if os.path.abspath(src) == os.path.abspath(dst):
         print("ERROR: source and destination are the same, skipping")
@@ -199,7 +213,28 @@ def concatenate_audiofiles(file_list, out_filename, remove=False):
     if remove:
         for fname in file_list:
             os.remove(fname)
-    
+
+
+
+def export_segment(audio_path: str, start: float, end: float, new_path: str):
+    """ Split an audiofile in many segments
+
+        Arguments:
+            audio_path (str): the path of the original audiofile
+            start (float) : time offset of beginning of segment
+            end (float) : time offset of end of segment
+            new_path (str): path of output file
+    """
+    # Cut the audio into segments using FFmpeg and suppress output
+    subprocess.run([
+        "ffmpeg",
+        "-i", audio_path,
+        "-ss", str(start),
+        "-to", str(end),
+        "-c", "copy", # Write using the same codec
+        new_path
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 
 
 def get_min_max_energy(segment: AudioSegment, chunk_size=100, overlap=50):
@@ -288,7 +323,7 @@ def split_to_segments(audio: AudioSegment, max_length=10, threshold_ratio=0.1) -
         segments_stack.extend([ (start + s, start + e) for s, e in sub_segments ])
     
     return sorted(short_segments)
-    
+
 
 
 _AMB_REP = os.path.join(os.path.split(os.path.abspath(__file__))[0], "amb")

@@ -157,13 +157,11 @@ if __name__ == "__main__":
             print(f"{new_n_aligned} aligned utterances")
 
     ni = 3
-    for it in range(3):
-        if new_n_aligned == n_aligned:
-            break
+    while new_n_aligned > n_aligned:
         ni += 1
         print("Iteration", ni)
 
-        reliable = ['O', 'o'] if it%2 == 0 else ['O']
+        reliable = ['O', 'o'] if ni%2 == 0 else ['O']
         unaligned_ranges = get_unaligned_ranges(lines, matches, rel=reliable)
         for start_range, end_range in unaligned_ranges:
             if start_range == 0:

@@ -21,9 +21,14 @@ import sys
 import os
 import argparse
 from colorama import Fore
+from math import floor, ceil
 
 from ostilhou import normalize_sentence
-from ostilhou.text import filter_out_chars, pre_process, PUNCTUATION
+from ostilhou.text import (
+    filter_out_chars, filter_in_chars,
+    pre_process,
+    PUNCTUATION, LETTERS
+)
 from ostilhou.asr import (
     phonemes,
     special_tokens,
@@ -31,8 +36,15 @@ from ostilhou.asr import (
     parse_dataset,
 )
 from ostilhou.utils import sec2hms
+from ostilhou.audio import export_segment, convert_to_wav, get_audiofile_info, is_audiofile_valid_format
 
 
+
+def clean_filename(filename: str) -> str:
+    """ Convert a regular filename to a Kaldi friendly filename """
+    filename = filename.replace(' ', '_')
+    filename = filter_in_chars(filename, LETTERS + LETTERS.upper() + "0123456789_-")
+    return filename
 
 
 
@@ -130,7 +142,7 @@ if __name__ == "__main__":
         if not os.path.exists(dir_kaldi_local):
             os.mkdir(dir_kaldi_local)
         
-        audio_dir = os.path.join(args.output, "audio")
+        audio_dir = os.path.abspath(os.path.join(args.output, "converted"))
         if not os.path.exists(audio_dir):
             os.mkdir(audio_dir)
             
@@ -220,53 +232,95 @@ if __name__ == "__main__":
 
 
         for corpus_name in corpora:
+            corpus = corpora[corpus_name]
             save_dir = os.path.join(args.output, corpus_name)
             if not os.path.exists(save_dir):
                 os.mkdir(save_dir)
+            
+            # Convert audio files in wavscp to 16KHz 16bit mono PCM format
+            print("Converting audio files to 16KHz s16le PCM...")
+            new_wavscp = []
+            for rec_id, audio_path in corpus["wavscp"]:
+                if not is_audiofile_valid_format(audio_path):
+                    _, basename = os.path.split(audio_path)
+                    basename, audio_format = os.path.splitext(basename)
+                    basename = clean_filename(basename)
+                    converted_path = os.path.join(audio_dir, basename + ".wav")
+                    if not os.path.exists(converted_path):
+                        convert_to_wav(audio_path, converted_path, verbose=True)
+                    new_wavscp.append((rec_id, converted_path))
+                else:
+                    new_wavscp.append((rec_id, audio_path))
+            corpus["wavscp"] = new_wavscp
+
+            if args.split_audio:
+                # Split audio files to individual segments
+                # wavscp data must be changed from 'rec_id' -> 'audio_path'
+                # to 'utt_id' -> 'audio-path'
+                print("Splitting audio files...")
+                new_wavscp = []
+                for rec_id, audio_path in corpus["wavscp"]:
+                    print(" *", audio_path, flush=True)
+                    for utt_id, seg_rec_id, start, end in corpus["segments"]:
+                        # Find all segments corresponding to this rec_id
+                        if seg_rec_id == rec_id:
+                            output_file = f"{rec_id}_{floor(start*100):0>7}-{ceil(end*100):0>7}.wav"
+                            output_file = os.path.join(audio_dir, output_file)
+                            if not os.path.exists(output_file):
+                                export_segment(audio_path, start, end, output_file)
+                            new_wavscp.append((utt_id, output_file))
+                    # Remove original audio file if it was already in audio dir
+                    if os.path.split(audio_path)[0] == audio_dir:
+                        os.remove(converted_path)
+                corpus["wavscp"] = new_wavscp
 
             # Build 'text' file
             fname = os.path.join(save_dir, 'text')
-            print(f"building file \'{fname}\'")
+            print(f"Building file \'{fname}\'")
             with open(fname, 'w') as f:
-                for utt_id, sentence in corpora[corpus_name]["text"]:
+                for utt_id, sentence in corpus["text"]:
                     f.write(f"{utt_id}\t{sentence}\n")
             
-            # Build 'segments' file
+            # Build 'segments' file (optional)
+            # Optional
+            # start and end are measured in seconds
             if not args.split_audio:
                 fname = os.path.join(save_dir, 'segments')
-                print(f"building file \'{fname}\'")
+                print(f"Building file \'{fname}\'")
                 with open(fname, 'w') as f:
-                    f.writelines(corpora[corpus_name]["segments"])
+                    for utt_id, rec_id, start, end in corpus["segments"]:
+                        f.write(f"{utt_id}\t{rec_id}\t{start}\t{end}\n")
             
             # Build 'utt2spk'
             fname = os.path.join(save_dir, 'utt2spk')
-            print(f"building file \'{fname}\'")
+            print(f"Building file \'{fname}\'")
             with open(fname, 'w') as f:
-                f.writelines(sorted(corpora[corpus_name]["utt2spk"]))
+                for utt_id, speaker_id in sorted(corpus["utt2spk"]):
+                    f.write(f"{utt_id}\t{speaker_id}\n")
             
             # Build 'spk2gender'
             fname = os.path.join(save_dir, 'spk2gender')
-            print(f"building file \'{fname}\'")
+            print(f"Building file \'{fname}\'")
             with open(fname, 'w') as f:
-                for speaker in sorted(corpora[corpus_name]["speakers"]):
+                for speaker in sorted(corpus["speakers"]):
                     if speaker not in speakers_gender: continue
                     f.write(f"{speaker}\t{speakers_gender[speaker]}\n")
             
             # Build 'wav.scp'
             fname = os.path.join(save_dir, 'wav.scp')
-            print(f"building file \'{fname}\'")
+            print(f"Building file \'{fname}\'")
             with open(fname, 'w') as f:
-                for rec_id, wav_filename in sorted(corpora[corpus_name]["wavscp"].items()):
-                    f.write(f"{rec_id}\t{wav_filename}\n")
+                for rec_id, audio_path in sorted(corpus["wavscp"]):
+                    f.write(f"{rec_id}\t{audio_path}\n")
         
     
     print("\n==== STATS ====")
 
-    for corpus in corpora:
-        print(f"== {corpus.capitalize()} ==")
-        audio_length_m = corpora[corpus]["audio_length"]['m']
-        audio_length_f = corpora[corpus]["audio_length"]['f']
-        audio_length_u = corpora[corpus]["audio_length"]['u']
+    for corpus_name in corpora:
+        print(f"== {corpus_name.capitalize()} ==")
+        audio_length_m = corpora[corpus_name]["audio_length"]['m']
+        audio_length_f = corpora[corpus_name]["audio_length"]['f']
+        audio_length_u = corpora[corpus_name]["audio_length"]['u']
         total_audio_length = audio_length_f + audio_length_m + audio_length_u
         print(f"- Total audio length:\t{sec2hms(total_audio_length)}")
         print(f"- Male speakers:\t{sec2hms(audio_length_m)}\t{audio_length_m/total_audio_length:.1%}")

@@ -225,10 +225,10 @@ def parse_dataset(file_or_dir, args):
     elif os.path.isdir(file_or_dir):
         data = {
             "path": file_or_dir,
-            "wavscp": dict(),   # Recording id to wave filenames
+            "wavscp": [],   # Recording id to wave filenames
             "utt2spk": [],      # Utterance id to speakers id
             "segments": [],     # Time segments
-            "text": [],         # Utterances text
+            "text": [],         # Utterances it to text
             "speakers": set(),  # Speakers names
             "lexicon": set(),   # Word dictionary
             "corpus": set(),    # Sentences for LM corpus
@@ -246,7 +246,7 @@ def parse_dataset(file_or_dir, args):
                 or filename.lower().endswith(".ali")
             ):
                 item_data = parse_dataset(os.path.join(file_or_dir, filename), args)
-                data["wavscp"].update(item_data["wavscp"])
+                data["wavscp"].extend(item_data["wavscp"])
                 data["utt2spk"].extend(item_data["utt2spk"])
                 data["segments"].extend(item_data["segments"])
                 data["text"].extend(item_data["text"])
@@ -275,13 +275,7 @@ speakers_gender = {"unknown": 'u'}
 
 def parse_data_file(filepath, args):
     print(Fore.GREEN + f" * {filepath}" + Fore.RESET, end=' ', flush=True)
-
-    # Kaldi doesn't like whitespaces in file path
-    # if ' ' in filepath:
-    #     raise "ERROR: whitespaces in path " + filepath
     
-    # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
-
     seg_ext = os.path.splitext(filepath)[1] # Could be '.split' or '.seg'
     audio_path = ""
 
@@ -307,15 +301,18 @@ def parse_data_file(filepath, args):
     assert os.path.exists(audio_path), f"ERROR: no audio file found for {filepath}"
     
     recording_id = md5(audio_path.encode("utf8")).hexdigest()
+
+    # Use a single random speaker id per file for unknown speakers
+    unk_speaker_id = str(uuid4()).replace('-', '')
     
     substitute_corpus_filename = filepath.replace(seg_ext, '.cor')
     replace_corpus = os.path.exists(substitute_corpus_filename)
     
     data = {
-        "wavscp": {},   # Recording id to wave filenames
+        "wavscp": [],       # Recording id to wave filenames
         "utt2spk": [],      # Utterance id to speakers id
         "segments": [],     # Time segments
-        "text": [],         # Utterances text
+        "text": [],         # Utterances id to text
         "speakers": set(),  # Speakers names
         "lexicon": set(),   # Word dictionary
         "corpus": set(),    # Sentences for LM corpus
@@ -323,8 +320,8 @@ def parse_data_file(filepath, args):
         }
     
 
-    if not args.split_audio:
-        data["wavscp"][recording_id] = audio_path
+    # if not args.split_audio:
+    data["wavscp"].append((recording_id, audio_path))
 
     for (sentence, metadata), (start, end) in zip(sentences_and_metadata, segments):
         if end - start < args.utt_min_len:
@@ -332,18 +329,15 @@ def parse_data_file(filepath, args):
             continue
             
         speaker_id = metadata["speaker"]
-        utterance_id = f"{speaker_id}-{recording_id}-{floor(100*start):0>7}_{ceil(100*end):0>7}"
 
         if speaker_id == "unknown":
-            # Use a single random speaker id per file for unknown speakers
-            if args.hash_id:
-                speaker_id = str(uuid4()).replace('-', '')
-            else:
-                speaker_id = "unknown" + md5(speaker_id.encode('utf-8')).hexdigest()[:16]
+            speaker_id = unk_speaker_id
         else:
             if args.hash_id:
                 speaker_id = md5(speaker_id.encode('utf-8')).hexdigest()
             data["speakers"].add(speaker_id)
+        
+        utterance_id = f"{speaker_id}-{recording_id}-{floor(100*start):0>7}_{ceil(100*end):0>7}"
         
         if speaker_id not in speakers_gender:
             # speakers_gender is a global variable
@@ -375,10 +369,10 @@ def parse_data_file(filepath, args):
                 + Fore.RESET + sentence, end='', file=sys.stderr)
             continue
         
-
         data["text"].append((utterance_id, sent))
         data["utt2spk"].append((utterance_id, speaker_id))
         data["segments"].append((utterance_id, recording_id, start, end))
+
 
         # Keeping track of gender representation
         if metadata["gender"] == 'm':

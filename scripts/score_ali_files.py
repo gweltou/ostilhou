@@ -22,7 +22,7 @@ from ostilhou.asr.dataset import format_timecode
 from ostilhou.audio import (
     AUDIO_FORMATS,
     find_associated_audiofile,
-    load_audiofile, get_audio_segment, prepare_segment_for_decoding
+    load_audiofile, get_audio_segment
 )
 
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
             sentence = normalize_sentence(sentence, autocorrect=True)
             sentence = pre_process(sentence).replace('-', ' ').lower()
             audio_segment = get_audio_segment(i, audio, segments)
-            transcription = transcribe_segment(prepare_segment_for_decoding(audio_segment))
+            transcription = transcribe_segment(audio_segment)
             transcription = ' '.join(transcription)
             transcription = transcription.replace('-', ' ').lower()
             score_wer = round(wer(sentence, transcription), 2)

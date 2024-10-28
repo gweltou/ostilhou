@@ -25,8 +25,19 @@ def filter_out_chars(text: str, chars: str) -> str:
 
 
 
+def filter_in_chars(text: str, allowed_chars: str) -> str:
+    """ Remove all characters that are not in allowed list """
+
+    filtered_text = []
+    for c in text:
+        if c in allowed_chars: filtered_text.append(c)
+    return ''.join(filtered_text)
+
+
+
 def is_capitalized(word: str) -> bool:
     return word.istitle()
+
 
 
 def capitalize(word: str) -> str:
