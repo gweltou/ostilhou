@@ -62,7 +62,6 @@ def srt2ali(*filenames):
     for filename in filenames:
         basename, ext = os.path.splitext(filename)
         if ext.lower() in (".srt", ".vtt"):
-            print(filename)
             with open(filename, 'r') as fin:
                 # Segments is in milliseconds
                 segments, text = parse_lines(fin.readlines())

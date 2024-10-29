@@ -28,6 +28,7 @@ def get_hunspell_dict():
         with open(HS_ADD_PATH, 'r') as f:
             for w in f.readlines():
                 if not w.startswith('#'):
+                    w = w.split()[0]
                     hs.add(w.strip())
     for w in interjections:
         hs.add(w)

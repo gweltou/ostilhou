@@ -66,6 +66,7 @@ bout
 breniñ
 brezhonegerion
 bromañ
+chañch
 c'hellahe
 c'hellefe
 c'hellehe
@@ -78,7 +79,9 @@ chomel
 c'houiet
 c'hoûl
 c'hoûla
+c'hoûlan
 c'hoûle
+c'hoûlet
 c'hrouedur
 c'hwezhiñ
 dac'h
@@ -103,6 +106,7 @@ diferañs
 digete
 dihunamb
 diontañ
+dioñtañ
 dionte
 dioñte
 dioñti
@@ -179,6 +183,7 @@ goûl
 goûlet
 goûlit
 gouniet
+goût
 goutell
 gouvezet
 grait
@@ -186,6 +191,7 @@ groga
 gwaskerion
 gwaskiñ
 Gwengoloñ
+gwerzhourion
 hani
 hanomp
 hanon
@@ -205,9 +211,11 @@ istoer
 istoerel
 istoerioù
 istoerour
+izhpenn
 kailhoc'h
 kaniñ
 kanniget
+kannigiñ
 kanour
 kanourez
 kasiñ

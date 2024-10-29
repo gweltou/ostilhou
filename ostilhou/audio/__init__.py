@@ -141,12 +141,12 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
         basename, ext = os.path.splitext(filename)
         new_name = basename + "_orig" + ext
         new_src = os.path.join(rep, new_name)
-        if verbose: print(f"AUDIO_CONV: renaming {filename} to {new_name}")
+        if verbose: print(Fore.YELLOW + f"AUDIO_CONV: renaming {filename} to {new_name}" + Fore.RESET)
         os.rename(src, new_src)
         src = new_src
 
     if verbose:
-        print(f"AUDIO_CONV: converting '{src}' to '{dst}'...")
+        print(Fore.YELLOW + f"AUDIO_CONV: converting '{src}' to '{dst}'..." + Fore.RESET)
     rep, filename = os.path.split(dst)
     dst = os.path.join(rep, filename)
     subprocess.call([
@@ -161,7 +161,7 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
 
     if not keep_orig:
         if verbose:
-            print(f"AUDIO_CONV: Removing {src}")
+            print(Fore.YELLOW + f"AUDIO_CONV: Removing {src}" + Fore.RESET)
         os.remove(src)
 
 
@@ -169,10 +169,10 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
 def convert_to_mp3(src, dst, verbose=True, keep_orig=True):
     """ Convert to MP3 """
     if verbose:
-        print(f"AUDIO_CONV: converting '{src}' to '{dst}'...")
+        print(Fore.YELLOW + f"AUDIO_CONV: converting '{src}' to '{dst}'..." + Fore.RESET)
         
     if os.path.abspath(src) == os.path.abspath(dst):
-        print("ERROR: source and destination are the same, skipping")
+        print(Fore.RED + "ERROR: source and destination are the same, skipping" + Fore.RESET)
         return -1
     rep, filename = os.path.split(dst)
     dst = os.path.join(rep, filename)
@@ -182,7 +182,7 @@ def convert_to_mp3(src, dst, verbose=True, keep_orig=True):
     
     if not keep_orig:
         if verbose:
-            print(f"AUDIO_CONV: Removing {src}")
+            print(Fore.YELLOW + f"AUDIO_CONV: Removing {src}")
         os.remove(src)
 
 

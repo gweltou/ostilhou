@@ -19,6 +19,7 @@ import glob
 from shutil import copyfile
 
 import argparse
+from colorama import Fore
 
 from ostilhou.audio import convert_to_wav, convert_to_mp3
 from ostilhou.asr import load_ali_file
@@ -38,7 +39,7 @@ skipfile_path = "/home/gweltaz/STT/corpora/brezhoweb/skip.tsv"
 
 
 def stage0():
-	print("Stage 0 : file conversion")
+	print(Fore.GREEN + "Stage 0 : file conversion" + Fore.RESET)
 	
 	if args.output:
 		if not os.path.exists(args.output):
@@ -57,7 +58,7 @@ def stage0():
 		new_filename = file.replace(".br.vtt", ".vtt")
 		basename = os.path.split(os.path.splitext(new_filename)[0])[1]
 		if basename in skipfiles:
-			print("**** skipping ****")
+			print(Fore.RED + "**** skipping ****" + Fore.RESET)
 			continue
 
 		# Renaming files
@@ -71,18 +72,21 @@ def stage0():
 		new_filename = new_filename.replace(")", '')
 		new_filename = new_filename.replace(",", '')
 
+		root, basename = os.path.split(new_filename)
+		basename = basename.lstrip('-')
+
 		if args.output:
-			new_filename = os.path.join(args.output, os.path.split(new_filename)[1])
+			root = args.output
+		new_filename = os.path.join(root, basename)
+
 		copyfile(file, new_filename)
 		
 		if not os.path.exists(source_audio_file):
-			print("Couldn't find", source_audio_file)
+			print(Fore.RED + f"Couldn't find {source_audio_file}" + Fore.RESET)
 			continue
 		
 		# Audio conversion
 		audio_file = new_filename.replace(".vtt", audio_ext)
-		if args.output:
-			audio_file = os.path.join(args.output, os.path.split(audio_file)[1])
 		if not os.path.exists(audio_file):
 			if args.audio_format == 'mp3':
 				if source_audio_file.lower().endswith('.mp3'):
@@ -105,7 +109,7 @@ def stage0():
 def stage1():
 	"""Convert text to lowercase for baseline model"""
 
-	print("Stage 1: lowercase")
+	print(Fore.GREEN + "Stage 1: lowercase" + Fore.RESET)
 
 	file_list = glob.glob(args.folder + "/*.ali")
 
@@ -126,7 +130,7 @@ def stage1():
 def stage2():
 	"""Normalize text segments"""
 	
-	print("Stage 2 : normalization and cherry-picked correction")
+	print(Fore.GREEN + "Stage 2 : normalization and cherry-picked correction" + Fore.RESET)
 	
 	# Use a specific word substitution file
 	sub_file = "/home/gweltaz/STT/corpora/brezhoweb/substitution.tsv"
@@ -181,7 +185,7 @@ def stage2():
 def stage3():
 	"""Joining segments from the same sentence (when possible)"""
 	
-	print("Stage 3 : joining segments")
+	print(Fore.GREEN + "Stage 3 : joining segments" + Fore.RESET)
 
 	file_list = glob.glob(args.folder + "/*.ali")
 	total_segments_before = 0
@@ -263,7 +267,8 @@ if __name__ == "__main__":
 
 	if args.stage >= 1:
 		# Prepare data for baseline model
-		stage1()
+		# stage1()
+		pass
 	if args.stage >= 2:
 		# Normalization
 		stage2()

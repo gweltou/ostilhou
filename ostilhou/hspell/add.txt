@@ -52,6 +52,8 @@ boulgour
 bourrapl
 boutik
 bratikourez
+brepariñ	# prepariñ
+brezeliañ
 brikolaj
 bruzuniñ
 bugoù
@@ -91,6 +93,7 @@ diñsad
 diplomatel
 diskiblez
 diskuilhañ
+diskwel
 disleksek
 disleksiezh
 dismantrus
@@ -101,6 +104,7 @@ dizainer
 dojo
 doktorez
 doneier
+drouizez
 duplex
 egorlestr
 eilveidi
@@ -125,6 +129,7 @@ fablab
 falc'hañ
 fartienn
 feneant
+fenomen
 fenotip
 feulsterioù
 figez
@@ -152,8 +157,10 @@ gopradez
 gornôgel
 goronavirus
 gourskrid
+graferezh
 grafik
 guzulikerien
+gwadigennoù
 gwallvrudus
 gwel'
 haïku
@@ -218,7 +225,9 @@ kultivañ
 kurry
 labo
 lagout
+langour	# =paresseux
 lâr'
+laskar
 lazagn
 lesbian
 liberet
@@ -239,6 +248,7 @@ milourel
 milvrudet
 mini
 mojennerezh
+moral
 nac'helour
 naouek
 naoutur
@@ -305,6 +315,7 @@ rondigennoù
 rubrikenn
 ruilhañ
 rummataet
+sambles	# Asambles
 sañskriteg
 santilitr
 santilitrad
@@ -347,6 +358,7 @@ teuzar
 tierigoù
 tipioù
 tofou
+tradi
 trakteur
 trañkil
 trañkiloc'h
@@ -375,6 +387,7 @@ vitaminoù
 volkanek
 voudisted
 vousfentiñ
+vrezeliañ	# Brezeliañ
 vuhezour
 vuhezourez
 vuhezourien
@@ -387,4 +400,5 @@ zenien
 ziganit
 zigentañ
 ziskrogañ
+ziskwel	# diskwel
 ziwar
