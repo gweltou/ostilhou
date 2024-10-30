@@ -195,6 +195,9 @@ if __name__ == "__main__":
         lexicon_path = os.path.join(dir_dict_nosp, 'lexicon.txt')
         print(f"building file \'{lexicon_path}\'")
 
+        if "test" in corpora:
+            corpora["train"]["lexicon"].update(corpora["test"]["lexicon"])
+
         with open(lexicon_path, 'w') as f_out:
             f_out.write("!SIL SIL\n"
                         "<SPOKEN_NOISE> SPN\n"
@@ -317,10 +320,12 @@ if __name__ == "__main__":
     print("\n==== STATS ====")
 
     for corpus_name in corpora:
+        corpus = corpora[corpus_name]
         print(f"== {corpus_name.capitalize()} ==")
-        audio_length_m = corpora[corpus_name]["audio_length"]['m']
-        audio_length_f = corpora[corpus_name]["audio_length"]['f']
-        audio_length_u = corpora[corpus_name]["audio_length"]['u']
+        print(f"- {len(corpus['text'])} utterances")
+        audio_length_m = corpus["audio_length"]['m']
+        audio_length_f = corpus["audio_length"]['f']
+        audio_length_u = corpus["audio_length"]['u']
         total_audio_length = audio_length_f + audio_length_m + audio_length_u
         print(f"- Total audio length:\t{sec2hms(total_audio_length)}")
         print(f"- Male speakers:\t{sec2hms(audio_length_m)}\t{audio_length_m/total_audio_length:.1%}")
@@ -328,6 +333,7 @@ if __name__ == "__main__":
         if audio_length_u > 0:
             print(f"- Unknown speakers:\t{sec2hms(audio_length_u)}\t{audio_length_u/total_audio_length:.1%}")
 
+    print(f"\nLexicon: {len(corpora['train']['lexicon'])} words")
 
 
     # print()
@@ -359,6 +365,6 @@ if __name__ == "__main__":
                 return f"{sec2hms(total_audio_length*pct/100)}"
         plt.pie(val, labels=keys, normalize=True, autopct=labelfn)
         plt.title(f"Dasparzh ar roadennoù, {sec2hms(total_audio_length)} en holl")
-        plt.savefig(os.path.join(corpora["train"]["path"], f"subset_division_{datetime.datetime.now().strftime('%Y-%m-%d')}.png"))
-        print(f"\nFigure saved to \'{corpora['train']['path']}\'")
+        plt.savefig(os.path.join(args.output, f"subset_division_{datetime.datetime.now().strftime('%Y-%m-%d')}.png"))
+        print(f"\nFigure saved to \'{args.output}\'")
         # plt.show()

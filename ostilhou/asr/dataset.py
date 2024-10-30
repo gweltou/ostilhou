@@ -125,20 +125,27 @@ def format_timecode(timecode):
 
 
 
-def create_ali_file(audiofile, sentences, segments, output,
-                    source="", audio_source="",
-                    author="", licence="",
-                    transcription="",
-                    tags=""):
+def create_ali_file(sentences, segments, output, **kwargs):
+    """
+        Common header metadata:
+            audio-path
+            source
+            audio-source
+            author
+            transcription: name of transcribers
+            licence
+            tags: list of tags separated by commas
+    """
     with open(output, 'w') as fout:
-        fout.write(f"{{audio-path: {audiofile}}}\n")
-        fout.write(f"{{source: {source}}}\n")
-        fout.write(f"{{audio-source: {audio_source}}}\n")
-        fout.write(f"{{author: {author}}}\n")
-        fout.write(f"{{transcription: {transcription}}}\n")
-        fout.write(f"{{licence: {license}}}\n")
-        fout.write(f"{{tags: {tags}}}\n")
+        if value := kwargs.pop("audio-path", None):
+            fout.write(f"{{audio-path: {value}}}\n")
+        if value := kwargs.pop("audio_path", None):
+            fout.write(f"{{audio-path: {value}}}\n")
+        for key, value in sorted(kwargs.items()):
+            key = key.replace('_', '-')
+            fout.write(f"{{{key}: {value}}}\n")
         fout.write("\n\n")
+
         for sentence, segment in zip(sentences, segments):
             start = format_timecode(segment[0])
             end = format_timecode(segment[1])

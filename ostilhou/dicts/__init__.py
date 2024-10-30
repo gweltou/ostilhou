@@ -56,7 +56,8 @@ def load_proper_nouns():
                 pron = pron or []
                 
                 if w in proper_nouns and pron:
-                    proper_nouns[w].append(pron[0])
+                    if pron[0] not in proper_nouns[w]: # Avoid duplicate entries, which Kaldi hates
+                        proper_nouns[w].append(pron[0])
                 else:
                     proper_nouns[w] = pron
     
