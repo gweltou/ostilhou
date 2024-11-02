@@ -21,3 +21,4 @@ def test_phonetize():
 
     # Single letters spelled out
     assert phonetize_word("B") == ['B E']
+    assert phonetize_word("Ñ") == ['EH N T I L D E']

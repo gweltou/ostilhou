@@ -312,9 +312,7 @@ def parse_data_file(filepath, args):
     # Use a single random speaker id per file for unknown speakers
     unk_speaker_id = str(uuid4()).replace('-', '')
     
-    substitute_corpus_filename = filepath.replace(seg_ext, '.cor')
-    replace_corpus = os.path.exists(substitute_corpus_filename)
-    
+
     data = {
         "wavscp": [],       # Recording id to wave filenames
         "utt2spk": [],      # Utterance id to speakers id
@@ -360,7 +358,7 @@ def parse_data_file(filepath, args):
         if not sent:
             continue
         sent = ' '.join(sent.split())
-
+        
         # Filter out utterances with numbers or foreign chars (not counting acronyms)
         sent_no_acronyms = detokenize(
             normalize(
@@ -400,7 +398,7 @@ def parse_data_file(filepath, args):
             elif word == "'":
                 pass
             else: data["lexicon"].add(word)
-        
+
 
         # Add sentence to language model corpus
         add_to_text_corpus = True
@@ -410,7 +408,7 @@ def parse_data_file(filepath, args):
             elif "add-lm" in metadata["parser"]:
                 add_to_text_corpus = True
         
-        if add_to_text_corpus and not replace_corpus and not args.no_lm:
+        if add_to_text_corpus and not args.no_lm:
             for sub in split_sentences(cleaned_sentence):
                 sent = normalize_sentence(sub, autocorrect=True, norm_case=True)
                 sent = sent.replace('-', ' ').replace('/', ' ')
@@ -435,18 +433,6 @@ def parse_data_file(filepath, args):
                     continue
                 data["corpus"].add(' '.join(tokens))
      
-
-    if replace_corpus and not args.no_lm:
-        for sentence, _ in load_text_data(substitute_corpus_filename):
-            for sub in split_sentences(sentence):
-                sub = pre_process(sub)
-                sub = normalize_sentence(sub, autocorrect=True, norm_case=True)
-                sub = sub.replace('-', ' ').replace('/', ' ')
-                sub = sub.replace('\xa0', ' ')
-                sub = filter_out_chars(sub, PUNCTUATION)
-                data["corpus"].add(' '.join(sub.split()))
-    
-
     # status = Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
         print(' ' + Fore.RED + "unknown speaker(s)" + Fore.RESET, end='')

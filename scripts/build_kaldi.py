@@ -35,8 +35,8 @@ from ostilhou.asr import (
     phonetize_word,
     parse_dataset,
 )
-from ostilhou.utils import sec2hms
-from ostilhou.audio import export_segment, convert_to_wav, get_audiofile_info, is_audiofile_valid_format
+from ostilhou.utils import sec2hms, list_files_with_extension, read_file_drop_comments
+from ostilhou.audio import export_segment, convert_to_wav, is_audiofile_valid_format
 
 
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("--train", help="train dataset directory", required=True)
     parser.add_argument("--test", help="train dataset directory")
-    parser.add_argument("--lm-corpus", nargs='+', help="path to a text file to build the language model")
+    parser.add_argument("--lm-corpus", nargs='+', help="path to one or more text files to build the language model")
     parser.add_argument("-n", "--no-lm", help="do not copy utterances to language model", action="store_true")
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
     parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
@@ -160,29 +160,37 @@ if __name__ == "__main__":
         # External text corpora will be added now
         if args.lm_corpus:
             print("parsing and embedding external corpora :")
+            corpus_files = []
+            for file in args.lm_corpus:
+                if os.path.isdir(file):
+                    # Expand directory
+                    corpus_files.extend(list_files_with_extension(['.txt', '.cor'], file))
+                else:
+                    corpus_files.append(file)
+                        
             with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a') as fout:
                 # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
-                for lm_corpus_file in args.lm_corpus:
-                    print(Fore.GREEN + f" * {lm_corpus_file}" + Fore.RESET)
+                for file in corpus_files:
+                    print(Fore.GREEN + f" * {file}" + Fore.RESET)
                     n = 0
-                    with open(lm_corpus_file, 'r') as fr:
-                        for sentence in fr.readlines():
-                            cleaned = pre_process(sentence)
-                            cleaned = normalize_sentence(cleaned.strip(), autocorrect=True, norm_case=True)
-                            cleaned = cleaned.replace('-', ' ').replace('/', ' ')
-                            cleaned = cleaned.replace('\xa0', ' ')
-                            cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}')
-                            for word in cleaned.split():
-                                if word in corpora["train"]["lexicon"]:
-                                    pass
-                                elif word == "'":
-                                    pass
-                                elif '·' in word: # Don't add inclusive words for now
-                                    pass
-                                else:
-                                    corpora["train"]["lexicon"].add(word)
-                            fout.write(cleaned + '\n')
-                            n += 1
+                    for line in read_file_drop_comments(file):
+                        sentence = line
+                        cleaned = pre_process(sentence)
+                        cleaned = normalize_sentence(cleaned.strip(), autocorrect=True, norm_case=True)
+                        cleaned = cleaned.replace('-', ' ').replace('/', ' ')
+                        cleaned = cleaned.replace('\xa0', ' ')
+                        cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}')
+                        for word in cleaned.split():
+                            if word in corpora["train"]["lexicon"]:
+                                pass
+                            elif word == "'":
+                                pass
+                            elif '·' in word: # Don't add inclusive words for now
+                                pass
+                            else:
+                                corpora["train"]["lexicon"].add(word)
+                        fout.write(cleaned + '\n')
+                        n += 1
                     print(f" {n} sentences added")
         
     
@@ -366,5 +374,5 @@ if __name__ == "__main__":
         plt.pie(val, labels=keys, normalize=True, autopct=labelfn)
         plt.title(f"Dasparzh ar roadennoù, {sec2hms(total_audio_length)} en holl")
         plt.savefig(os.path.join(args.output, f"subset_division_{datetime.datetime.now().strftime('%Y-%m-%d')}.png"))
-        print(f"\nFigure saved to \'{args.output}\'")
+        print(f"\nFigure saved to \'{os.path.abspath(args.output)}\'")
         # plt.show()

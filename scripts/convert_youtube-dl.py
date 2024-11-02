@@ -214,7 +214,7 @@ def stage3():
 				sil = segments[i][0] - joined_segs[-1][1]
 				# Expected length after joining the two segments together
 				joined_len = segments[i][1] - joined_segs[-1][0]
-				if sil < 1500 and joined_len < 9000:
+				if sil < 1.5 and joined_len < 15:
 					# Join this segment with previous one
 					joined_text[-1] += ' ' + t
 					joined_segs[-1] = (joined_segs[-1][0], segments[i][1])
@@ -225,7 +225,7 @@ def stage3():
 				sil = segments[i][0] - joined_segs[-1][1]
 				# Expected length after joining the two segments together
 				joined_len = segments[i][1] - joined_segs[-1][0]
-				if sil < 2000 and joined_len < 6000:
+				if sil < 2 and joined_len < 6:
 					# Join this segment with previous one
 					joined_text[-1] += ' ' + t
 					joined_segs[-1] = (joined_segs[-1][0], segments[i][1])
