@@ -183,7 +183,7 @@ def load_lexicon_add():
     lexicon_add: Dict[str, List[str]] = dict()
     _lexicon_add_path = os.path.join(lexicon_root, "lexicon_add.tsv")
 
-    with open(_lexicon_add_path, 'r') as f:
+    with open(_lexicon_add_path, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             w, phon = l.strip().split(maxsplit=1)
             if w in lexicon_add:
@@ -212,7 +212,7 @@ def load_lexicon_sub():
     lexicon_sub: Dict[str, List[str]] = dict()
     _lexicon_sub_path = os.path.join(lexicon_root, "lexicon_sub.tsv")
     
-    with open(_lexicon_sub_path, 'r') as f:
+    with open(_lexicon_sub_path, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             w, phon = l.strip().split(maxsplit=1)
             if w in lexicon_sub:

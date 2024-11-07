@@ -31,7 +31,7 @@ if __name__ == "__main__":
     sentences = []
     hypothesis = []
 
-    with open(args.filename, 'r') as fin:
+    with open(args.filename, 'r', encoding='utf-8') as fin:
         for line in fin.readlines():
             path, sentence = line.strip().split('\t')
             audio_files.append(path)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     if args.output and os.path.exists(args.output):
         # Remove already seen files from list
         # ali_files = set(ali_files)
-        with open(args.output, 'r') as fin:
+        with open(args.output, 'r', encoding='utf-8') as fin:
             for datapoint in fin.readlines():
                 path = datapoint.split('\t')[0]
                 seen_files.add(path)
@@ -74,7 +74,7 @@ if __name__ == "__main__":
             print('\t'.join(datapoint))
         else:
             print('.', end='', flush=True)
-            with open(args.output, 'a') as fout:
+            with open(args.output, 'a', encoding='utf-8') as fout:
                 fout.write('\t'.join(datapoint) + '\n')
 
     print()

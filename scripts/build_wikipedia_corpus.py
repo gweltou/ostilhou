@@ -64,7 +64,7 @@ if __name__ == "__main__":
     
     articles = []
     for filename in filenames:
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             articles.extend(f.read().split('\n\n'))
     
     keepers = []
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     kept = 0
     
-    with open(os.path.join(OUTPUT_DIR, "wikipedia_keepers.txt"), 'w') as f:
+    with open(os.path.join(OUTPUT_DIR, "wikipedia_keepers.txt"), 'w', encoding='utf-8') as f:
         #for sentence in sorted(keepers):
         for sentence in keepers:
             words = sentence.split()
@@ -162,6 +162,6 @@ if __name__ == "__main__":
     if not os.path.exists(OUTPUT_DIR):
         os.mkdir(OUTPUT_DIR)
     
-    with open(os.path.join(OUTPUT_DIR, "vocab.txt"), 'w') as f:
+    with open(os.path.join(OUTPUT_DIR, "vocab.txt"), 'w', encoding='utf-8') as f:
         for w, n in sorted(vocabulary.items(), key=lambda x: x[1], reverse=True):
             f.write(f"{w}\t{n}\n")

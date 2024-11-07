@@ -47,7 +47,7 @@ if __name__ == "__main__":
         # Remove already seen files from list
         ali_files = set(ali_files)
         seen_files = set()
-        with open(args.output, 'r') as fin:
+        with open(args.output, 'r', encoding='utf-8') as fin:
             for datapoint in fin.readlines():
                 path = datapoint.split('\t')[0]
                 seen_files.add(path)
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         
         if args.output:
             print()
-            with open(args.output, 'a') as fout:
+            with open(args.output, 'a', encoding='utf-8') as fout:
                 for row in rows:
                     fout.write(row + '\n')
 

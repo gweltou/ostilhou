@@ -25,7 +25,7 @@ def get_hunspell_dict():
     #hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
     for path in additional_words:
         HS_ADD_PATH= os.path.join(hspell_root, path)
-        with open(HS_ADD_PATH, 'r') as f:
+        with open(HS_ADD_PATH, 'r', encoding='utf-8') as f:
             for w in f.readlines():
                 if not w.startswith('#'):
                     w = w.split()[0]

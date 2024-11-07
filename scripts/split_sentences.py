@@ -7,7 +7,7 @@ from ostilhou.text import split_sentences
 
 if __name__ == "__main__":
 
-    with open(sys.argv[1], 'r') as f_in:
+    with open(sys.argv[1], 'r', encoding='utf-8') as f_in:
         data = ''.join(f_in.readlines())
     
     parts = data.split('\n\n')

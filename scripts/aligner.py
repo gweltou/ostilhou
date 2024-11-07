@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     if args.reformat:
         # Use punctuation to reformat text to one sentence per line
-        with open(args.text_file, 'r') as fin:
+        with open(args.text_file, 'r', encoding='utf-8') as fin:
             data = ''.join(fin.readlines())
         parts = data.split('\n\n')
         lines = []
@@ -232,7 +232,7 @@ if __name__ == "__main__":
         args.type = "srt"
     
 
-    fout = open(args.output, 'w') if args.output else sys.stdout
+    fout = open(args.output, 'w', encoding='utf-8') if args.output else sys.stdout
 
     if args.type == "srt":
         subs = []

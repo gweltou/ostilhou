@@ -150,7 +150,7 @@ if __name__ == "__main__":
         print("\n==== BUILDING KALDI FILES ====")
         # Copy text from train utterances to language model corpus
         print(f"building file \'{os.path.join(dir_kaldi_local, 'corpus.txt')}\'")
-        with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'w') as fout:
+        with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'w', encoding='utf-8') as fout:
             n = 0
             for l in corpora["train"]["corpus"]:
                 fout.write(f"{l}\n")
@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 else:
                     corpus_files.append(file)
                         
-            with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a') as fout:
+            with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a', encoding='utf-8') as fout:
                 # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
                 for file in corpus_files:
                     print(Fore.GREEN + f" * {file}" + Fore.RESET)
@@ -206,7 +206,7 @@ if __name__ == "__main__":
         if "test" in corpora:
             corpora["train"]["lexicon"].update(corpora["test"]["lexicon"])
 
-        with open(lexicon_path, 'w') as f_out:
+        with open(lexicon_path, 'w', encoding='utf-8') as f_out:
             f_out.write("!SIL SIL\n"
                         "<SPOKEN_NOISE> SPN\n"
                         "<UNK> SPN\n"
@@ -214,6 +214,7 @@ if __name__ == "__main__":
                         "<NTT> SPN\n"
                         "<HUM> SPN\n"
                         "<PASAAT> SPN\n"
+                        "<FRONAL> SPN\n"
                         "<SONEREZH> NSN\n")
             for word in sorted(corpora["train"]["lexicon"]):
                 for pron in phonetize_word(word):
@@ -225,20 +226,20 @@ if __name__ == "__main__":
         # silence_phones.txt
         silence_phones_path  = os.path.join(dir_dict_nosp, "silence_phones.txt")
         print(f"building file \'{silence_phones_path}\'")
-        with open(silence_phones_path, 'w') as f:
+        with open(silence_phones_path, 'w', encoding='utf-8') as f:
             f.write(f'SIL\noov\nSPN\nLAU\nNSN\n')
         
         # nonsilence_phones.txt
         nonsilence_phones_path = os.path.join(dir_dict_nosp, "nonsilence_phones.txt")
         print(f"building file \'{nonsilence_phones_path}\'")
-        with open(nonsilence_phones_path, 'w') as f:
+        with open(nonsilence_phones_path, 'w', encoding='utf-8') as f:
             for p in sorted(phonemes):
                 f.write(f'{p}\n')
         
         # optional_silence.txt
         optional_silence_path  = os.path.join(dir_dict_nosp, "optional_silence.txt")
         print(f"building file \'{optional_silence_path}\'")
-        with open(optional_silence_path, 'w') as f:
+        with open(optional_silence_path, 'w', encoding='utf-8') as f:
             f.write('SIL\n')
 
 
@@ -288,7 +289,7 @@ if __name__ == "__main__":
             # Build 'text' file
             fname = os.path.join(save_dir, 'text')
             print(f"Building file \'{fname}\'")
-            with open(fname, 'w') as f:
+            with open(fname, 'w', encoding='utf-8') as f:
                 for utt_id, sentence in corpus["text"]:
                     f.write(f"{utt_id}\t{sentence}\n")
             
@@ -320,7 +321,7 @@ if __name__ == "__main__":
             # Build 'wav.scp'
             fname = os.path.join(save_dir, 'wav.scp')
             print(f"Building file \'{fname}\'")
-            with open(fname, 'w') as f:
+            with open(fname, 'w', encoding='utf-8') as f:
                 for rec_id, audio_path in sorted(corpus["wavscp"]):
                     f.write(f"{rec_id}\t{audio_path}\n")
         

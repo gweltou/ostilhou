@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     assert os.path.exists(args.filelist)
 
-    with open(args.filelist, 'r') as f:
+    with open(args.filelist, 'r', encoding='utf-8') as f:
         seg_files = [ filename.strip() for filename in f if filename.strip() ]
 
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             txt_file = file.replace(seg_ext, ".txt")
             if EXCLUDE_FROM_LM:
                 data = load_text_data(txt_file)
-                with open(dest.replace(seg_ext, ".txt"), 'w') as fout:
+                with open(dest.replace(seg_ext, ".txt"), 'w', encoding='utf-8') as fout:
                     fout.write("{parser: no-lm}\n\n")
                     for line in data:
                         fout.write(f"{line[0]}\n")

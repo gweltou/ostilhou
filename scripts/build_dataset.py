@@ -125,8 +125,7 @@ def parse_data_file(filepath):
     
     for i, (start, stop) in enumerate(segments):
         sentence, metadata = text_data[i]
-
-        if stop - start < args.utterances_min_length:
+        if stop - start < args.utt_min_len:
             # Skip short utterances
             print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
             n_dropped += 1
@@ -237,10 +236,10 @@ if __name__ == "__main__":
         os.mkdir(args.output)
 
     if args.format == "tsv":
-        metadata_file = open(os.path.join(args.output, "metadata.tsv"), 'w')
+        metadata_file = open(os.path.join(args.output, "metadata.tsv"), 'w', encoding='utf-8')
         metadata_file.write('\t'.join(["file_name", "text"]) + '\n')
     elif args.format == "jsonl":
-        metadata_file = open(os.path.join(args.output, "metadata.jsonl"), 'w')
+        metadata_file = open(os.path.join(args.output, "metadata.jsonl"), 'w', encoding='utf-8')
 
     output_folder = os.path.join(args.output, "data")
     if not args.dry_run and not os.path.exists(output_folder):

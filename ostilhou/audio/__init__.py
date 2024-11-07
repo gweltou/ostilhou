@@ -200,7 +200,7 @@ def concatenate_audiofiles(file_list, out_filename, remove=False):
         return
     
     file_list_filename = "audiofiles.txt"
-    with open(file_list_filename, 'w') as f:
+    with open(file_list_filename, 'w', encoding='utf-8') as f:
         f.write('\n'.join([f"file '{wav}'" for wav in file_list]))
     
     subprocess.call(['ffmpeg', '-v', 'panic',

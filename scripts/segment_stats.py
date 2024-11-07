@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
         for i, (s, e) in enumerate(segments):
             dur = e - s
-            if dur > 25:
+            if dur > 25 or dur < 1.5:
                 print(round(dur, 2), filename, i)
             bin_i = min(int(dur/2), len(bins) - 1)
             bins[bin_i] += 1

@@ -20,7 +20,7 @@ def _load_mbrola_phon_dict():
         return
     
     path = __file__.replace("__init__.py", "mbrola_phon.tsv")
-    with open(path, 'r') as f_in:
+    with open(path, 'r', encoding='utf-8') as f_in:
         for line in f_in.readlines():
             line = line.strip()
             if not line or line.startswith('#'):
@@ -29,7 +29,7 @@ def _load_mbrola_phon_dict():
             _mbrola_phon_dict[key] = val
     
     path = __file__.replace("__init__.py", "mbrola_phon_dur.tsv")
-    with open(path, 'r') as f_in:
+    with open(path, 'r', encoding='utf-8') as f_in:
         for line in f_in.readlines():
             line = line.strip()
             if not line or line.startswith('#'):

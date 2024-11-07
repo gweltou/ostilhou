@@ -15,7 +15,7 @@ from ..hspell import get_hspell_mistakes
 
 def load_translation_dict(path: str) -> dict:
     translation_dict = dict()
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip()
             if '\t' in line:
@@ -42,7 +42,7 @@ def reverse_translation_dict(path: str, newpath: str) -> None:
                 reversed[val] += ", {}".format(key)
             else:
                 reversed[val] = key
-    with open(newpath, 'w') as f:
+    with open(newpath, 'w', encoding='utf-8') as f:
         for k in sorted(reversed):
             f.write(f"{k}\t{reversed[k]}\n")
 
@@ -113,10 +113,19 @@ def is_full_sentence(sentence: str) -> bool:
     return sentence[0].isupper() and sentence[-1] in ".!?…"
 
 def is_sentence_start_open(sentence: str) -> bool:
-    return sentence[0].islower() or sentence[0] in "'’"
+    return (
+        sentence[0].islower()
+        or (sentence[0].isupper() and (sentence[1].isupper() or sentence[1].isdigit()))  # Acronym
+        or sentence[0] in "'’"
+        or sentence[0].isdigit()
+    )
 	
 def is_sentence_end_open(sentence: str) -> bool:
-    return sentence[-1].islower() or sentence[-1] in "…'’,»\""
+    return (
+        sentence[-1].islower()
+        or sentence[-1] in "…'’,»\""
+        or sentence[-1].isdigit()
+    )
 
 def is_sentence_punct_paired(sentence: str) -> bool:
     if sentence.count('"') % 2 != 0:

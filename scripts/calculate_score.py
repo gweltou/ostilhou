@@ -22,7 +22,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    with open(args.filename, 'r') as fin:
+    with open(args.filename, 'r', encoding='utf-8') as fin:
         rows = fin.readlines()
     
     references = []

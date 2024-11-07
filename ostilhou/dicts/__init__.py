@@ -48,7 +48,7 @@ def load_proper_nouns():
         if not os.path.exists(path):
             print(f"Missing dictionary file {file}")
             continue
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             for l in f.readlines():
                 l = l.strip()
                 if l.startswith('#') or not l: continue
@@ -77,7 +77,7 @@ def load_nouns_f():
         print(f"Missing dictionary file noun_f.tsv")
         return nouns_f
 
-    with open(_nouns_f_path, 'r') as f:
+    with open(_nouns_f_path, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             l = l.strip()
             if l.startswith('#') or not l: continue
@@ -96,7 +96,7 @@ def load_nouns_m():
         print(f"Missing dictionary file noun_m.tsv")
         return nouns_m
 
-    with open(_nouns_m_path, 'r') as f:
+    with open(_nouns_m_path, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             l = l.strip()
             if l.startswith('#') or not l: continue
@@ -121,7 +121,7 @@ def load_acronyms():
     #     acronyms[l] = [acr2f[l]]
     
     if os.path.exists(_acronyms_path):
-        with open(_acronyms_path, 'r') as f:
+        with open(_acronyms_path, 'r', encoding='utf-8') as f:
             for l in f.readlines():
                 l = l.strip()
                 if l.startswith('#') or not l: continue
@@ -132,7 +132,7 @@ def load_acronyms():
                     acronyms[acr] = [pron]
     else:
         print("Acronym dictionary not found... creating file")
-        open(_acronyms_path, 'a').close()
+        open(_acronyms_path, 'a', encoding='utf-8').close()
     return acronyms
 
 acronyms = load_acronyms()
@@ -148,7 +148,7 @@ def load_abbreviations():
         print(f"Missing dictionary file abbreviations.tsv")
         return abbreviations
     
-    with open(_abbreviations_path, 'r') as f:
+    with open(_abbreviations_path, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             l = l.strip()
             if l.startswith('#') or not l: continue
@@ -176,7 +176,7 @@ def load_interjections():
     #     acronyms[l] = [acr2f[l]]
     
     if os.path.exists(_interjections_path):
-        with open(_interjections_path, 'r') as f:
+        with open(_interjections_path, 'r', encoding='utf-8') as f:
             for l in f.readlines():
                 l = l.strip()
                 if l.startswith('#') or not l: continue
@@ -189,7 +189,7 @@ def load_interjections():
                     interjections[interj] = pron
     else:
         print("Interjections dictionary not found... creating file")
-        open(_interjections_path, 'a').close()
+        open(_interjections_path, 'a', encoding='utf-8').close()
     return interjections
 
 interjections = load_interjections()
@@ -205,7 +205,7 @@ def load_corrected_tokens():
         print(f"Missing dictionary file corrected_tokens.tsv")
         return corrected_tokens
     
-    with open(_corrected_tokens_path, 'r') as f:
+    with open(_corrected_tokens_path, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             l = l.strip()
             if l.startswith('#') or not l: continue
@@ -228,7 +228,7 @@ def load_standard_tokens():
         print(f"Missing dictionary file standard_tokens.tsv")
         return standard_tokens
 
-    with open(_standard_tokens_path, 'r') as f:
+    with open(_standard_tokens_path, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             l = l.strip()
             if l.startswith('#') or not l: continue

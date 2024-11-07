@@ -37,7 +37,7 @@ def list_files_with_extension(ext: Union[str, tuple, list], rep, recursive=True)
 
 def read_file_drop_comments(path: str) -> List[str]:
     lines = []
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         for l in f.readlines():
             l = l.strip()
             if l and not l.startswith('#'):

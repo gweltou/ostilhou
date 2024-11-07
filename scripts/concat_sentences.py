@@ -19,7 +19,7 @@ if __name__ == "__main__":
 	lines = []
 	concat = ""
 	
-	with open(sys.argv[1], 'r') as f_in:
+	with open(sys.argv[1], 'r', encoding='utf-8') as f_in:
 		for l in f_in.readlines():
 			l = l.strip()
 			if not l:
@@ -36,6 +36,6 @@ if __name__ == "__main__":
 	
 	basename, ext = os.path.splitext(sys.argv[1])
 	output_path = basename + "_fullsentences" + ext
-	with open(output_path, 'w') as f_out:
+	with open(output_path, 'w', encoding='utf-8') as f_out:
 		for line in lines:
 			f_out.write(line.strip() + '\n')

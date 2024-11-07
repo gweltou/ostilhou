@@ -136,7 +136,7 @@ def create_ali_file(sentences, segments, output, **kwargs):
             licence
             tags: list of tags separated by commas
     """
-    with open(output, 'w') as fout:
+    with open(output, 'w', encoding='utf-8') as fout:
         if value := kwargs.pop("audio-path", None):
             fout.write(f"{{audio-path: {value}}}\n")
         if value := kwargs.pop("audio_path", None):
@@ -170,7 +170,7 @@ def load_ali_file(filepath) -> Dict:
     segments = []        # Segments in milliseconds
     metadatas = []
 
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', encoding='utf-8') as f:
         # Find associated audio file in metadata
         current_speaker = 'unknown'
         current_gender = 'unknown'
@@ -331,6 +331,7 @@ def parse_data_file(filepath, args):
     for (sentence, metadata), (start, end) in zip(sentences_and_metadata, segments):
         if end - start < args.utt_min_len:
             # Skip short utterances
+            print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
             continue
             
         speaker_id = metadata["speaker"]
@@ -543,7 +544,7 @@ def convert_to_eaf(split_filename, type="wav"):
 
     xml_str = doc.toprettyxml(indent ="\t", encoding="UTF-8")
 
-    with open(eaf_filename, "w") as f:
+    with open(eaf_filename, "w", encoding='utf-8') as f:
         f.write(xml_str.decode("utf-8"))
 
 
@@ -612,11 +613,11 @@ def convert_from_eaf(eaf_filename):
                 segments.append((time_seg, text))
                 #print(f"SEG: {time_seg} {text}")
 
-    with open(text_filename, 'w') as f:
+    with open(text_filename, 'w', encoding='utf-8') as f:
         f.write('#\n' * 4 + '\n' * 6)
         for _, sentence in segments:
             f.write(sentence + '\n')
-    with open(split_filename, 'w') as f:
+    with open(split_filename, 'w', encoding='utf-8') as f:
         for (s, e), _ in segments:
             f.write(f"{s} {e}\n")
 

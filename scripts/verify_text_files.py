@@ -40,7 +40,7 @@ if __name__ == "__main__":
         split_filename = file.replace('.txt', '.split')
         if not os.path.exists(split_filename):
             continue
-        with open(file, 'r') as f:
+        with open(file, 'r', encoding='utf-8') as f:
             print('\n' + file)
             num_line = 0
             for line in f.readlines():
@@ -67,7 +67,7 @@ if __name__ == "__main__":
             # extract acronyms
             extracted_acronyms = libMySTT.extract_acronyms_from_file(file)
             if extracted_acronyms:
-                with open(libMySTT.ACRONYM_PATH, 'a') as f:
+                with open(libMySTT.ACRONYM_PATH, 'a', encoding='utf-8') as f:
                     for acr in extracted_acronyms:
                         f.write(f"{acr} {extracted_acronyms[acr]}\n")
                         libMySTT.acronyms[acr] = extracted_acronyms[acr]

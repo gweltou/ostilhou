@@ -62,11 +62,11 @@ def srt2ali(*filenames):
     for filename in filenames:
         basename, ext = os.path.splitext(filename)
         if ext.lower() in (".srt", ".vtt"):
-            with open(filename, 'r') as fin:
+            with open(filename, 'r', encoding='utf-8') as fin:
                 # Segments is in milliseconds
                 segments, text = parse_lines(fin.readlines())
             
-            with open(basename + ".ali", 'w') as fout:
+            with open(basename + ".ali", 'w', encoding='utf-8') as fout:
                 fout.write("{tags: subtitles}\n\n")
 
                 for segment, text in zip(segments, text):

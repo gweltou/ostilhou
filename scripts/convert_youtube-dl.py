@@ -48,7 +48,7 @@ def stage0():
 	
 	file_list = glob.glob(args.folder + "/*.vtt")
 	
-	with open(skipfile_path, 'r') as f:
+	with open(skipfile_path, 'r', encoding='utf-8') as f:
 		skipfiles = [l.strip() for l in f.readlines()]
 	
 	audio_ext = os.path.extsep + args.audio_format
@@ -121,7 +121,7 @@ def stage1():
 		if args.dry_run:
 			continue
 
-		with open(filepath, 'w') as fout:
+		with open(filepath, 'w', encoding='utf-8') as fout:
 			for text, segment in zip(text, ali_data["segments"]):
 				timecode = f"{{start: {format_timecode(segment[0])}; end: {format_timecode(segment[1])}}}"
 				fout.write(f"{text} {timecode}\n")
@@ -135,7 +135,7 @@ def stage2():
 	# Use a specific word substitution file
 	sub_file = "/home/gweltaz/STT/corpora/brezhoweb/substitution.tsv"
 	sub_dict = dict()
-	with open(sub_file, 'r') as fin:
+	with open(sub_file, 'r', encoding='utf-8') as fin:
 		for line in fin.readlines():
 			line = line.split('\t')
 			sub_dict[line[0]] = line[1].strip()
@@ -156,7 +156,12 @@ def stage2():
 			sentence = pre_process(sentence)
 			for word in sub_dict:
 				if word in sentence:
-					sentence = sentence.replace(word, sub_dict[word])
+					corrected_sentence = sentence.replace(word, sub_dict[word])
+					print("Replacing " +
+		   				Fore.YELLOW + f"{sentence}" + Fore.RESET +
+						" with " +
+						Fore.YELLOW + f"{corrected_sentence}" + Fore.RESET)
+					sentence = corrected_sentence
 			norm_sentence = normalize_sentence(sentence, autocorrect=True, norm_punct=True)
 			norm_sentence = norm_sentence.replace('-', ' ')
 			corr, n_mistake = get_hspell_mistakes(norm_sentence, autocorrected=True)
@@ -173,7 +178,7 @@ def stage2():
 		if args.dry_run:
 			continue
 		
-		with open(filepath, 'w') as fout:
+		with open(filepath, 'w', encoding='utf-8') as fout:
 			for text, segment in zip(kept_text, kept_segs):
 				timecode = f"{{start: {format_timecode(segment[0])}; end: {format_timecode(segment[1])}}}"
 				fout.write(f"{text} {timecode}\n")
