@@ -1,6 +1,7 @@
 
 from typing import List, Optional
 
+import sys
 import subprocess
 import json
 import os.path
@@ -27,16 +28,14 @@ def find_associated_audiofile(path: str, silent=False) -> Optional[str]:
             if not silent:
                 print("Found audio file:", audio_path)
             return audio_path
-    print(Fore.RED + f"Could not find {audio_path}" + Fore.RESET)
+    print(Fore.RED + f"Could not find {audio_path}" + Fore.RESET, file=sys.stderr)
     return None
 
 
 
 def load_audiofile(path: str, sr=16000) -> AudioSegment:
     data = AudioSegment.from_file(path)
-    data.set_channels(1)
-    data.set_frame_rate(sr)
-    data.set_sample_width(2)
+    data = prepare_segment_for_decoding(data)
     return data
 
 

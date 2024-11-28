@@ -21,11 +21,12 @@ def _count_words(s: str) -> int:
 
 def _prepare_text(s: str) -> str:
     """ Process sentence for alignment matching """
-    s = re.sub(r"{.+?}", '', s)
+    s = re.sub(r"{.+?}", '', s) # Ignore metadata
+    s = re.sub(r"<[A-Z\']+?>", '', s) # Ignore special tokens
     s = pre_process(s.lower())
     s = s.replace("c'h", 'X').replace('ch', 'S')
     s = s.replace('ù', 'u').replace('ê', 'e')
-    s = filter_out_chars(s, PUNCTUATION + " '-h")
+    s = filter_out_chars(s, PUNCTUATION + " '-h ")
     # Remove double-letters
     chars = []
     for c in s:
@@ -71,6 +72,10 @@ def align(
     
     n_ref_words = [ _count_words(s) for s in sentences ]
     norm_sentences = [ _prepare_text(s) for s in sentences ]
+
+    # Remove empty lines
+    norm_sentences = [s for s in norm_sentences if s]
+    
     total_ref_words = sum(n_ref_words)
     total_hyp_words = len(hyp)
     matches = []

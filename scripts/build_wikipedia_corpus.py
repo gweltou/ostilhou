@@ -23,7 +23,7 @@ import argparse
 
 
 from ostilhou.text import (
-    split_sentences, split_sentences_old,
+    split_sentences,
     pre_process, filter_out_chars, sentence_stats,
     correct_sentence, normalize_sentence,
     PUNCTUATION

@@ -165,6 +165,7 @@ def load_ali_file(filepath) -> Dict:
     """
 
     audio_path = None
+    header = dict()
     sentences = []       # Text without metadata
     raw_sentences = []   # Text with metadata
     segments = []        # Segments in milliseconds
@@ -206,6 +207,11 @@ def load_ali_file(filepath) -> Dict:
                 sentences.append(text.strip())
                 raw_sentences.append(line)
                 metadatas.append(metadata)
+            elif metadata:
+                metadata.pop("speaker", None)
+                metadata.pop("gender", None)
+                metadata.pop("accent", None)
+                header.update(metadata)
 
             if not audio_path and "audio-path" in metadata:
                 dir = os.path.split(filepath)[0]
@@ -214,6 +220,7 @@ def load_ali_file(filepath) -> Dict:
     
     return {
         "audio_path": audio_path,
+        "header": header,
         "sentences": sentences,
         "raw_sentences": raw_sentences,
         "segments": segments,

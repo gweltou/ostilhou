@@ -3,12 +3,11 @@
 
 """
 Create subtitles (a `srt` file) from an audio file
-and a text file, using a vosk model
+and a text file, using a Vosk model
 
 Author:  Gweltaz Duval-Guennoc
 
 Usage: ./linennan.py audio_file text_file
-
 """
 
 
@@ -20,9 +19,9 @@ import os.path
 
 from ostilhou.asr.aligner import align, add_reliability_score, resolve_boundaries
 from ostilhou.asr.recognizer import transcribe_file_timecoded
-from ostilhou.asr.models import load_model, DEFAULT_MODEL
+from ostilhou.asr.models import load_model
 from ostilhou.asr.dataset import format_timecode
-from ostilhou.text import split_sentences
+from ostilhou.text import split_sentences, sentence_stats, normalize_sentence
 from ostilhou.utils import read_file_drop_comments
 
 
@@ -64,7 +63,7 @@ if __name__ == "__main__":
         description = "Create a timecoded file (`srt`, `seg` or `ali` file) from an audio file and a text file")
     parser.add_argument("audio_file")
     parser.add_argument("text_file")
-    parser.add_argument("-m", "--model", default=DEFAULT_MODEL,
+    parser.add_argument("-m", "--model", default=None,
         help="Vosk model to use for decoding", metavar='MODEL_PATH')
     parser.add_argument("-t", "--type", choices=["srt", "seg", "ali"],
         help="file output type")
@@ -75,14 +74,13 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", help="write to a file")
     parser.add_argument("-d", "--debug", action="store_true",
         help="display debug information")
-    parser.add_argument("-f", "--force-output", action="store_true",
-        help="Output ill-aligned sentences as well")
+    parser.add_argument("--aligned-only", action="store_true",
+        help="Don't output ill-aligned sentences")
     args = parser.parse_args()
 
 
     load_model(args.model)
 
-    lines = read_file_drop_comments(args.text_file)
 
     if args.reformat:
         # Use punctuation to reformat text to one sentence per line
@@ -95,7 +93,16 @@ if __name__ == "__main__":
     else:
         lines = read_file_drop_comments(args.text_file)
 
+    # Look for numbers in text file, normalize in that case
+    normalize = False
+    for line in lines:
+        if sentence_stats(line)["decimal"] > 0:
+            normalize = True
+            break
+    if normalize:
+        lines = [ normalize_sentence(line, autocorrect=autocorrect) for line in lines ]
 
+    print(f"Transcribing...", file=sys.stderr)
     hyp = transcribe_file_timecoded(args.audio_file)
 
     matches = align(lines, hyp, 0, len(hyp), positional_weight)
@@ -273,7 +280,7 @@ if __name__ == "__main__":
 
         for i, line in enumerate(lines):
             if matches[i]["reliability"] in ('X', '?'):
-                if args.force_output:
+                if not args.aligned_only:
                     print(f"{line.strip()}", file=fout)
                 continue
 

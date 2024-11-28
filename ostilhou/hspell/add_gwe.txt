@@ -44,6 +44,7 @@ baeiñ
 bamdé
 bamnoz
 barrouz
+beajourion
 behe
 beleion
 berped
@@ -67,6 +68,7 @@ breniñ
 brezhonegerion
 bromañ
 chañch
+c'helennerion
 c'hellahe
 c'hellefe
 c'hellehe
@@ -155,6 +157,8 @@ ganac'h
 ganourez
 garahe
 gava
+gazetennerion
+gelennerion
 geneoc'h
 geneomp
 genoc'h
@@ -193,10 +197,10 @@ hani
 hanomp
 hanon
 hanout
+hellamp
 henoazh
 herie
 hiniv
-hellamp
 hom
 hudu
 iet
@@ -210,6 +214,7 @@ istoerioù
 istoerour
 izhpenn
 kailhoc'h
+kanerion
 kaniñ
 kanniget
 kannigiñ
@@ -218,8 +223,10 @@ kanourez
 kasiñ
 kat
 kaviet
+kazetennerion
 kea
 keginour
+kelennerion
 kemenniñ
 keno
 koedaj
@@ -237,9 +244,11 @@ koutant
 kouzhet
 kristenion
 krogiñ
+labourerion
 laoskel
 lâra
 lazhour
+lennourion
 lojiñ
 marsen
 matreze

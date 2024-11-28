@@ -29,13 +29,17 @@ atersadenn
 atersadennoù
 atmosfer
 atmosferel
+avañset	# galleg "avancé"
 azoniad
 azonoù
+bakterioù
 ba'l
 balbouzerezh
 bambou
+b'an
 ba'n
 bandemiezh
+b'ar
 ba'r
 bartienn
 bartiennoù
@@ -116,6 +120,8 @@ elektrik
 embregiñ
 emoji
 emojioù
+emzesk
+emzeskiñ
 endalc'hoù
 enepspierezh
 energetek
@@ -178,6 +184,7 @@ homofobek
 houmous
 ideologiezh
 immunizet
+impro	# galleg "improvisation"
 industriel
 industriezh
 inervet
@@ -241,6 +248,7 @@ loupet
 maesa
 maesaet
 martolodez
+mediaioù
 melodienn
 mikroboù
 mililitrad
@@ -250,6 +258,7 @@ mini
 mojennerezh
 moral
 nac'helour
+naouegezh	# naouegezh artifisiel 
 naouek
 naoutur
 nevezadus
@@ -333,6 +342,8 @@ sitrek
 skalpel
 skampiola
 sklêrijennat
+skog	# galleg "impulsion, impact"
+skogoù
 skolpoù
 skript
 skriptoù

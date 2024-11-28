@@ -108,7 +108,7 @@ for line in lines:
     if hash in seen: continue
     
     seen.add(hash)
-    cleaned.add(line + '\n')
+    cleaned.add(line)
 
 
 for line in sorted(cleaned):

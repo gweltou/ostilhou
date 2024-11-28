@@ -16,9 +16,9 @@ from ..audio import get_audiofile_length
 
 def transcribe_segment(segment: AudioSegment) -> str:
     """ Transcribe a short AudioSegment """
-    assert segment.frame_rate == 16000
-    assert segment.sample_width == 2
-    assert segment.channels == 1
+    assert segment.frame_rate == 16000, f"Wrong sample rate {segment.frame_rate=}"
+    assert segment.sample_width == 2, f"Wrong sample width {segment.sample_width=}"
+    assert segment.channels == 1, f"Wrong number of channels {segment.channels=}"
 
     model = load_model()
     recognizer = KaldiRecognizer(model, 16000)
@@ -82,9 +82,9 @@ def transcribe_segment_timecoded_callback(segment: AudioSegment, callback: calla
         'start' and 'end' keys are in seconds
         'conf' is a normalized confidence score
     """
-    assert segment.frame_rate == 16000
-    assert segment.sample_width == 2
-    assert segment.channels == 1
+    assert segment.frame_rate == 16000, f"Wrong sampling rate {segment.frame_rate=} (should be 16000)"
+    assert segment.sample_width == 2, f"Wrong sample width {segment.sample_width=} (should be 2)"
+    assert segment.channels == 1, f"Wrong number of channels {segment.channels=} (should be 1)"
     
     model = load_model()
     recognizer = KaldiRecognizer(model, 16000)

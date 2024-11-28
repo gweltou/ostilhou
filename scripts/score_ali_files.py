@@ -17,6 +17,7 @@ from colorama import Fore
 from ostilhou.utils import list_files_with_extension
 from ostilhou.text import pre_process, filter_out_chars, normalize_sentence, PUNCTUATION
 from ostilhou.asr import load_ali_file
+from ostilhou.asr.models import load_model
 from ostilhou.asr.recognizer import transcribe_segment
 from ostilhou.asr.dataset import format_timecode
 from ostilhou.audio import (
@@ -24,15 +25,18 @@ from ostilhou.audio import (
     find_associated_audiofile,
     load_audiofile, get_audio_segment
 )
-
-
 from jiwer import wer, cer
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Score every utterance of every data item in a given folder")
     parser.add_argument("data_folder", metavar='FOLDER', help="Folder containing data files")
+    parser.add_argument("-m", "--model", default=None,
+        help="Vosk model to use for decoding", metavar='MODEL_PATH')
     parser.add_argument("-o", "--output", type=str, help="Results file")
     args = parser.parse_args()
+    
+    load_model(args.model)
 
     # print(args.data_folder)
     if os.path.isdir(args.data_folder):
