@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import Tuple
 from colorama import Fore
 
@@ -10,18 +11,23 @@ from ..dicts import interjections
 
 hspell_root = os.path.dirname(os.path.abspath(__file__))
 
-
 hs_dic_path = os.path.join(hspell_root, "hunspell-dictionary", "br_FR")
 hs_aff_path = os.path.join(hspell_root, "hunspell-dictionary", "br_FR.aff")
 
 additional_words = ["add.txt", "add_gwe.txt"]
 
+_hs = None
 
 
 def get_hunspell_dict():
+    global _hs
+    if _hs != None:
+        return _hs
+    
+    print("Loading Hunspell dictionary...", file=sys.stderr)
     import hunspell
 
-    hs = hunspell.HunSpell(hs_dic_path+".dic", hs_aff_path)
+    _hs = hunspell.HunSpell(hs_dic_path+".dic", hs_aff_path)
     #hs = hunspell.Hunspell(HS_DIC_PATH) # for cyhunspell
     for path in additional_words:
         HS_ADD_PATH= os.path.join(hspell_root, path)
@@ -29,12 +35,10 @@ def get_hunspell_dict():
             for w in f.readlines():
                 if not w.startswith('#'):
                     w = w.split()[0]
-                    hs.add(w.strip())
+                    _hs.add(w.strip())
     for w in interjections:
-        hs.add(w)
-    return hs
-
-hs_dict = get_hunspell_dict()
+        _hs.add(w)
+    return _hs
 
 
 
@@ -48,6 +52,8 @@ def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
                 Apply autocorrection before countint errors
     """
 
+    hs = get_hunspell_dict()
+
     n_mistakes = 0
     colored_tokens = []
     # colored = ""
@@ -60,12 +66,12 @@ def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
                 tok.data = Fore.YELLOW + tok.data + Fore.RESET
             elif Flag.INCLUSIVE in tok.flags:
                 head, *_ = tok.data.split('·')
-                if not hs_dict.spell(head):
+                if not hs.spell(head):
                     n_mistakes += 1
                     tok.data = Fore.RED + tok.data + Fore.RESET
             elif Flag.CORRECTED in tok.flags:
                 tok.data = Fore.YELLOW + tok.data + Fore.RESET
-            elif not hs_dict.spell(tok.data):
+            elif not hs.spell(tok.data):
                 n_mistakes += 1
                 tok.data = Fore.RED + tok.data + Fore.RESET
         elif tok.kind == Token.PROPER_NOUN:

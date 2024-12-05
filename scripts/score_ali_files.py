@@ -11,21 +11,15 @@
 import sys
 import argparse
 import os
+from jiwer import wer, cer
 
-from colorama import Fore
-
-from ostilhou.utils import list_files_with_extension
+from ostilhou.utils import list_files_with_extension, red
 from ostilhou.text import pre_process, filter_out_chars, normalize_sentence, PUNCTUATION
 from ostilhou.asr import load_ali_file
 from ostilhou.asr.models import load_model
 from ostilhou.asr.recognizer import transcribe_segment
 from ostilhou.asr.dataset import format_timecode
-from ostilhou.audio import (
-    AUDIO_FORMATS,
-    find_associated_audiofile,
-    load_audiofile, get_audio_segment
-)
-from jiwer import wer, cer
+from ostilhou.audio import load_audiofile, get_audio_segment
 
 
 if __name__ == "__main__":
@@ -66,16 +60,16 @@ if __name__ == "__main__":
         print(f"==== {basename} ====", file=sys.stderr)
 
         ali_data = load_ali_file(filepath)
-
-        audio_file = find_associated_audiofile(filepath, silent=True)
+        audio_file = ali_data["audio-path"]
         if not audio_file:
+            print(red("Couldn't fine associated audiofile"), file=sys.stderr)
             continue
 
         segments = ali_data["segments"]
         text = ali_data["sentences"]
         print(len(segments), "utterances", file=sys.stderr)
         if len(segments) == 0:
-            print(Fore.RED + f"Error with file {filepath}" + Fore.RESET)
+            print(red(f"Error with file {filepath}"))
             continue
         audio_ext = os.path.splitext(audio_file)[1][1:]
 

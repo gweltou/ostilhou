@@ -1,6 +1,19 @@
 from typing import Union, List
 import os
 
+from colorama import Fore
+
+
+
+def green(s:str) -> str:
+    return Fore.GREEN + s + Fore.RESET
+
+def yellow(s:str) -> str:
+    return Fore.YELLOW + s + Fore.RESET
+
+def red(s:str) -> str:
+    return Fore.RED + s + Fore.RESET
+
 
 
 def sec2hms(seconds):

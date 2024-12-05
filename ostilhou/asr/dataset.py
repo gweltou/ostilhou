@@ -19,7 +19,7 @@ from ..text import (
     PUNCTUATION,
     VALID_CHARS
 )
-from ..audio import convert_to_mp3
+from ..audio import convert_to_mp3, find_associated_audiofile
 
 
 datafile_header = \
@@ -217,6 +217,10 @@ def load_ali_file(filepath) -> Dict:
                 dir = os.path.split(filepath)[0]
                 audio_path = os.path.join(dir, metadata["audio-path"])
                 audio_path = os.path.normpath(audio_path)
+        
+        # Try to find an associated audiofile if it was not explicitely set in metadata
+        if not audio_path:
+            audio_path = find_associated_audiofile(filepath, silent=True)
     
     return {
         "audio_path": audio_path,

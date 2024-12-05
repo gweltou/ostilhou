@@ -9,7 +9,7 @@ import argparse
 
 from ostilhou.utils import list_files_with_extension
 from ostilhou.audio import add_whitenoise
-from ostilhou.asr import load_text_data
+from ostilhou.asr import load_text_data, load_ali_file
 
 
 """
@@ -20,8 +20,6 @@ Usage:
 
 """
 
-
-DEST = "augmented"
 
 EXCLUDE_FROM_LM = True
 
@@ -36,28 +34,41 @@ if __name__ == "__main__":
     assert os.path.exists(args.filelist)
 
     with open(args.filelist, 'r', encoding='utf-8') as f:
-        seg_files = [ filename.strip() for filename in f if filename.strip() ]
+        files = [ filename.strip() for filename in f if filename.strip() ]
 
 
-    for file in seg_files:
-        seg_filename = os.path.split(file)[1]
-        seg_ext = os.path.splitext(seg_filename)[1]
-        dest = os.path.join(args.output, seg_filename)
+    for filepath in files:
+        filename = os.path.split(filepath)[1]
+        file_ext = os.path.splitext(filename)[1]
+
+        if file_ext.lower() == ".ali":
+            ali_data = load_ali_file(filepath)
+            soundfile = ali_data["audio_path"]
+        else:
+            soundfile = filepath.replace(file_ext, ".wav")
+        
+        dest = os.path.join(args.output, filename)
+        soundfile_dest = os.path.join(args.output, os.path.split(soundfile)[1])
+        if not soundfile_dest.lower().endswith(".wav"):
+            soundfile_dest = soundfile_dest[:-4] + ".wav"
+
         if not os.path.exists(dest):
-            if not os.path.exists(os.path.split(dest)[0]):
-                makedirs(os.path.split(dest)[0])
-            wav_file = file.replace(seg_ext, ".wav")
-            add_whitenoise(wav_file, dest.replace(seg_ext, ".wav"), -22)
+            makedirs(args.output, exist_ok=True)
+            
+            add_whitenoise(soundfile, soundfile_dest, -22)
             
             # Copy split and text files
-            shutil.copy(file, dest)
+            shutil.copy(filepath, dest)
+
+            if file_ext.lower() == ".ali":
+                continue
             
-            txt_file = file.replace(seg_ext, ".txt")
+            txt_file = filepath.replace(file_ext, ".txt")
             if EXCLUDE_FROM_LM:
                 data = load_text_data(txt_file)
-                with open(dest.replace(seg_ext, ".txt"), 'w', encoding='utf-8') as fout:
+                with open(dest.replace(file_ext, ".txt"), 'w', encoding='utf-8') as fout:
                     fout.write("{parser: no-lm}\n\n")
                     for line in data:
                         fout.write(f"{line[0]}\n")
             else:
-                shutil.copy(txt_file, dest.replace(seg_ext, ".txt"))
+                shutil.copy(txt_file, dest.replace(file_ext, ".txt"))

@@ -37,6 +37,7 @@ ba'l
 balbouzerezh
 bambou
 b'an
+bleup	# galleg "sot, con"
 ba'n
 bandemiezh
 b'ar
@@ -232,7 +233,7 @@ kultivañ
 kurry
 labo
 lagout
-langour	# =paresseux
+langour	# galleg "paresseux"
 lâr'
 laskar
 lazagn
@@ -288,6 +289,8 @@ patronez
 pa'z
 pedopornografek
 penngasourez
+kevella	# pêche au casier
+gevella	# pêche au casier (kemmadur)
 perc'henniñ
 pesketouriezh
 pesto
