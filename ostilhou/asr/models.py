@@ -30,6 +30,10 @@ def _get_model_directory() -> str:
     else:
         raise OSError("Unsupported operating system")
     model_dir = os.path.join(os.getenv("XDG_CACHE_HOME", default), "anaouder", "models")
+    
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+    
     return model_dir
 
 _model_root = _get_model_directory()
