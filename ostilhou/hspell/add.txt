@@ -37,7 +37,6 @@ ba'l
 balbouzerezh
 bambou
 b'an
-bleup	# galleg "sot, con"
 ba'n
 bandemiezh
 b'ar
@@ -50,6 +49,7 @@ binarel
 biolojik
 bisiklet
 blam
+bleup	# galleg "sot, con"
 blini 
 boellgomzerioù
 botiron
@@ -86,6 +86,7 @@ denien
 deusoute
 deusouto
 diabarzhet
+diantek	# galleg "innocent"
 dianv
 dibaoe
 dibleget
@@ -109,6 +110,7 @@ dizainer
 dojo
 doktorez
 doneier
+dreistnaturel
 drouizez
 duplex
 egorlestr
@@ -157,6 +159,7 @@ geek
 genitervez
 geriaduriñ
 geriaouegi
+gevella	# pêche au casier (kemmadur)
 glaouch
 gle
 gleoù
@@ -212,6 +215,7 @@ kentaidi
 kenweturiñ
 kersantit
 keta
+kevella	# pêche au casier
 kigezat
 klaviadiñ
 klaviadoù
@@ -253,6 +257,7 @@ mediaioù
 melodienn
 mikroboù
 mililitrad
+milouer	# galleg "miroir"
 milourel
 milvrudet
 mini
@@ -289,8 +294,6 @@ patronez
 pa'z
 pedopornografek
 penngasourez
-kevella	# pêche au casier
-gevella	# pêche au casier (kemmadur)
 perc'henniñ
 pesketouriezh
 pesto

@@ -8,6 +8,8 @@ import jiwer
 import re
 from math import inf
 
+from tqdm import tqdm
+
 from ..text import pre_process, filter_out_chars, PUNCTUATION
 
 
@@ -43,7 +45,8 @@ def align(
         sentences:list,
         hyp:List[dict],
         left_boundary:int, right_boundary:int,
-        positional_weight=0.5
+        positional_weight=0.5,
+        progress_bar=True
     ):
     """
         Try to locate the best match for each sentence in transcription
@@ -79,9 +82,13 @@ def align(
     total_ref_words = sum(n_ref_words)
     total_hyp_words = len(hyp)
     matches = []
+
+    if progress_bar:
+        norm_sentences = tqdm(norm_sentences)
+    
     for sent_idx, norm_sentence in enumerate(norm_sentences):
-        sentence_pos = left_boundary + sum(n_ref_words[:sent_idx]) / total_ref_words
         match = []
+        sentence_pos = left_boundary + sum(n_ref_words[:sent_idx]) / total_ref_words
         for i in range(left_boundary, right_boundary):
             # Try to find a minima for the CER by adding one word at a time
             hyp_pos = i / total_hyp_words
@@ -105,12 +112,13 @@ def align(
                     break
             
             match.append( {"hyp": best_hyp, "span": best_span, "score": best_score} )
-        
+
         match.sort(key=lambda x: x["score"])
         
         # Keep only best match location for each sentence
         try:
             match[0]["sentence"] = sentences[sent_idx]
+            assert match[0]["span"][0] < match[0]["span"][1], f"wrong segment {match[0]}"
             matches.append(match[0])
         except:
             print(f"{match=}")
@@ -142,6 +150,9 @@ def add_reliability_score(matches: list, hyp: list, verbose=False):
     
     last_reliable_wi = 0
     for i, match in enumerate(matches):
+        if not match: # Empty or metadata only lines
+            continue
+
         span = match["span"]
         prev_dist = get_prev_word_idx(matches, i) - span[0]
         next_dist = get_next_word_idx(matches, i, hyp) - span[1]
@@ -190,6 +201,8 @@ def get_unaligned_ranges(sentences, matches, rel=['O']):
 def count_aligned_utterances(matches: list):
     n = 0
     for match in matches:
+        if not match:
+            continue
         if match["reliability"] == 'O':
             n += 1
     return n
@@ -242,6 +255,8 @@ def calculate_global_score(matches: list):
     total_score = 0
     total_num_char = 0
     for match in matches:
+        if not match:
+            continue
         num_char = len(_prepare_text(match["sentence"]))
         total_score += match["score"] * num_char
         total_num_char += num_char

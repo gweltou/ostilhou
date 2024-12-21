@@ -40,7 +40,6 @@ special_tokens = {
     "<HUM>": "SPN",
     "<PASAAT>": "SPN",
     "<SONEREZH>": "NSN",
-    "<PAS>": "SPN",
     "<FRONAL>": "SPN",
 }
 

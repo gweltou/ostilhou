@@ -16,8 +16,16 @@ import datetime
 import argparse
 import srt
 import os.path
+import json
 
-from ostilhou.asr.aligner import align, add_reliability_score, resolve_boundaries
+from ostilhou.asr.aligner import (
+    align,
+    add_reliability_score,
+    resolve_boundaries,
+    get_prev_word_idx, get_next_word_idx,
+    count_aligned_utterances,
+    get_unaligned_ranges,
+)
 from ostilhou.asr.recognizer import transcribe_file_timecoded
 from ostilhou.asr.models import load_model
 from ostilhou.asr.dataset import format_timecode
@@ -30,30 +38,84 @@ positional_weight = 0.1
 
 
 
-def count_aligned_utterances(matches):
-    n = 0
-    for match in matches:
-        if match["reliability"] in ('O',):
-            n += 1
-    return n
+def save(args, lines, hyp, matches):
+    # Resolve file output type
+    if args.output and not args.type:
+        # No type explicitely defined, use output file extension
+        split_ext = args.output.rsplit('.', maxsplit=1)
+        if len(split_ext) == 2:
+            ext = split_ext[1].lower()
+            if ext in ("srt", "seg", "ali"):
+                args.type = ext
+            else:
+                print("Unrecognized extension, using default type (`srt`)", file=sys.stderr)
+                args.type = "srt"
+        else:
+            # No file extension found, use default type
+            args.type = "srt"
 
+    if not args.type:
+        args.type = "srt"
+    
 
-def get_unaligned_ranges(sentences, matches, rel=['O']):
-    # Find ill-aligned sentence ranges
-    wrong_ranges = []
-    start = 0
-    end = 0
-    while True:
-        while start < len(sentences) and matches[start]["reliability"] in rel:
-            start += 1
-        end = start
-        while end < len(sentences) and matches[end]["reliability"] not in rel:
-            end += 1
-        if start >= len(sentences):
-            break
-        wrong_ranges.append((start, end))
-        start = end
-    return wrong_ranges
+    fout = open(args.output, 'w', encoding='utf-8') if args.output else sys.stdout
+
+    if args.type == "srt":
+        subs = []
+        last = -1
+        for i, line in enumerate(lines):
+            if not matches[i]:
+                continue
+            if matches[i]["reliability"] == 'X':
+                continue
+            span = matches[i]["span"]
+            start = hyp[span[0]]["start"]
+            if start <= last: # Avoid timecode overlap
+                start += 0.05
+            end = hyp[span[1]-1]["end"]
+            last = end
+            s = srt.Subtitle(index=len(subs),
+                    content=line,
+                    start=datetime.timedelta(seconds=start),
+                    end=datetime.timedelta(seconds=end))
+            subs.append(s)
+
+        print(srt.compose(subs), file=fout)
+    
+
+    elif args.type == "seg":
+        # utts = []
+        for i, line in enumerate(lines):
+            if not matches[i]:
+                continue
+            if matches[i]["reliability"] == 'X':
+                continue
+            span = matches[i]["span"]
+            start = int(hyp[span[0]]["start"] * 1000)
+            end = int(hyp[span[1]-1]["end"] * 1000)
+            print(f"{line} {{start: {start}; end: {end}}}", file=fout)
+    
+
+    elif args.type == "ali":
+        print(f"{{audio-path: {os.path.basename(args.audio_file)}}}\n\n", file=fout)
+
+        for i, line in enumerate(lines):
+            if not matches[i]:
+                print(f"{line.strip()}", file=fout)
+                continue
+            if matches[i]["reliability"] in ('X', '?'):
+                if not args.aligned_only:
+                    print(f"{line.strip()}", file=fout)
+                continue
+
+            span = matches[i]["span"]
+            start = hyp[span[0]]["start"]
+            end = hyp[span[1]-1]["end"]
+            print(f"{line.strip()} {{start: {format_timecode(start)}; end: {format_timecode(end)}}}",
+                  file=fout)
+    
+    if args.output:
+        fout.close()
 
 
 
@@ -102,18 +164,35 @@ if __name__ == "__main__":
     if normalize:
         lines = [ normalize_sentence(line, autocorrect=autocorrect) for line in lines ]
 
-    print(f"Transcribing...", file=sys.stderr)
-    hyp = transcribe_file_timecoded(args.audio_file)
+    # We should extract any non-utterance text (metadata, comments...) at this point,
+    # Keeping track of their positions
+    # To reinsert them after the alignment
+    # (the aligner cannot match unpronunciable text)
 
+    json_path = os.path.splitext(args.output)[0] + ".json" # caching transcript
+    if os.path.exists(json_path):
+        print("Reading transcript from cache")
+        with open(json_path, 'r') as _f:
+            hyp = json.load(_f)
+    else:
+        print(f"Transcribing...", file=sys.stderr)
+        hyp = transcribe_file_timecoded(args.audio_file)
+
+    with open(json_path, 'w') as _f:
+        json.dump(hyp, _f)
+
+    print("First iteration...", file=sys.stderr)
     matches = align(lines, hyp, 0, len(hyp), positional_weight)
 
     # Infer the reliability of each location by checking its adjacent neighbours
     add_reliability_score(matches, hyp, verbose=args.debug)
     n_aligned = count_aligned_utterances(matches)
+
+    save(args, lines, hyp, matches)
     if args.debug:
         print(f"{n_aligned} aligned utterances", file=sys.stderr)
 
-    print("Second iteration", file=sys.stderr)
+    print("Second iteration...", file=sys.stderr)
     unaligned_ranges = get_unaligned_ranges(lines, matches)
     for start_range, end_range in unaligned_ranges:
         if start_range == 0:
@@ -134,17 +213,18 @@ if __name__ == "__main__":
 
     add_reliability_score(matches, hyp, verbose=args.debug)
     new_n_aligned = count_aligned_utterances(matches)
+
+    save(args, lines, hyp, matches)
     if args.debug:
         print(f"{new_n_aligned} aligned utterances", file=sys.stderr)
 
+
     if new_n_aligned != n_aligned:
-        print("Third iteration")
+        print("Third iteration...")
         unaligned_ranges = get_unaligned_ranges(lines, matches, rel=['O'])
         for start_range, end_range in unaligned_ranges:
-            if start_range == 0:
-                left_word_idx = 0
-            else:
-                left_word_idx = matches[start_range-1]["span"][1]
+            left_word_idx = get_prev_word_idx(matches, start_range)
+            
             if end_range == len(lines):
                 right_word_idx == len(hyp)
             else:
@@ -160,6 +240,7 @@ if __name__ == "__main__":
         n_aligned = new_n_aligned
         new_n_aligned = count_aligned_utterances(matches)
 
+        save(args, lines, hyp, matches)
         if args.debug:
             print(f"{new_n_aligned} aligned utterances")
 
@@ -190,6 +271,7 @@ if __name__ == "__main__":
         n_aligned = new_n_aligned
         new_n_aligned = count_aligned_utterances(matches)
 
+        save(args, lines, hyp, matches)
         if args.debug:
             print(f"{new_n_aligned} aligned utterances", file=sys.stderr)
 
@@ -203,10 +285,13 @@ if __name__ == "__main__":
                 last_reliable_idx = match["span"][1]
             else:
                 match["reliability"] = '?'
+        assert match["span"][0] < match["span"][1], f"wrong segment: {match}"
 
 
     # Resolve overlapping matches
     resolve_boundaries(matches)
+    for match in matches:
+        assert match["span"][0] < match["span"][1], f"wrong segment: {match}"
 
     if args.debug:
         for i, match in enumerate(matches):
@@ -219,77 +304,4 @@ if __name__ == "__main__":
             n += 1
     print(f"{n} ill-aligned segment{'s' if n>1 else ''}", file=sys.stderr)
 
-
-    # Resolve file output type
-    if args.output and not args.type:
-        # No type explicitely defined, use output file extension
-        split_ext = args.output.rsplit('.', maxsplit=1)
-        if len(split_ext) == 2:
-            ext = split_ext[1].lower()
-            if ext in ("srt", "seg", "ali"):
-                args.type = ext
-            else:
-                print("Unrecognized extension, using default type (`srt`)", file=sys.stderr)
-                args.type = "srt"
-        else:
-            # No file extension found, use default type
-            args.type = "srt"
-
-    if not args.type:
-        args.type = "srt"
-    
-
-    fout = open(args.output, 'w', encoding='utf-8') if args.output else sys.stdout
-
-    if args.type == "srt":
-        subs = []
-        last = -1
-        for i, line in enumerate(lines):
-            if matches[i]["reliability"] == 'X':
-                continue
-
-            span = matches[i]["span"]
-            start = hyp[span[0]]["start"]
-            if start <= last: # Avoid timecode overlap
-                start += 0.05
-            end = hyp[span[1]-1]["end"]
-            last = end
-            s = srt.Subtitle(index=len(subs),
-                    content=line,
-                    start=datetime.timedelta(seconds=start),
-                    end=datetime.timedelta(seconds=end))
-            subs.append(s)
-
-        print(srt.compose(subs), file=fout)
-    
-
-    elif args.type == "seg":
-        # utts = []
-        for i, line in enumerate(lines):
-            if matches[i]["reliability"] == 'X':
-                continue
-
-            span = matches[i]["span"]
-            start = int(hyp[span[0]]["start"] * 1000)
-            end = int(hyp[span[1]-1]["end"] * 1000)
-            print(f"{line} {{start: {start}; end: {end}}}", file=fout)
-    
-
-    elif args.type == "ali":
-        print(f"{{audio-path: {os.path.basename(args.audio_file)}}}\n\n", file=fout)
-
-        for i, line in enumerate(lines):
-            if matches[i]["reliability"] in ('X', '?'):
-                if not args.aligned_only:
-                    print(f"{line.strip()}", file=fout)
-                continue
-
-            span = matches[i]["span"]
-            start = hyp[span[0]]["start"]
-            end = hyp[span[1]-1]["end"]
-            print(f"{line.strip()} {{start: {format_timecode(start)}; end: {format_timecode(end)}}}",
-                  file=fout)
-    
-
-    if args.output:
-        fout.close()
+    save(args, lines, hyp, matches)

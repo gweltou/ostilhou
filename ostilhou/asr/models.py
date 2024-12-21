@@ -32,7 +32,7 @@ def _get_model_directory() -> str:
     model_dir = os.path.join(os.getenv("XDG_CACHE_HOME", default), "anaouder", "models")
     
     if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
+        os.makedirs(model_dir, exist_ok=True)
     
     return model_dir
 
