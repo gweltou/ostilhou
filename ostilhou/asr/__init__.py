@@ -24,10 +24,10 @@ w2f = {
     "c'h"   :   'X',        # 
     'd'     :   'D',
     'dei'   :   'D EH I',   # DEIlenn
-    'c'     :   'K',        # xxx GALLEG XXX
+    'c'     :   'K',        # xxx GALLEG xxx
     'e'     :   'E',        # spEred
     'ê'     :   'E',        # gÊr
-    'é'     :   'E',        # xxx GALLEG XXX
+    'é'     :   'E',        # xxx GALLEG xxx
     'è'     :   'EH',       # galleg / gwennedeg
     "ec'h"  :   'EH X',     # nec'h
     'ei'    :   'EY',       # kEIn      # could replace with (EH I) maybe ?
@@ -77,8 +77,8 @@ w2f = {
     "oc'h"  :   'OH X',     # pellOC'H
     'p'     :   'P',
     ".p'h"  :   'P',        # P'He
-    'qu'    :   'K',        # XXX GALLEG
-    'q'     :   'K',        # XXX GALLEG
+    'qu'    :   'K',        # xxx GALLEG xxx
+    'q'     :   'K',        # xxx GALLEG xxx
     'r'     :   'R',
     'rr'    :   'R',
     's'     :   'S',

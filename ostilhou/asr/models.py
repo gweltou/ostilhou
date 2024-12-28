@@ -4,9 +4,10 @@ import os
 import sys
 import platform
 import json
-import urllib.error
-import urllib.request
-import urllib.response
+
+import ssl
+import certifi
+import urllib
 import zipfile
 from tqdm import tqdm
 
@@ -15,6 +16,7 @@ from vosk import Model, SetLogLevel
 
 
 MODEL_LIST_URL = "https://raw.githubusercontent.com/gweltou/patromou/refs/heads/main/model_list.json"
+_certifi_context = ssl.create_default_context(cafile=certifi.where())
 
 _model_list = None
 _loaded_model = None
@@ -48,7 +50,7 @@ def _get_model_list():
     cached_path = os.path.join(_model_root, "model_list.json")
 
     try:
-        _model_list = json.load(urllib.request.urlopen(MODEL_LIST_URL, timeout=4))
+        _model_list = json.load(urllib.request.urlopen(MODEL_LIST_URL, timeout=4, context=_certifi_context))
     except (urllib.error.URLError, urllib.error.HTTPError) as error:
         print(f"Cannot access online model list: {error}", file=sys.stderr)
         print(f"Reverting to cached model list", file=sys.stderr)
@@ -174,7 +176,7 @@ def _download(model_name: str, root: str) -> str:
     download_target = os.path.join(root, os.path.basename(url))
 
     print(f"Downloading model from {url}", file=sys.stderr)
-    with urllib.request.urlopen(url) as source, open(download_target, "wb") as output:
+    with urllib.request.urlopen(url, context=_certifi_context) as source, open(download_target, "wb") as output:
         with tqdm(
             total=int(source.info().get("Content-Length")),
             ncols=80,

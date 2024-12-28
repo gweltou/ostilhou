@@ -66,7 +66,7 @@ def load_proper_nouns():
 proper_nouns = load_proper_nouns()
 
 
-# Noun dictionary
+# Nouns dictionary
 # Things that you can count
 
 def load_nouns_f():

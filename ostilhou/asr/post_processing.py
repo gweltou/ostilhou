@@ -29,8 +29,8 @@ verbal_fillers = {
     'pff'   :   'P F F',
     'mais'  :   'M EH',
     'hmm'   :   'M M',
-    'oh'    :   'O',
-    'ah'    :   'A',
+    # 'oh'    :   'O',
+    # 'ah'    :   'A',
 }
 
 
@@ -108,7 +108,12 @@ def post_process_timecoded(
         tokens: List[dict],
         normalize=False,
         keep_fillers=True) -> List[dict]:
-    """ Apply post-processing on Vosk formatted result (keeping timecodes) """
+    """ Apply post-processing on Vosk formatted result (keeping timecodes)
+        
+        Add hypens (-se, -mañ)
+        Common words substitution  (optional)
+        Inverse-normalization      (optional)
+    """
     
     # Verbal fillers removal
     if not keep_fillers:
@@ -213,24 +218,3 @@ def apply_post_process_dict_timecoded(tokens: List[dict], ngram_dicts: List[dict
         idx += 1
 
     return translated
-
-
-
-# def sentence_post_process(text: str) -> str:
-#     """ Add hyphens back to composite words and inverse-normalize text """
-
-#     if not text:
-#         return ''
-    
-#     # web adresses
-#     if "HTTP" in text or "WWW" in text:
-#         text = text.replace("pik", '.')
-#         text = text.replace(' ', '')
-#         return text.lower()
-    
-#     for sub in _postproc_sub:
-#         text = text.replace(sub, _postproc_sub[sub])
-    
-#     splitted = text.split(maxsplit=1)
-#     splitted[0] = splitted[0].capitalize()
-#     return ' '.join(splitted)

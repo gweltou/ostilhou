@@ -155,15 +155,16 @@ def transcribe_file_timecoded(filepath: str, show_progress_bar=True) -> List[dic
     recognizer.SetWords(True)
 
     total_duration = get_audiofile_length(filepath)
+    progress = 0.0
+
     if show_progress_bar:
         progress_bar = tqdm(total=total_duration)
-    i = 0
-    cumul_frames = 0
+    
     tokens = []
     with subprocess.Popen(["ffmpeg", "-loglevel", "quiet", "-i",
-                                filepath,
-                                "-ar", "16000" , "-ac", "1", "-f", "s16le", "-"],
-                                stdout=subprocess.PIPE) as process:
+                            filepath,
+                            "-ar", "16000" , "-ac", "1", "-f", "s16le", "-"],
+                            stdout=subprocess.PIPE) as process:
 
         while True:
             data = process.stdout.read(4000)
@@ -171,11 +172,13 @@ def transcribe_file_timecoded(filepath: str, show_progress_bar=True) -> List[dic
                 break
             if recognizer.AcceptWaveform(data):
                 tokens.extend(format_output(recognizer.Result()))
-            cumul_frames += len(data) // 2
-            if show_progress_bar and i%10 == 0:
-                progress_bar.update(cumul_frames / 16000)
-                cumul_frames = 0
-            i += 1
+
+            progress += (len(data) // 2) / 16000
+
+            if show_progress_bar:
+                progress_bar.n = progress
+                progress_bar.refresh()
+        
         tokens.extend(format_output(recognizer.FinalResult()))
     if show_progress_bar:
         progress_bar.close()

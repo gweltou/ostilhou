@@ -28,5 +28,11 @@ if __name__ == "__main__":
     
     assert len(tr_lines) == len(ali_data["sentences"]), "Number of sentences doesn't match"
     
-    create_ali_file(tr_lines, ali_data["segments"], sys.argv[3],
-        audio_path=ali_data["audio_path"])
+    with open(sys.argv[3], 'w', encoding="utf-8") as _f:
+        _f.write(
+            create_ali_file(
+                tr_lines,
+                ali_data["segments"],
+                audio_path=ali_data["audio_path"]
+            )
+        )
