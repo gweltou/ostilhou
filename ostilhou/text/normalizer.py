@@ -95,7 +95,7 @@ def solve_mutation_article(article: str, noun: str) -> List[str]:
 def norm_number_noun(number: int, noun: str) -> str:
     """ (75, bloaz) -> "pemp bloaz ha tri-ugent"
         TODO:
-            * diwall d'ar c'hemadurioù
+            * diwall d'ar c'hemmadurioù
     """
 
     noun = solve_mutation_number(number, noun)

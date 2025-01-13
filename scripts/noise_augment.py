@@ -3,20 +3,21 @@
 
 import sys
 import os.path
+from random import randint
 from os import makedirs
 import shutil
 import argparse
 
 from ostilhou.utils import list_files_with_extension
-from ostilhou.audio import add_whitenoise
-from ostilhou.asr import load_text_data, load_ali_file
+from ostilhou.audio import add_whitenoise, add_amb_random
+from ostilhou.asr import load_text_data, load_ali_file, create_ali_file
 
 
 """
 Data Augmentation by adding noise to audiofiles
 
 Usage:
-    python3 noise_augment.py file_list.txt
+    python3 noise_augment.py file_list.txt [-o output_dir]
 
 """
 
@@ -27,8 +28,9 @@ EXCLUDE_FROM_LM = True
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filelist", help="List of files to be augmented, in text format")
+    parser.add_argument("--amb-noise", action="store_true", help="Augment by adding ambiance noise")
     parser.add_argument("-o", "--output", help="Path where to write the augmented files",
-                        default=os.path.join(os.getcwd(), "augmented"))
+                        default=os.path.join(os.getcwd(), "augmented_noise"))
     args = parser.parse_args()
 
     assert os.path.exists(args.filelist)
@@ -45,30 +47,44 @@ if __name__ == "__main__":
             ali_data = load_ali_file(filepath)
             soundfile = ali_data["audio_path"]
         else:
+            # Old formats
             soundfile = filepath.replace(file_ext, ".wav")
         
-        dest = os.path.join(args.output, filename)
+        utterance_file_dest = os.path.join(args.output, filename)
         soundfile_dest = os.path.join(args.output, os.path.split(soundfile)[1])
         if not soundfile_dest.lower().endswith(".wav"):
-            soundfile_dest = soundfile_dest[:-4] + ".wav"
+            basename, _ = os.path.splitext(soundfile_dest)
+            soundfile_dest = basename + ".wav"
 
-        if not os.path.exists(dest):
+        if not os.path.exists(utterance_file_dest):
             makedirs(args.output, exist_ok=True)
+            print(filepath)
+
+            if args.amb_noise:
+                add_amb_random(soundfile, soundfile_dest, randint(-10, -4))
+                soundfile = soundfile_dest
             
-            add_whitenoise(soundfile, soundfile_dest, -22)
+            add_whitenoise(soundfile, soundfile_dest, randint(-34, -22))
             
-            # Copy split and text files
-            shutil.copy(filepath, dest)
 
             if file_ext.lower() == ".ali":
-                continue
-            
-            txt_file = filepath.replace(file_ext, ".txt")
-            if EXCLUDE_FROM_LM:
-                data = load_text_data(txt_file)
-                with open(dest.replace(file_ext, ".txt"), 'w', encoding='utf-8') as fout:
-                    fout.write("{parser: no-lm}\n\n")
-                    for line in data:
-                        fout.write(f"{line[0]}\n")
+                with open(utterance_file_dest, 'w', encoding="utf-8") as _f:
+                    _f.write(
+                        create_ali_file(
+                            ali_data["sentences"],
+                            ali_data["segments"],
+                            audio_path=os.path.split(soundfile_dest)[1],
+                            parser="no-lm"))
             else:
-                shutil.copy(txt_file, dest.replace(file_ext, ".txt"))
+                # Old format
+                # Copy split and text files
+                shutil.copy(filepath, utterance_file_dest)
+                txt_file = filepath.replace(file_ext, ".txt")
+                if EXCLUDE_FROM_LM:
+                    data = load_text_data(txt_file)
+                    with open(utterance_file_dest.replace(file_ext, ".txt"), 'w', encoding='utf-8') as fout:
+                        fout.write("{parser: no-lm}\n\n")
+                        for line in data:
+                            fout.write(f"{line[0]}\n")
+                else:
+                    shutil.copy(txt_file, utterance_file_dest.replace(file_ext, ".txt"))

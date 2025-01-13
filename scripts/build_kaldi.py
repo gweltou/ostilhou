@@ -61,7 +61,7 @@ if __name__ == "__main__":
     parser.add_argument("--lm-corpus", nargs='+', help="path to one or more text files to build the language model")
     parser.add_argument("-n", "--no-lm", help="do not copy utterances to language model", action="store_true")
     parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
-    parser.add_argument("-f", "--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
+    parser.add_argument("--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
     parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
     parser.add_argument("-o", "--output", help="Output folder for generated Kalid files", default="data")
     parser.add_argument("--lm-min-token", help="Minimum number of tokens in sentence for adding it to LM corpus", type=int, default=3)
@@ -72,10 +72,10 @@ if __name__ == "__main__":
     print(args)
 
     if not os.path.isdir(args.train):
-        print("`train` argument should be a directory containing aligned audio, text and split files")
+        print("`train` argument should be a directory containing aligned data")
         sys.exit(1)
     if args.test and not os.path.isdir(args.test):
-        print("`test` argument should be a directory containing aligned audio, text and split files")
+        print("`test` argument should be a directory containing aligned data")
         sys.exit(1)
     
     speakers_gender = {"unknown": "u"}

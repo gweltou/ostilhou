@@ -1,21 +1,27 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+    Prints a list of aligned data files, given a tag
+
+    usage:
+        python3 list_tags.py data_folder
+        
+        python3 list_tags.py data_folder tag
+"""
+
+
 import sys
 import os.path
 
 from colorama import Fore
 
-from ostilhou.utils import list_files_with_extension
+from ostilhou.utils import list_files_with_extension, yellow
 from ostilhou.asr.dataset import get_text_header, load_ali_file
 
 
-def yellow(s:str) -> str:
-    return Fore.YELLOW + s + Fore.RESET
-
 
 if __name__ == "__main__":
-    
     seg_files = list_files_with_extension((".split", ".seg", ".ali"), sys.argv[1])
     seg_files.sort()
     all_tags = set()

@@ -60,7 +60,7 @@ if __name__ == "__main__":
         print(f"==== {basename} ====", file=sys.stderr)
 
         ali_data = load_ali_file(filepath)
-        audio_file = ali_data["audio-path"]
+        audio_file = ali_data["audio_path"]
         if not audio_file:
             print(red("Couldn't fine associated audiofile"), file=sys.stderr)
             continue

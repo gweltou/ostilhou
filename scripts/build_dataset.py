@@ -36,7 +36,7 @@ from ostilhou.asr import (
     load_ali_file,
 )
 from ostilhou.audio import load_audiofile
-from ostilhou.utils import sec2hms
+from ostilhou.utils import sec2hms, green, yellow, red
 
 
 
@@ -63,7 +63,7 @@ def parse_dataset(file_or_dir):
             if filename.startswith('.'):
                 # Skip hidden folders
                 continue
-            file_ext = os.path.splitext(file_or_dir)[1]
+            file_ext = os.path.splitext(filename)[1]
             if os.path.isdir(os.path.join(file_or_dir, filename)) \
                     or file_ext in (".split", ".seg", ".ali"):
                 data_item = parse_dataset(os.path.join(file_or_dir, filename))
@@ -86,11 +86,6 @@ def parse_dataset(file_or_dir):
 def parse_data_file(filepath):
     global n_dropped
 
-    # Kaldi doesn't like whitespaces in file path
-    if ' ' in filepath:
-        print("ERROR: whitespaces in path", filepath)
-        sys.exit(1)
-    
     # basename = os.path.basename(split_filename).split(os.path.extsep)[0]
     # print(Fore.GREEN + f" * {split_filename[:-6]}" + Fore.RESET)
     seg_ext = os.path.splitext(filepath)[1]
@@ -127,7 +122,7 @@ def parse_data_file(filepath):
         sentence, metadata = text_data[i]
         if stop - start < args.utt_min_len:
             # Skip short utterances
-            print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
+            print(yellow("dropped (too short): ") + sentence, file=sys.stderr)
             n_dropped += 1
             continue
         
@@ -152,9 +147,8 @@ def parse_data_file(filepath):
         # Filter out utterances with foreign chars
         chars = set(sentence)
         if not chars.issubset(valid_chars):
-            print(Fore.YELLOW
-                  + f"dropped (foreign chars '{chars.difference(valid_chars)}'): "
-                  + Fore.RESET + sentence, file=sys.stderr)
+            print(yellow(f"dropped (foreign chars '{chars.difference(valid_chars)}'): ")
+                  + sentence, file=sys.stderr)
             n_dropped += 1
             continue
 
@@ -165,7 +159,7 @@ def parse_data_file(filepath):
             utt_id = str(uuid4()).replace('-', '')
         
         if utt_id in utt_ids:
-            print(Fore.YELLOW + "dropped (recurrent): " + Fore.RESET + sentence, file=sys.stderr)
+            print(yellow("dropped (recurrent): ") + sentence, file=sys.stderr)
             n_dropped += 1
             continue
         utt_ids.add(utt_id)
@@ -178,7 +172,7 @@ def parse_data_file(filepath):
         if speaker_id in speakers_gender:
             speaker_gender = speakers_gender[speaker_id]
         else:
-            print(Fore.RED + "unknown gender:" + Fore.RESET, speaker_id)
+            print(red("unknown gender:"), speaker_id)
             speaker_gender = 'u'
         
         if speaker_gender == 'm':
@@ -196,9 +190,9 @@ def parse_data_file(filepath):
             [sentence, speaker_id, speaker_gender, accent, audio_path, start, stop]
         )
     
-    status = Fore.GREEN + f" * {filepath[:-len(seg_ext)]}" + Fore.RESET
+    status = green(f" * {filepath[:-len(seg_ext)]}")
     if data["audio_length"]['u'] > 0:
-        status += '\t' + Fore.RED + "unknown speaker(s)" + Fore.RESET
+        status += '\t' + red("unknown speaker(s)")
     print(status, file=sys.stderr)
     return data
 
@@ -213,7 +207,7 @@ if __name__ == "__main__":
     parser.add_argument("--train", help="Train dataset directory", required=True)
     parser.add_argument("--test", help="Test dataset directory")
     parser.add_argument("-o", "--output", help="Output folder for generated files", default="data_hf")
-    parser.add_argument("--utterances-min-length", help="Minimum length of an utterance", type=float, default=0.2)
+    parser.add_argument("--utt-min-len", help="Minimum length of an utterance", type=float, default=0.2)
     parser.add_argument("--unique", help="Remove multiple occurences of the same utterance", action="store_true")
     parser.add_argument("--no-punct", help="Remove punctuation from sentences", action="store_true")
     parser.add_argument("-f", "--format", help="metadata file format", choices=["tsv", "jsonl"], default="jsonl")
@@ -267,7 +261,6 @@ if __name__ == "__main__":
             elif args.format == "jsonl":
                 sentence = sentence.replace('"', '\\"')
                 metadata_file.write(f'{{"file_name": "{seg_audio_file}", "transcript": "{sentence}"}}\n')
-
 
 
             if not args.dry_run:
