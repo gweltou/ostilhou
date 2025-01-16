@@ -124,7 +124,7 @@ def format_timecode(timecode):
 
 
 
-def create_ali_file(sentences, segments, output, **kwargs):
+def create_ali_file(sentences, segments, **kwargs) -> str:
     """
         Common header metadata:
             audio-path
@@ -135,20 +135,23 @@ def create_ali_file(sentences, segments, output, **kwargs):
             licence
             tags: list of tags separated by commas
     """
-    with open(output, 'w', encoding='utf-8') as fout:
-        if value := kwargs.pop("audio-path", None):
-            fout.write(f"{{audio-path: {value}}}\n")
-        if value := kwargs.pop("audio_path", None):
-            fout.write(f"{{audio-path: {value}}}\n")
-        for key, value in sorted(kwargs.items()):
-            key = key.replace('_', '-')
-            fout.write(f"{{{key}: {value}}}\n")
-        fout.write("\n\n")
+    data = []
 
-        for sentence, segment in zip(sentences, segments):
-            start = format_timecode(segment[0])
-            end = format_timecode(segment[1])
-            fout.write(f"{sentence.strip()} {{start: {start}; end: {end}}}\n")
+    if value := kwargs.pop("audio-path", None):
+        data.append(f"{{audio-path: {value}}}")
+    if value := kwargs.pop("audio_path", None):
+        data.append(f"{{audio-path: {value}}}")
+    for key, value in sorted(kwargs.items()):
+        key = key.replace('_', '-')
+        data.append(f"{{{key}: {value}}}")
+    data.append("")
+
+    for sentence, segment in zip(sentences, segments):
+        start = format_timecode(segment[0])
+        end = format_timecode(segment[1])
+        data.append(f"{sentence.strip()} {{start: {start}; end: {end}}}")
+    
+    return '\n'.join(data)
 
 
 
@@ -160,7 +163,6 @@ def load_ali_file(filepath) -> Dict:
             raw_sentences: list,
             segments: list,
             metadata: list,
-
     """
 
     audio_path = None
@@ -215,7 +217,7 @@ def load_ali_file(filepath) -> Dict:
             if not audio_path and "audio-path" in metadata:
                 dir = os.path.split(filepath)[0]
                 audio_path = os.path.join(dir, metadata["audio-path"])
-                audio_path = os.path.normpath(audio_path)
+                audio_path = os.path.abspath(audio_path)
         
         # Try to find an associated audiofile if it was not explicitely set in metadata
         if not audio_path:
@@ -257,11 +259,9 @@ def parse_dataset(file_or_dir, args):
             if filename.startswith('.'):
                 # Skip hidden folders
                 continue
-            if (os.path.isdir(os.path.join(file_or_dir, filename))
-                or filename.endswith(".split")
-                or filename.endswith(".seg")
-                or filename.lower().endswith(".ali")
-            ):
+            file_ext = os.path.splitext(filename)[1].lower()
+            if os.path.isdir(os.path.join(file_or_dir, filename)) \
+                    or file_ext in (".split", ".seg", ".ali"):
                 item_data = parse_dataset(os.path.join(file_or_dir, filename), args)
                 data["wavscp"].extend(item_data["wavscp"])
                 data["utt2spk"].extend(item_data["utt2spk"])
@@ -292,6 +292,11 @@ speakers_gender = {"unknown": 'u'}
 
 def parse_data_file(filepath, args):
     print(Fore.GREEN + f" * {filepath}" + Fore.RESET, end=' ', flush=True)
+
+    # Kaldi doesn't like whitespaces in file path
+    if ' ' in filepath:
+        print("ERROR: whitespaces in path", filepath)
+        sys.exit(1)
     
     seg_ext = os.path.splitext(filepath)[1] # Could be '.split' or '.seg'
     audio_path = ""
@@ -452,27 +457,20 @@ def parse_data_file(filepath, args):
 
 
 
-def convert_to_eaf(split_filename, type="wav"):
-    """ Convert wav + txt + split files to a eaf (Elan) file """
+def create_eaf(segments, sentences, audiofile, type="wav"):
+    """ Export to eaf (Elan) file """
 
-    record_id = os.path.abspath(split_filename).split(os.path.extsep)[0]
-    audio_filename = os.path.extsep.join((record_id, 'wav'))
+    record_id = os.path.splitext(os.path.abspath(audiofile))[0]
     if type == "mp3":
         mp3_file = os.path.extsep.join((record_id, 'mp3'))
         if not os.path.exists(mp3_file):
-            convert_to_mp3(audio_filename, mp3_file)
-        audio_filename = mp3_file
-
-    text_filename = os.path.extsep.join((record_id, 'txt'))
-    eaf_filename = os.path.extsep.join((record_id, 'eaf'))
-
-    segments = load_segments_data(split_filename)
-    utterances = load_text_data(text_filename)
+            convert_to_mp3(audiofile, mp3_file)
+        audiofile = mp3_file
 
     doc = minidom.Document()
 
     root = doc.createElement('ANNOTATION_DOCUMENT')
-    root.setAttribute('AUTHOR', 'split2eaf (Gweltaz DG)')
+    root.setAttribute('AUTHOR', f'Anaouder {VERSION} (Gweltaz DG)')
     root.setAttribute('DATE', datetime.datetime.now(pytz.timezone('Europe/Paris')).isoformat(timespec='seconds'))
     root.setAttribute('FORMAT', '3.0')
     root.setAttribute('VERSION', '3.0')
@@ -486,12 +484,12 @@ def convert_to_eaf(split_filename, type="wav"):
     root.appendChild(header)
 
     media_descriptor = doc.createElement('MEDIA_DESCRIPTOR')
-    media_descriptor.setAttribute('MEDIA_URL', 'file://' + os.path.abspath(audio_filename))
+    media_descriptor.setAttribute('MEDIA_URL', 'file://' + os.path.abspath(audiofile))
     if type == "mp3":
         media_descriptor.setAttribute('MIME_TYPE', 'audio/mpeg')
     else:
         media_descriptor.setAttribute('MIME_TYPE', 'audio/x-wav')
-    media_descriptor.setAttribute('RELATIVE_MEDIA_URL', './' + os.path.basename(audio_filename))
+    media_descriptor.setAttribute('RELATIVE_MEDIA_URL', './' + os.path.basename(audiofile))
     header.appendChild(media_descriptor)
 
     time_order = doc.createElement('TIME_ORDER')
@@ -514,7 +512,7 @@ def convert_to_eaf(split_filename, type="wav"):
     tier_trans.setAttribute('LINGUISTIC_TYPE_REF', 'transcript')
     tier_trans.setAttribute('TIER_ID', 'Transcription')
 
-    for i, (sentence, _) in enumerate(utterances):
+    for i, sentence in enumerate(sentences):
         annotation = doc.createElement('ANNOTATION')
         alignable_annotation = doc.createElement('ALIGNABLE_ANNOTATION')
         alignable_annotation.setAttribute('ANNOTATION_ID', f'a{i+1}')
@@ -554,8 +552,7 @@ def convert_to_eaf(split_filename, type="wav"):
 
     xml_str = doc.toprettyxml(indent ="\t", encoding="UTF-8")
 
-    with open(eaf_filename, "w", encoding='utf-8') as f:
-        f.write(xml_str.decode("utf-8"))
+    return xml_str.decode("utf-8")
 
 
 

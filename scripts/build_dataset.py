@@ -231,20 +231,21 @@ if __name__ == "__main__":
 
     if args.format == "tsv":
         metadata_file = open(os.path.join(args.output, "metadata.tsv"), 'w', encoding='utf-8')
+        # Write header
         metadata_file.write('\t'.join(["file_name", "text"]) + '\n')
     elif args.format == "jsonl":
         metadata_file = open(os.path.join(args.output, "metadata.jsonl"), 'w', encoding='utf-8')
 
-    output_folder = os.path.join(args.output, "data")
-    if not args.dry_run and not os.path.exists(output_folder):
-        os.mkdir(output_folder)
+    data_folder = os.path.join(args.output, "data")
+    if not args.dry_run and not os.path.exists(data_folder):
+        os.mkdir(data_folder)
 
     last_recording_id = None
 
     for corpus_name, data in dataset.items(): # train / test
         n_segments = 0
 
-        corpus_folder = os.path.join(output_folder, corpus_name)
+        corpus_folder = os.path.join(data_folder, corpus_name)
         if not args.dry_run and not os.path.exists(corpus_folder):
             os.mkdir(corpus_folder)
 
@@ -254,14 +255,14 @@ if __name__ == "__main__":
             audio_file, start, end = utterance[4:]
 
             recording_id = md5(utterance[4].encode("utf8")).hexdigest()
-            seg_audio_file = os.path.join("data", corpus_name, f"{recording_id}_{start:0>7}_{end:0>7}.mp3")
+            seg_audio_filename = f"{recording_id}_{int(start):0>7}_{int(end):0>7}.{args.audio_format}"
+            seg_audio_path = os.path.join("data", corpus_name, seg_audio_filename)
             
             if args.format == "tsv":
-                metadata_file.write('\t'.join([seg_audio_file, sentence]) + '\n')
+                metadata_file.write('\t'.join([seg_audio_path, sentence]) + '\n')
             elif args.format == "jsonl":
                 sentence = sentence.replace('"', '\\"')
-                metadata_file.write(f'{{"file_name": "{seg_audio_file}", "transcript": "{sentence}"}}\n')
-
+                metadata_file.write(f'{{"file_name": "{seg_audio_path}", "transcript": "{sentence}"}}\n')
 
             if not args.dry_run:
                 if recording_id != last_recording_id:
@@ -270,7 +271,7 @@ if __name__ == "__main__":
                     last_recording_id = recording_id
                 
                 segment = audio[start:end]
-                output_file = os.path.join(corpus_folder, f"{recording_id}_{start:0>7}_{end:0>7}.{args.audio_format}")
+                output_file = os.path.join(corpus_folder, seg_audio_filename)
                 if not os.path.exists(output_file):
                     segment.export(output_file, format=args.audio_format)
                 n_segments += 1
@@ -291,7 +292,7 @@ if __name__ == "__main__":
         if audio_length_u > 0:
             print(f"- Unknown speakers:\t{sec2hms(audio_length_u)}\t{audio_length_u/total_audio_length:.1%}")
 
-    print(f"Files saved in {output_folder}")
+    print(f"Files saved in {data_folder}")
 
 
 
