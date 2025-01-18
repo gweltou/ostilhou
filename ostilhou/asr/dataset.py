@@ -12,14 +12,14 @@ from colorama import Fore
 from xml.dom import minidom
 import datetime, pytz
 
-from ..utils import read_file_drop_comments
+from ..utils import read_file_drop_comments, green, yellow, red
 from ..text import (
     pre_process, normalize_sentence, filter_out_chars,
     split_sentences, tokenize, detokenize, normalize, Token,
     PUNCTUATION,
     VALID_CHARS
 )
-from ..audio import convert_to_mp3, find_associated_audiofile
+from ..audio import convert_to_wav, convert_to_mp3, find_associated_audiofile
 
 
 datafile_header = \
@@ -234,12 +234,12 @@ def load_ali_file(filepath) -> Dict:
 
 
 
-def parse_dataset(file_or_dir, args):
+def parse_dataset(file_or_dir, exclude:list, args) -> dict:
     if (file_or_dir.endswith(".split")
         or file_or_dir.endswith(".seg")
         or file_or_dir.lower().endswith('.ali')
     ):   # Single data item
-        return parse_data_file(file_or_dir, args)
+        return parse_data_file(file_or_dir, exclude, args)
 
     elif os.path.isdir(file_or_dir):
         data = {
@@ -262,7 +262,9 @@ def parse_dataset(file_or_dir, args):
             file_ext = os.path.splitext(filename)[1].lower()
             if os.path.isdir(os.path.join(file_or_dir, filename)) \
                     or file_ext in (".split", ".seg", ".ali"):
-                item_data = parse_dataset(os.path.join(file_or_dir, filename), args)
+                item_data = parse_dataset(os.path.join(file_or_dir, filename), exclude, args)
+                if not item_data:
+                    continue
                 data["wavscp"].extend(item_data["wavscp"])
                 data["utt2spk"].extend(item_data["utt2spk"])
                 data["segments"].extend(item_data["segments"])
@@ -282,21 +284,19 @@ def parse_dataset(file_or_dir, args):
 
         return data
     else:
-        print("File argument must be a split file or a directory")
-        return
+        raise TypeError("File argument must be a split file or a directory")
     
 
 
 valid_chars = set(VALID_CHARS)
 speakers_gender = {"unknown": 'u'}
 
-def parse_data_file(filepath, args):
-    print(Fore.GREEN + f" * {filepath}" + Fore.RESET, end=' ', flush=True)
-
-    # Kaldi doesn't like whitespaces in file path
-    if ' ' in filepath:
-        print("ERROR: whitespaces in path", filepath)
-        sys.exit(1)
+def parse_data_file(filepath, exclude, args) -> dict:
+    print(green(f" * {filepath}"), end=' ', flush=True)
+    
+    if os.path.abspath(filepath) in exclude:
+        print(red("Excluded"))
+        return None
     
     seg_ext = os.path.splitext(filepath)[1] # Could be '.split' or '.seg'
     audio_path = ""
@@ -346,7 +346,7 @@ def parse_data_file(filepath, args):
     for (sentence, metadata), (start, end) in zip(sentences_and_metadata, segments):
         if end - start < args.utt_min_len:
             # Skip short utterances
-            print(Fore.YELLOW + "dropped (too short): " + Fore.RESET + sentence, file=sys.stderr)
+            print(yellow("dropped (too short): ") + sentence, file=sys.stderr)
             continue
             
         speaker_id = metadata["speaker"]
@@ -385,8 +385,7 @@ def parse_data_file(filepath, args):
         sent_no_acronyms = sent_no_acronyms.replace('\xa0', ' ').replace('*', '')
         chars = set(sent_no_acronyms)
         if not chars.issubset(valid_chars):
-            print('\n' + Fore.YELLOW
-                + f"dropped (foreign chars '{chars.difference(valid_chars)}'): "
+            print('\n' + yellow(f"dropped (foreign chars '{chars.difference(valid_chars)}'): ")
                 + Fore.RESET + sentence, end='', file=sys.stderr)
             continue
         
@@ -438,20 +437,20 @@ def parse_data_file(filepath, args):
                 # Ignore if to many black-listed words in sentence
                 if n_stared / len(tokens) > 0.2:
                     if args.verbose:
-                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent, end='')
+                        print(yellow("LM exclude:"), sent, end='')
                     continue
                 # Remove starred words
                 tokens = [tok for tok in tokens if not tok.startswith('*')]
                 # Ignore if sentence is too short
                 if len(tokens) < args.lm_min_token:
                     if args.verbose:
-                        print(Fore.YELLOW + "LM exclude:" + Fore.RESET, sent, end='')
+                        print(yellow("LM exclude:"), sent, end='')
                     continue
                 data["corpus"].add(' '.join(tokens))
      
     # status = Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
-        print(' ' + Fore.RED + "unknown speaker(s)" + Fore.RESET, end='')
+        print(' ' + yellow("unknown speaker(s)"), end='')
     print()
     return data
 
@@ -697,12 +696,12 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
                     else:
                         speaker_name_depr = SPEAKER_ID_PATTERN_DEPR.fullmatch(unit)
                         if speaker_name_depr:
-                            print(Fore.RED + f"Deprecated metadata: {unit}" + Fore.RESET)
+                            print(red(f"Deprecated metadata: {unit}"))
                             metadata["speaker"] = speaker_name_depr.group(1)
                             if speaker_name_depr.group(2) in 'fm':
                                 metadata["gender"] = speaker_name_depr.group(2)
                         else:
-                            print(Fore.RED + f"Wrong metadata: {unit}" + Fore.RESET)
+                            print(red(f"Wrong metadata: {unit}"))
                 else:
                     # A simplified speaker name
                     if not unit.isupper():

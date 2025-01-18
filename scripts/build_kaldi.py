@@ -67,71 +67,27 @@ if __name__ == "__main__":
     parser.add_argument("--lm-min-token", help="Minimum number of tokens in sentence for adding it to LM corpus", type=int, default=3)
     parser.add_argument("--utt-min-len", help="Minimum length of audio utterances", type=float, default=0.0)
     parser.add_argument("--hash-id", help="Hash speaker ids", action="store_true")
+    parser.add_argument("--exclude", help="filepath containing a list of data files to exclude from training", type=str)
     parser.add_argument("--split-audio", help="Split audio files by segments", action="store_true")
     args = parser.parse_args()
     print(args)
 
     if not os.path.isdir(args.train):
-        print("`train` argument should be a directory containing aligned data")
-        sys.exit(1)
+        raise NotADirectoryError("`train` argument should be a directory containing aligned data")
     if args.test and not os.path.isdir(args.test):
-        print("`test` argument should be a directory containing aligned data")
-        sys.exit(1)
+        raise NotADirectoryError("`test` argument should be a directory containing aligned data")
     
     speakers_gender = {"unknown": "u"}
+
+    # Exclude specific files from training data
+    exclude = []
+    if "exclude" in args:
+        with open(args.exclude, 'r', encoding='utf-8') as _f:
+            exclude.extend([l.strip() for l in _f.readlines()])
     
     print("\n==== PARSING DATA ITEMS ====")
-    corpora = { "train": parse_dataset(args.train, args) }
-    if args.test: corpora["test"] = parse_dataset(args.test, args)
-
-
-    ####################################
-    ####     DATA AUGMENTATION      ####
-    ####################################
-
-    # if not args.dry_run and args.augment:
-    #     print("TO FIX !")
-    #     sys.exit(1)
-
-    #     print("\n==== DATA AUGMENTATION ====")
-    #     # If True, duplicates the whole train dataset, adding various audio noises.
-    #     # The augmented data will be put in a sister folder `augmented`, with the same
-    #     # directory hierarchy as the original audio corpus.
-
-    #     root = os.path.abspath(args.train)
-    #     # augmented_rep = os.path.join(os.path.abspath(SAVE_DIR), "augmented")
-    #     augmented_rep = os.path.join(root, "augmented")
-    #     augmented_files = dict()
-        
-    #     new_rec_id = dict()
-
-    #     for (rec_id, original_audio) in corpora["train"]["wavscp"].items():
-    #         recording_id = rec_id + "_AUG"
-    #         utterance_id = corpora["train"]["text"][i][0]
-    #         # utterance_id should not be postfixed with anything,
-    #         # lest Kaldi goes back and forth between the original and augmented audio file
-    #         # when extracting features for every utterance
-    #         utterance_id = utterance_id.rsplit('-', maxsplit=1)
-    #         utterance_id = utterance_id[0] + "_AUG_" + utterance_id[1]
-    #         text = corpora["train"]["text"][i][1]
-    #         corpora["train"]["text"].append((utterance_id, text))
-    #         seg = corpora["train"]["segments"][i].split('\t')
-    #         corpora["train"]["segments"].append(f"{utterance_id}\t{recording_id}\t{seg[2]}\t{seg[3]}")
-    #         utt2spk = corpora["train"]["utt2spk"][i].split('\t')
-    #         corpora["train"]["utt2spk"].append(f"{utterance_id}\t{utt2spk[1]}")
-
-    #         rep, filename = os.path.split(original_audio)
-    #         rep = rep.replace(root, augmented_rep)
-    #         output_filename = os.path.join(rep, filename)
-    #         augmented_files[recording_id] = output_filename
-    #         if os.path.exists(output_filename):
-    #             continue
-    #         if not os.path.exists(rep):
-    #             os.makedirs(rep)
-    #         add_amb_random(original_audio, output_filename)
-
-    #     corpora["train"]["wavscp"].update(augmented_files)
-    #     print("Done.")
+    corpora = { "train": parse_dataset(args.train, exclude, args) }
+    if args.test: corpora["test"] = parse_dataset(args.test, exclude, args)
 
 
     if not args.dry_run:
@@ -159,7 +115,7 @@ if __name__ == "__main__":
         
         # External text corpora will be added now
         if args.lm_corpus:
-            print("parsing and embedding external corpora :")
+            print("parsing external corpora :")
             corpus_files = []
             for file in args.lm_corpus:
                 if os.path.isdir(file):
@@ -250,19 +206,19 @@ if __name__ == "__main__":
                 os.mkdir(save_dir)
             
             # Convert audio files in wavscp to 16KHz 16bit mono PCM format
-            print("Converting audio files to 16KHz s16le PCM...")
+            print("Converting audio files to 16KHz s16le PCM, if necessary...")
             new_wavscp = []
             for rec_id, audio_path in corpus["wavscp"]:
-                if not is_audiofile_valid_format(audio_path):
-                    _, basename = os.path.split(audio_path)
-                    basename, audio_format = os.path.splitext(basename)
+                _, filename = os.path.split(audio_path)
+                if not is_audiofile_valid_format(audio_path) or ' ' in filename:
+                    # Kaldi doesn't like whitespaces in file path
+                    basename, audio_format = os.path.splitext(filename)
                     basename = clean_filename(basename)
                     converted_path = os.path.join(audio_dir, basename + ".wav")
                     if not os.path.exists(converted_path):
                         convert_to_wav(audio_path, converted_path, verbose=True)
-                    new_wavscp.append((rec_id, converted_path))
-                else:
-                    new_wavscp.append((rec_id, audio_path))
+                    audio_path = converted_path
+                new_wavscp.append((rec_id, audio_path))
             corpus["wavscp"] = new_wavscp
 
             if args.split_audio:
@@ -294,7 +250,6 @@ if __name__ == "__main__":
                     f.write(f"{utt_id}\t{sentence}\n")
             
             # Build 'segments' file (optional)
-            # Optional
             # start and end are measured in seconds
             if not args.split_audio:
                 fname = os.path.join(save_dir, 'segments')
