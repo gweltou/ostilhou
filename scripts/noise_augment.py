@@ -8,8 +8,7 @@ from os import makedirs
 import shutil
 import argparse
 
-from ostilhou.utils import list_files_with_extension
-from ostilhou.audio import add_whitenoise, add_amb_random
+from ostilhou.audio import add_whitenoise, add_random_amb_noise
 from ostilhou.asr import load_text_data, load_ali_file, create_ali_file
 
 
@@ -61,7 +60,7 @@ if __name__ == "__main__":
             print(filepath)
 
             if args.amb_noise:
-                add_amb_random(soundfile, soundfile_dest, randint(-10, -4))
+                add_random_amb_noise(soundfile, soundfile_dest, randint(-10, -4))
                 soundfile = soundfile_dest
             
             add_whitenoise(soundfile, soundfile_dest, randint(-34, -22))

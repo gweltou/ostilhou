@@ -132,7 +132,19 @@ def pre_process(text: str) -> str:
 
 
 def sentence_stats(sentence: str) -> dict:
-    """ Get statistics about a text """
+    """
+    Get statistics about a text
+
+    {
+        "letter" (int),
+        "decimal" (int),
+        "upper" (int),
+        "punct" (int),
+        "blank" (int),
+        "other" (int),
+        "words" (int),
+    }
+    """
     
     letter = 0
     decimal = 0

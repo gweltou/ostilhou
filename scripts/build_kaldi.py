@@ -254,21 +254,21 @@ if __name__ == "__main__":
             if not args.split_audio:
                 fname = os.path.join(save_dir, 'segments')
                 print(f"Building file \'{fname}\'")
-                with open(fname, 'w') as f:
+                with open(fname, 'w', encoding='utf-8') as f:
                     for utt_id, rec_id, start, end in corpus["segments"]:
                         f.write(f"{utt_id}\t{rec_id}\t{start}\t{end}\n")
             
             # Build 'utt2spk'
             fname = os.path.join(save_dir, 'utt2spk')
             print(f"Building file \'{fname}\'")
-            with open(fname, 'w') as f:
+            with open(fname, 'w', encoding='utf-8') as f:
                 for utt_id, speaker_id in sorted(corpus["utt2spk"]):
                     f.write(f"{utt_id}\t{speaker_id}\n")
             
             # Build 'spk2gender'
             fname = os.path.join(save_dir, 'spk2gender')
             print(f"Building file \'{fname}\'")
-            with open(fname, 'w') as f:
+            with open(fname, 'w', encoding='utf-8') as f:
                 for speaker in sorted(corpus["speakers"]):
                     if speaker not in speakers_gender: continue
                     f.write(f"{speaker}\t{speakers_gender[speaker]}\n")

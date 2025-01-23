@@ -5,6 +5,11 @@
     Score every utterance of every data item in a given folder
     Creates a TSV file with the following columns :
     filepath, audio ext, seg start, seg end, reference, hypothesis, WER, CER
+    
+    usage:
+        python3 score_ali_files.py data_folder/
+        python3 score_ali_files.py data.ali
+        python3 score_ali_files.py list_of_files.txt
 """
 
 
@@ -12,31 +17,48 @@ import sys
 import argparse
 import os
 from jiwer import wer, cer
+from tempfile import mkstemp
 
-from ostilhou.utils import list_files_with_extension, red
-from ostilhou.text import pre_process, filter_out_chars, normalize_sentence, PUNCTUATION
+from ostilhou.utils import (
+    list_files_with_extension,
+    red,
+    yellow,
+)
+from ostilhou.text import (
+    pre_process, filter_out_chars, normalize_sentence,
+    sentence_stats,
+    PUNCTUATION,
+)
 from ostilhou.asr import load_ali_file
 from ostilhou.asr.models import load_model
 from ostilhou.asr.recognizer import transcribe_segment
 from ostilhou.asr.dataset import format_timecode
-from ostilhou.audio import load_audiofile, get_audio_segment
+from ostilhou.audio import load_audiofile, get_audio_segment, add_whitenoise
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Score every utterance of every data item in a given folder")
-    parser.add_argument("data_folder", metavar='FOLDER', help="Folder containing data files")
+    parser = argparse.ArgumentParser(
+        description="Score every utterance of every ALI file in a given folder"
+    )
+    parser.add_argument("data_folder", metavar='FOLDER',
+        help="Folder containing ALI files or a single ALI file or a text file with a list of paths in it")
     parser.add_argument("-m", "--model", default=None,
         help="Vosk model to use for decoding", metavar='MODEL_PATH')
     parser.add_argument("-o", "--output", type=str, help="Results file")
+    parser.add_argument("--noise", type=float, help="Add white noise to audio (dB)")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
     
     load_model(args.model)
 
-    # print(args.data_folder)
     if os.path.isdir(args.data_folder):
         ali_files = list_files_with_extension('.ali', args.data_folder)
     elif args.data_folder.lower().endswith('.ali'):
         ali_files = [args.data_folder]
+    elif os.path.isfile(args.data_folder):
+        # A text file with a path to an ALI file on every line
+        with open(args.data_folder, 'r') as _f:
+            ali_files = [ l.strip() for l in _f.readlines() ]
     else:
         print("Wrong argument", file=sys.stderr)
         sys.exit(1)
@@ -50,30 +72,40 @@ if __name__ == "__main__":
                 path = datapoint.split('\t')[0]
                 seen_files.add(path)
         for filepath in seen_files:
-            print(f"* Skipping {os.path.split(filepath)[1]}")
+            print(f"* Skipping {os.path.split(filepath)[1]}", file=sys.stderr)
         ali_files.difference_update(seen_files)
             
-
+    wer_sum = 0.0
+    cer_sum = 0.0
+    words_sum = 0
+    letters_sum = 0
     for filepath in sorted(ali_files):
         _, basename = os.path.split(filepath)
         basename, _ = os.path.splitext(basename)
         print(f"==== {basename} ====", file=sys.stderr)
 
         ali_data = load_ali_file(filepath)
-        audio_file = ali_data["audio_path"]
-        if not audio_file:
+        audio_path = ali_data["audio_path"]
+        if not audio_path:
             print(red("Couldn't fine associated audiofile"), file=sys.stderr)
             continue
 
+        if args.noise:
+            print(yellow(f"Adding white noise to audio ({args.noise} dB)"))
+            _, noisy_audio_path = mkstemp()
+            add_whitenoise(audio_path, noisy_audio_path, min(args.noise, 0))
+            audio_path = noisy_audio_path
+
         segments = ali_data["segments"]
         text = ali_data["sentences"]
-        print(len(segments), "utterances", file=sys.stderr)
+        if args.verbose:
+            print(f"  {len(segments)} utterances", file=sys.stderr)
         if len(segments) == 0:
             print(red(f"Error with file {filepath}"))
             continue
-        audio_ext = os.path.splitext(audio_file)[1][1:]
+        audio_ext = os.path.splitext(audio_path)[1][1:]
 
-        audio = load_audiofile(audio_file)
+        audio = load_audiofile(audio_path)
 
         references = []
         hypothesis = []
@@ -89,6 +121,11 @@ if __name__ == "__main__":
             transcription = transcription.replace('-', ' ').lower()
             score_wer = round(wer(sentence, transcription), 2)
             score_cer = round(cer(sentence, transcription), 2)
+            stats = sentence_stats(sentence)
+            wer_sum += score_wer * stats["words"]
+            cer_sum += score_cer * stats["letter"]
+            words_sum += stats["words"]
+            letters_sum += stats["letter"]
             if not transcription:
                 transcription = '-'
             
@@ -109,6 +146,15 @@ if __name__ == "__main__":
             with open(args.output, 'a', encoding='utf-8') as fout:
                 for row in rows:
                     fout.write(row + '\n')
+        
+        if args.noise:
+            # Remove temporary noisy audio
+            os.remove(noisy_audio_path)
 
-        print("  => WER:", wer(references, hypothesis), file=sys.stderr)
-        print("  => CER:", cer(references, hypothesis), file=sys.stderr)
+        print("  => WER:", round(wer(references, hypothesis), 3), file=sys.stderr)
+        print("  => CER:", round(cer(references, hypothesis), 3), file=sys.stderr)
+
+    print(f"\n======== TOTAL ({os.path.split(args.model)[1]}) ========", file=sys.stderr)
+    print(f"WER: {round(wer_sum / words_sum, 3)}", file=sys.stderr)
+    print(f"CER: {round(cer_sum / letters_sum, 3)}", file=sys.stderr)
+    print("\n", file=sys.stderr)

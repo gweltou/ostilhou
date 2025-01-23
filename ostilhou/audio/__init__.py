@@ -334,22 +334,38 @@ else:
 
 
 
-def add_amb_random(voice_file, output_file, gain=None):
-    amb_file = choice(AUDIO_AMB_FILES)
+def add_random_amb_noise(voice_file, output_file, gain=None):
+    """
+    Add random ambient noises to a voice audio segment
+    Export to 16kHz s16le PCM
+    """
     voice = AudioSegment.from_file(voice_file)
-    amb = AudioSegment.from_file(amb_file)
-
-    if gain:
-        amb += gain
-    elif amb.dBFS > -30: amb -= amb.dBFS + 30
+    combined_amb = AudioSegment.silent(duration=0)
+    
+    while len(combined_amb) < len(voice):
+        amb_file = choice(AUDIO_AMB_FILES)
+        amb = AudioSegment.from_file(amb_file)
+        
+        if gain:
+            amb += gain
+        elif amb.dBFS > -30:
+            amb -= amb.dBFS + 30
+            
+        combined_amb += amb
+    
+    combined_amb = combined_amb[:len(voice)]
     
     if voice.dBFS < -25: voice += -voice.dBFS - 20
     # print(amb_file, amb.rms, amb.dBFS)
     # print(voice_file, voice.rms, voice.dBFS)
 
-    combined = voice.overlay(amb, loop=True)
+    combined = voice.overlay(combined_amb)
     print("Exporting to", output_file)
-    combined.export(output_file, format='wav', parameters=['-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000'])
+    combined.export(
+        output_file,
+        format='wav',
+        parameters=['-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000']
+    )
 
 
 
