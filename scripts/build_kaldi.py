@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     # Exclude specific files from training data
     exclude = []
-    if "exclude" in args:
+    if args.exclude:
         with open(args.exclude, 'r', encoding='utf-8') as _f:
             exclude.extend([l.strip() for l in _f.readlines()])
     
