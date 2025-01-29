@@ -35,6 +35,7 @@ from ostilhou.asr import (
     phonetize_word,
     parse_dataset,
 )
+from ostilhou.dicts import stopwords
 from ostilhou.utils import sec2hms, list_files_with_extension, read_file_drop_comments
 from ostilhou.audio import export_segment, convert_to_wav, is_audiofile_valid_format
 
@@ -85,200 +86,203 @@ if __name__ == "__main__":
         with open(args.exclude, 'r', encoding='utf-8') as _f:
             exclude.extend([l.strip() for l in _f.readlines()])
     
+    stopwords = { word.lower() for word in stopwords }
+        
     print("\n==== PARSING DATA ITEMS ====")
     corpora = { "train": parse_dataset(args.train, exclude, args) }
     if args.test: corpora["test"] = parse_dataset(args.test, exclude, args)
 
 
-    if not args.dry_run:
-        if not os.path.exists(args.output):
-            os.mkdir(args.output)
+    if not os.path.exists(args.output):
+        os.mkdir(args.output)
 
-        dir_kaldi_local = os.path.join(args.output, "local")
-        if not os.path.exists(dir_kaldi_local):
-            os.mkdir(dir_kaldi_local)
+    dir_kaldi_local = os.path.join(args.output, "local")
+    if not os.path.exists(dir_kaldi_local):
+        os.mkdir(dir_kaldi_local)
+    
+    audio_dir = os.path.abspath(os.path.join(args.output, "converted"))
+    if not os.path.exists(audio_dir):
+        os.mkdir(audio_dir)
         
-        audio_dir = os.path.abspath(os.path.join(args.output, "converted"))
-        if not os.path.exists(audio_dir):
-            os.mkdir(audio_dir)
-            
 
-        print("\n==== BUILDING KALDI FILES ====")
-        # Copy text from train utterances to language model corpus
-        print(f"building file \'{os.path.join(dir_kaldi_local, 'corpus.txt')}\'")
-        with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'w', encoding='utf-8') as fout:
-            n = 0
-            for l in corpora["train"]["corpus"]:
-                fout.write(f"{l}\n")
-                n += 1
-            print(f" {n} sentences added")
-        
-        # External text corpora will be added now
-        if args.lm_corpus:
-            print("parsing external corpora :")
-            corpus_files = []
-            for file in args.lm_corpus:
-                if os.path.isdir(file):
-                    # Expand directory
-                    corpus_files.extend(list_files_with_extension(['.txt', '.cor'], file))
-                else:
-                    corpus_files.append(file)
-                        
-            with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a', encoding='utf-8') as fout:
-                # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
-                for file in corpus_files:
-                    print(Fore.GREEN + f" * {file}" + Fore.RESET)
-                    n = 0
-                    for line in read_file_drop_comments(file):
-                        sentence = line
-                        cleaned = pre_process(sentence)
-                        cleaned = normalize_sentence(cleaned.strip(), autocorrect=True, norm_case=True)
-                        cleaned = cleaned.replace('-', ' ').replace('/', ' ')
-                        cleaned = cleaned.replace('\xa0', ' ')
-                        cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}')
-                        for word in cleaned.split():
-                            if word in corpora["train"]["lexicon"]:
-                                pass
-                            elif word == "'":
-                                pass
-                            elif '·' in word: # Don't add inclusive words for now
-                                pass
-                            else:
-                                corpora["train"]["lexicon"].add(word)
-                        fout.write(cleaned + '\n')
-                        n += 1
-                    print(f" {n} sentences added")
+    print("\n==== BUILDING KALDI FILES ====")
+    # Copy text from train utterances to language model corpus
+    print(f"building file \'{os.path.join(dir_kaldi_local, 'corpus.txt')}\'")
+    with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'w', encoding='utf-8') as fout:
+        n = 0
+        for l in corpora["train"]["corpus"]:
+            fout.write(f"{l}\n")
+            n += 1
+        print(f" {n} sentences added")
+    
+    # External text corpora will be added now
+    if args.lm_corpus:
+        print("parsing external corpora :")
+        corpus_files = []
+        for file in args.lm_corpus:
+            if os.path.isdir(file):
+                # Expand directory
+                corpus_files.extend(list_files_with_extension(['.txt', '.cor'], file))
+            else:
+                corpus_files.append(file)
+                    
+        with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a', encoding='utf-8') as fout:
+            # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
+            for file in corpus_files:
+                print(Fore.GREEN + f" * {file}" + Fore.RESET)
+                n = 0
+                for line in read_file_drop_comments(file):
+                    sentence = line
+                    cleaned = pre_process(sentence)
+                    cleaned = normalize_sentence(cleaned.strip(), autocorrect=True, norm_case=True)
+                    cleaned = cleaned.replace('-', ' ').replace('/', ' ')
+                    cleaned = cleaned.replace('\xa0', ' ')
+                    cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}*')
+                    for word in cleaned.split():
+                        if word in corpora["train"]["lexicon"]:
+                            pass
+                        elif word == "'":
+                            pass
+                        elif '·' in word: # Don't add inclusive words for now
+                            pass
+                        else:
+                            corpora["train"]["lexicon"].add(word)
+                    fout.write(' '.join(cleaned.split()) + '\n') # Remove multi-spaces
+                    n += 1
+                print(f" {n} sentences added")
         
     
-    if not args.dry_run:
-        dir_dict_nosp = os.path.join(dir_kaldi_local, 'dict_nosp')
-        if not os.path.exists(dir_dict_nosp):
-            os.mkdir(dir_dict_nosp)
-        
-        # Lexicon.txt
-        lexicon_path = os.path.join(dir_dict_nosp, 'lexicon.txt')
-        print(f"building file \'{lexicon_path}\'")
+    dir_dict_nosp = os.path.join(dir_kaldi_local, 'dict_nosp')
+    if not os.path.exists(dir_dict_nosp):
+        os.mkdir(dir_dict_nosp)
+    
+    # Lexicon.txt
+    lexicon_path = os.path.join(dir_dict_nosp, 'lexicon.txt')
+    print(f"building file \'{lexicon_path}\'")
 
-        if "test" in corpora:
-            corpora["train"]["lexicon"].update(corpora["test"]["lexicon"])
+    if "test" in corpora:
+        corpora["train"]["lexicon"].update(corpora["test"]["lexicon"])
 
-        with open(lexicon_path, 'w', encoding='utf-8') as f_out:
-            f_out.write("!SIL SIL\n"
-                        "<SPOKEN_NOISE> SPN\n"
-                        "<UNK> SPN\n"
-                        "<C'HOARZH> LAU\n"
-                        "<NTT> SPN\n"
-                        "<HUM> SPN\n"
-                        "<PASAAT> SPN\n"
-                        "<FRONAL> SPN\n"
-                        "<SONEREZH> NSN\n")
-            for word in sorted(corpora["train"]["lexicon"]):
-                for pron in phonetize_word(word):
-                    if not pron:
-                        print(Fore.RED + "ERROR empty pronunciation" + Fore.RESET, word)
-                    # print(f"{word} {pron}\n")
+    with open(lexicon_path, 'w', encoding='utf-8') as f_out:
+        f_out.write("!SIL SIL\n"
+                    "<SPOKEN_NOISE> SPN\n"
+                    "<UNK> SPN\n"
+                    "<C'HOARZH> LAU\n"
+                    "<NTT> SPN\n"
+                    "<HUM> SPN\n"
+                    "<PASAAT> SPN\n"
+                    "<FRONAL> SPN\n"
+                    "<SONEREZH> NSN\n")
+        for word in sorted(corpora["train"]["lexicon"]):
+            if word.lower() in stopwords:
+                continue
+            prons, errors = phonetize_word(word)
+            for pron in prons:
+                if not pron:
+                    print(Fore.RED + "ERROR empty pronunciation" + Fore.RESET, word)
+                elif errors == 0:
                     f_out.write(f"{word} {pron}\n")
-        
-        # silence_phones.txt
-        silence_phones_path  = os.path.join(dir_dict_nosp, "silence_phones.txt")
-        print(f"building file \'{silence_phones_path}\'")
-        with open(silence_phones_path, 'w', encoding='utf-8') as f:
-            f.write(f'SIL\noov\nSPN\nLAU\nNSN\n')
-        
-        # nonsilence_phones.txt
-        nonsilence_phones_path = os.path.join(dir_dict_nosp, "nonsilence_phones.txt")
-        print(f"building file \'{nonsilence_phones_path}\'")
-        with open(nonsilence_phones_path, 'w', encoding='utf-8') as f:
-            for p in sorted(phonemes):
-                f.write(f'{p}\n')
-        
-        # optional_silence.txt
-        optional_silence_path  = os.path.join(dir_dict_nosp, "optional_silence.txt")
-        print(f"building file \'{optional_silence_path}\'")
-        with open(optional_silence_path, 'w', encoding='utf-8') as f:
-            f.write('SIL\n')
+    
+    # silence_phones.txt
+    silence_phones_path  = os.path.join(dir_dict_nosp, "silence_phones.txt")
+    print(f"building file \'{silence_phones_path}\'")
+    with open(silence_phones_path, 'w', encoding='utf-8') as f:
+        f.write(f'SIL\noov\nSPN\nLAU\nNSN\n')
+    
+    # nonsilence_phones.txt
+    nonsilence_phones_path = os.path.join(dir_dict_nosp, "nonsilence_phones.txt")
+    print(f"building file \'{nonsilence_phones_path}\'")
+    with open(nonsilence_phones_path, 'w', encoding='utf-8') as f:
+        for p in sorted(phonemes):
+            f.write(f'{p}\n')
+    
+    # optional_silence.txt
+    optional_silence_path  = os.path.join(dir_dict_nosp, "optional_silence.txt")
+    print(f"building file \'{optional_silence_path}\'")
+    with open(optional_silence_path, 'w', encoding='utf-8') as f:
+        f.write('SIL\n')
 
 
-        for corpus_name in corpora:
-            corpus = corpora[corpus_name]
-            save_dir = os.path.join(args.output, corpus_name)
-            if not os.path.exists(save_dir):
-                os.mkdir(save_dir)
-            
-            # Convert audio files in wavscp to 16KHz 16bit mono PCM format
-            print("Converting audio files to 16KHz s16le PCM, if necessary...")
+    for corpus_name in corpora:
+        corpus = corpora[corpus_name]
+        save_dir = os.path.join(args.output, corpus_name)
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
+        
+        # Convert audio files in wavscp to 16KHz 16bit mono PCM format
+        print("Converting audio files to 16KHz s16le PCM, if necessary...")
+        new_wavscp = []
+        for rec_id, audio_path in corpus["wavscp"]:
+            _, filename = os.path.split(audio_path)
+            if not is_audiofile_valid_format(audio_path) or ' ' in filename:
+                # Kaldi doesn't like whitespaces in file path
+                basename, audio_format = os.path.splitext(filename)
+                basename = clean_filename(basename)
+                converted_path = os.path.join(audio_dir, basename + ".wav")
+                if not args.dry_run and not os.path.exists(converted_path):
+                    convert_to_wav(audio_path, converted_path, verbose=True)
+                audio_path = converted_path
+            new_wavscp.append((rec_id, audio_path))
+        corpus["wavscp"] = new_wavscp
+
+        if args.split_audio:
+            # Split audio files to individual segments
+            # wavscp data must be changed from 'rec_id' -> 'audio_path'
+            # to 'utt_id' -> 'audio-path'
+            print("Splitting audio files...")
             new_wavscp = []
             for rec_id, audio_path in corpus["wavscp"]:
-                _, filename = os.path.split(audio_path)
-                if not is_audiofile_valid_format(audio_path) or ' ' in filename:
-                    # Kaldi doesn't like whitespaces in file path
-                    basename, audio_format = os.path.splitext(filename)
-                    basename = clean_filename(basename)
-                    converted_path = os.path.join(audio_dir, basename + ".wav")
-                    if not os.path.exists(converted_path):
-                        convert_to_wav(audio_path, converted_path, verbose=True)
-                    audio_path = converted_path
-                new_wavscp.append((rec_id, audio_path))
+                print(" *", audio_path, flush=True)
+                for utt_id, seg_rec_id, start, end in corpus["segments"]:
+                    # Find all segments corresponding to this rec_id
+                    if seg_rec_id == rec_id:
+                        output_file = f"{rec_id}_{floor(start*100):0>7}-{ceil(end*100):0>7}.wav"
+                        output_file = os.path.join(audio_dir, output_file)
+                        if not os.path.exists(output_file):
+                            export_segment(audio_path, start, end, output_file)
+                        new_wavscp.append((utt_id, output_file))
+                # Remove original audio file if it was already in audio dir
+                if os.path.split(audio_path)[0] == audio_dir:
+                    os.remove(converted_path)
             corpus["wavscp"] = new_wavscp
 
-            if args.split_audio:
-                # Split audio files to individual segments
-                # wavscp data must be changed from 'rec_id' -> 'audio_path'
-                # to 'utt_id' -> 'audio-path'
-                print("Splitting audio files...")
-                new_wavscp = []
-                for rec_id, audio_path in corpus["wavscp"]:
-                    print(" *", audio_path, flush=True)
-                    for utt_id, seg_rec_id, start, end in corpus["segments"]:
-                        # Find all segments corresponding to this rec_id
-                        if seg_rec_id == rec_id:
-                            output_file = f"{rec_id}_{floor(start*100):0>7}-{ceil(end*100):0>7}.wav"
-                            output_file = os.path.join(audio_dir, output_file)
-                            if not os.path.exists(output_file):
-                                export_segment(audio_path, start, end, output_file)
-                            new_wavscp.append((utt_id, output_file))
-                    # Remove original audio file if it was already in audio dir
-                    if os.path.split(audio_path)[0] == audio_dir:
-                        os.remove(converted_path)
-                corpus["wavscp"] = new_wavscp
-
-            # Build 'text' file
-            fname = os.path.join(save_dir, 'text')
+        # Build 'text' file
+        fname = os.path.join(save_dir, 'text')
+        print(f"Building file \'{fname}\'")
+        with open(fname, 'w', encoding='utf-8') as f:
+            for utt_id, sentence in corpus["text"]:
+                f.write(f"{utt_id}\t{sentence}\n")
+        
+        # Build 'segments' file (optional)
+        # start and end are measured in seconds
+        if not args.split_audio:
+            fname = os.path.join(save_dir, 'segments')
             print(f"Building file \'{fname}\'")
             with open(fname, 'w', encoding='utf-8') as f:
-                for utt_id, sentence in corpus["text"]:
-                    f.write(f"{utt_id}\t{sentence}\n")
-            
-            # Build 'segments' file (optional)
-            # start and end are measured in seconds
-            if not args.split_audio:
-                fname = os.path.join(save_dir, 'segments')
-                print(f"Building file \'{fname}\'")
-                with open(fname, 'w', encoding='utf-8') as f:
-                    for utt_id, rec_id, start, end in corpus["segments"]:
-                        f.write(f"{utt_id}\t{rec_id}\t{start}\t{end}\n")
-            
-            # Build 'utt2spk'
-            fname = os.path.join(save_dir, 'utt2spk')
-            print(f"Building file \'{fname}\'")
-            with open(fname, 'w', encoding='utf-8') as f:
-                for utt_id, speaker_id in sorted(corpus["utt2spk"]):
-                    f.write(f"{utt_id}\t{speaker_id}\n")
-            
-            # Build 'spk2gender'
-            fname = os.path.join(save_dir, 'spk2gender')
-            print(f"Building file \'{fname}\'")
-            with open(fname, 'w', encoding='utf-8') as f:
-                for speaker in sorted(corpus["speakers"]):
-                    if speaker not in speakers_gender: continue
-                    f.write(f"{speaker}\t{speakers_gender[speaker]}\n")
-            
-            # Build 'wav.scp'
-            fname = os.path.join(save_dir, 'wav.scp')
-            print(f"Building file \'{fname}\'")
-            with open(fname, 'w', encoding='utf-8') as f:
-                for rec_id, audio_path in sorted(corpus["wavscp"]):
-                    f.write(f"{rec_id}\t{audio_path}\n")
+                for utt_id, rec_id, start, end in corpus["segments"]:
+                    f.write(f"{utt_id}\t{rec_id}\t{start}\t{end}\n")
+        
+        # Build 'utt2spk'
+        fname = os.path.join(save_dir, 'utt2spk')
+        print(f"Building file \'{fname}\'")
+        with open(fname, 'w', encoding='utf-8') as f:
+            for utt_id, speaker_id in sorted(corpus["utt2spk"]):
+                f.write(f"{utt_id}\t{speaker_id}\n")
+        
+        # Build 'spk2gender'
+        fname = os.path.join(save_dir, 'spk2gender')
+        print(f"Building file \'{fname}\'")
+        with open(fname, 'w', encoding='utf-8') as f:
+            for speaker in sorted(corpus["speakers"]):
+                if speaker not in speakers_gender: continue
+                f.write(f"{speaker}\t{speakers_gender[speaker]}\n")
+        
+        # Build 'wav.scp'
+        fname = os.path.join(save_dir, 'wav.scp')
+        print(f"Building file \'{fname}\'")
+        with open(fname, 'w', encoding='utf-8') as f:
+            for rec_id, audio_path in sorted(corpus["wavscp"]):
+                f.write(f"{rec_id}\t{audio_path}\n")
         
     
     print("\n==== STATS ====")
@@ -300,16 +304,6 @@ if __name__ == "__main__":
     print(f"\nLexicon: {len(corpora['train']['lexicon'])} words")
 
 
-    # print()
-    # print("Pleustret gant mouezhioù :")
-    # anonymous = 0
-    # names = set()
-    # for name in speakers:
-    #     if "paotr" in name or "plach" in name or "plac'h" in name:
-    #         anonymous += 1
-    #     else:
-    #         names.add(name.replace('_', ' ').title())
-    # print(' ॰ '.join(sorted(names)))
 
     if args.draw_figure:
         import matplotlib.pyplot as plt

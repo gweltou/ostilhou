@@ -38,9 +38,9 @@ def load_proper_nouns():
     proper_nouns_files = [
         "proper_nouns_phon.tsv",
         "places.tsv",
-        # "countries.tsv",
-        "last_names.tsv",
         "first_names.tsv",
+        "last_names.tsv",
+        # "countries.tsv",
     ]
 
     for file in proper_nouns_files:
@@ -239,3 +239,24 @@ def load_standard_tokens():
     return standard_tokens
 
 standard_tokens = load_standard_tokens()
+
+
+# Stopwords
+
+def load_stopwords():
+    stopwords = set()
+    _stopwords_path = os.path.join(dict_root, "stopwords.tsv")
+
+    if not os.path.exists(_stopwords_path):
+        print(f"Missing dictionary file stopwords.tsv")
+        return stopwords
+
+    with open(_stopwords_path, 'r', encoding='utf-8') as f:
+        for l in f.readlines():
+            l = l.strip()
+            if l.startswith('#') or not l: continue
+            stopwords.add(l)
+    
+    return stopwords
+
+stopwords = load_stopwords()

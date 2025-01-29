@@ -1,4 +1,4 @@
-# Automatc Speech Recognition module
+# Automatic Speech Recognition module
 
 ## `corrected_tokens.tsv`
 

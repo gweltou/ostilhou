@@ -131,16 +131,17 @@ def post_process_timecoded(
     for idx, tok in enumerate(tokens):
         if not keep_fillers and tok["word"].lower() in verbal_fillers:
             continue
-        if tok["word"] in ("se", "mañ") and is_noun(prev_word):
-            word = prev_word + '-' + tok["word"]
+        if tok["word"] in ("se", "mañ") and is_noun(parsed[-1]["word"] if parsed else ''):
+            # Join with the last word in parsed instead of prev_word
+            word = parsed[-1]["word"] + '-' + tok["word"]
             new_token = {
                         "word": word,
-                        "start": tokens[idx-1]["start"],
+                        "start": parsed[-1]["start"],  # Use start from last parsed token
                         "end": tok["end"],
                         "conf": tok["conf"]
                         }
+            parsed.pop()  # Remove the last word since we're joining it
             parsed.append(new_token)
-            prev_word = word
         else:
             parsed.append(tok)
     tokens = parsed
