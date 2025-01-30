@@ -87,8 +87,8 @@ def post_process_text(sentence: str, normalize=False, keep_fillers=True) -> str:
     parsed = []
     prev_word = ''
     for word in sentence:
-        if not keep_fillers and word.lower() in verbal_fillers:
-            continue
+        # if not keep_fillers and word.lower() in verbal_fillers:
+        #     continue
         if word in ("se", "mañ") and is_noun(prev_word):
             parsed.append('-'.join([parsed.pop(), word]))
             prev_word = parsed[-1]
@@ -118,7 +118,7 @@ def post_process_timecoded(
     # Verbal fillers removal
     if not keep_fillers:
         parsed = []
-        for idx, tok in enumerate(tokens):
+        for _, tok in enumerate(tokens):
             if not tok["word"].lower() in verbal_fillers:
                 parsed.append(tok)
         tokens = parsed
@@ -127,12 +127,10 @@ def post_process_timecoded(
 
     # Add hyphens for "-se" and "-mañ"
     parsed = []
-    prev_word = ''
-    for idx, tok in enumerate(tokens):
-        if not keep_fillers and tok["word"].lower() in verbal_fillers:
-            continue
-        if tok["word"] in ("se", "mañ") and is_noun(parsed[-1]["word"] if parsed else ''):
-            # Join with the last word in parsed instead of prev_word
+    for _, tok in enumerate(tokens):
+        # if not keep_fillers and tok["word"].lower() in verbal_fillers:
+        #     continue
+        if tok["word"] in ("se", "mañ") and len(parsed) > 0 and is_noun(parsed[-1]["word"]):
             word = parsed[-1]["word"] + '-' + tok["word"]
             new_token = {
                         "word": word,
@@ -140,7 +138,7 @@ def post_process_timecoded(
                         "end": tok["end"],
                         "conf": tok["conf"]
                         }
-            parsed.pop()  # Remove the last word since we're joining it
+            parsed.pop()
             parsed.append(new_token)
         else:
             parsed.append(tok)
