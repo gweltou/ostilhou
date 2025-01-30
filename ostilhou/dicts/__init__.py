@@ -248,7 +248,7 @@ def load_stopwords():
     _stopwords_path = os.path.join(dict_root, "stopwords.tsv")
 
     if not os.path.exists(_stopwords_path):
-        print(f"Missing dictionary file stopwords.tsv")
+        print(f"Missing dictionary file stopwords.tsv", file=sys.stderr)
         return stopwords
 
     with open(_stopwords_path, 'r', encoding='utf-8') as f:
