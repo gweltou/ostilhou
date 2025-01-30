@@ -66,6 +66,7 @@ w2f = {
     'nn'    :   'N',
     'o'     :   'O',        # nOr
     'ô'     :   'O',        # kornôg
+    'om'    :   'ON M',     # lakOMp
     'on'    :   'ON N',     # dON
     'ont.'  :   'ON N',     # mONt
     'oñ'    :   'ON',       # sOÑjal
@@ -226,7 +227,7 @@ lexicon_sub = load_lexicon_sub()
 
 
 
-def phonetize_word(word: str) -> List[str]:
+def phonetize_word(word: str) -> tuple[List[str], int]:
     """ Simple phonetizer
         Returns a string of phonemes representing the pronunciation
         of a single given word.
@@ -240,31 +241,33 @@ def phonetize_word(word: str) -> List[str]:
     if '-' in word:
         # Composed word with hyphen, treat every subword individually
         prop = [""]
+        errors = 0
         for sub in word.split('-'):
             new_prop = []
-            rep = phonetize_word(sub)
+            rep, err = phonetize_word(sub)
+            errors += err
             for r in rep:
                 for pre in prop:
                     new_prop.append(str.strip(pre + ' ' + r))
             prop = new_prop
-        return prop
+        return prop, errors
 
     if word in acronyms:
-        return acronyms[word]
+        return acronyms[word], 0
     
     if word in acr2f:
-        return acr2f[word]
+        return acr2f[word], 0
 
     if word in proper_nouns:
         if proper_nouns[word]:
-            return proper_nouns[word]
+            return proper_nouns[word], 0
     
     if lowered in lexicon_sub:
         alter = lexicon_add.get(lowered, [])
-        return lexicon_sub[lowered] + alter
+        return lexicon_sub[lowered] + alter, 0
     
     if lowered in verbal_fillers:
-        return [ verbal_fillers[lowered] ]
+        return [ verbal_fillers[lowered] ], 0
 
     
     head = 0
@@ -290,4 +293,4 @@ def phonetize_word(word: str) -> List[str]:
         print("ERROR [phonetizer]", word, pron, errors)
     
     variants = lexicon_add.get(word, [])
-    return [pron] + variants
+    return [pron] + variants, len(errors)
