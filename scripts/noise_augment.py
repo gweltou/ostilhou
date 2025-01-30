@@ -63,7 +63,7 @@ if __name__ == "__main__":
                 add_random_amb_noise(soundfile, soundfile_dest, randint(-10, -4))
                 soundfile = soundfile_dest
             
-            add_whitenoise(soundfile, soundfile_dest, randint(-34, -22))
+            add_whitenoise(soundfile, soundfile_dest, randint(-28, -20))
             
 
             if file_ext.lower() == ".ali":
