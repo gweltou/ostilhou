@@ -55,6 +55,7 @@ w2f = {
     'iñ'    :   'I N',      # bIÑs
     'iñv'   :   'I V',      # fIÑV {gwiñver ?}
     'iñ.'   :   'I',        # debrIÑ
+    'iv.'   :   'I W',     # liv, div, riv
     'j'     :   'J',        # BeaJiñ
     'k'     :   'K',
     'l'     :   'L',

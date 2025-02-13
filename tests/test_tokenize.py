@@ -22,6 +22,7 @@ def test_split_sentence():
     test_cases = [
         ("Un tan-gwall a voe d'ar 1añ a viz Gouhere 2011 el leti. Ne voe den ebet gloazet pe lazhet. Un nebeud estajoù nemetken a oa bet tizhet.", 3),
         ("unan daou tri : pevar pemp c'hwec'h", 1),
+        ("Cheñchet en deus ar mor e douar sec'h. Treuzet hon eus ar stêr war droad.", 2),
         ("Tamm ebet. Klasket em boa e-pad 5 miz ha n’on ket bet plijet ; un afer a bublik eo.", 2),
         ("Tout an dud en em soñj. Piv int ar skrivagnerien-se ? Eus pelec'h emaint o tont... ?", 3),
         ("E 1938 e voe he gwaz harzet ha lazhet en U. R. S. S., ar pezh na viras ket ouzh Ana Pauker a chom feal d'ar gomunouriezh, d'an U. R. S. S. ha da Jozef Stalin.", 1),

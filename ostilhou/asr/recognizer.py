@@ -115,9 +115,12 @@ def transcribe_file(filepath: str) -> List[str]:
     
     text = []
 
-    with subprocess.Popen(["ffmpeg", "-loglevel", "quiet", "-i",
-                                filepath,
-                                "-ar", "16000" , "-ac", "1", "-f", "s16le", "-"],
+    with subprocess.Popen(["ffmpeg", "-loglevel", "quiet",
+                                "-i", filepath,
+                                "-ar", "16000",
+                                "-ac", "1",
+                                "-f", "s16le",
+                                "-"],
                                 stdout=subprocess.PIPE) as process:
 
         while True:
@@ -137,18 +140,22 @@ def transcribe_file(filepath: str) -> List[str]:
 
 
 def transcribe_file_timecoded(filepath: str, show_progress_bar=True) -> List[dict]:
-    """ Return list of infered words with associated timecodes (vosk format)
+    """ Return a list of decoded words with timecodes (vosk format)
 
-        The resulting transcription is a list of Vosk tokens
-        Each Vosk token is a dictionary of the form:
+        The resulting transcription is a list of Vosk tokens.
+        Each Vosk token is a dictionary in the form:
             {'word': str, 'start': float, 'end': float, 'conf': float}
-        'start' and 'end' keys are in seconds
-        'conf' is a normalized confidence score
+        where:
+            'start' and 'end' are in seconds
+            'conf' is a normalized confidence score (between 0.0 and 1.0)
     """
 
     def format_output(result) -> List[dict]:
         jres = json.loads(result)
         return jres.get("result", [])
+    
+    if not os.path.exists(filepath):
+        print("Couldn't find {}".format(filepath), file=sys.stderr)
 
     model = load_model()
     recognizer = KaldiRecognizer(model, 16000)
@@ -158,7 +165,7 @@ def transcribe_file_timecoded(filepath: str, show_progress_bar=True) -> List[dic
     progress = 0.0
 
     if show_progress_bar:
-        progress_bar = tqdm(total=total_duration)
+        progress_bar = tqdm(total=total_duration, unit='s', unit_scale=True)
     
     tokens = []
     with subprocess.Popen(["ffmpeg", "-loglevel", "quiet", "-i",
@@ -176,10 +183,11 @@ def transcribe_file_timecoded(filepath: str, show_progress_bar=True) -> List[dic
             progress += (len(data) // 2) / 16000
 
             if show_progress_bar:
-                progress_bar.n = progress
+                progress_bar.n = min(progress, total_duration)
                 progress_bar.refresh()
         
         tokens.extend(format_output(recognizer.FinalResult()))
+    
     if show_progress_bar:
         progress_bar.close()
     
