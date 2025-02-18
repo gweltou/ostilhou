@@ -301,52 +301,62 @@ norm_roman_ordinal = lambda s: ROMAN_ORDINALS[s] if s in ROMAN_ORDINALS else rom
 
 
 
-def normalize_sentence(sentence: str,
-                       autocorrect=False,
-                       norm_punct=False,
-                       norm_case=False,
-                       capitalize=False) -> str:
+def normalize_sentence(
+        sentence: str,
+        autocorrect=False,
+        norm_punct=False,
+        norm_case=False,
+        norm_digits=True,
+        capitalize=False
+    ) -> str:
     """ 
-        Normalize a single sentence.
-        return: list of all possible normalization for the sentence
+    Normalize a single sentence.
+    return: list of all possible normalization for the sentence
 
-        Parameters
-        ----------
-            autocorrect: bool
-                Substitutes words according to `corrected_tokens.tsv` dictionary
-            
-            norm_punct: bool
-                Normalize punctuation
-            
-            norm_case: bool
-                Lowerize any word that shouldn't be capitalized
-            
-            capitalize: bool
-                Capitalize the first word of each grammatical sentence
+    Parameters
+    ----------
+        autocorrect: bool
+            Substitutes words according to `corrected_tokens.tsv` dictionary
+        
+        norm_punct: bool
+            Normalize punctuation
+        
+        norm_case: bool
+            Lowerize any word that shouldn't be capitalized
+        
+        norm_digits: bool
+            Normalize digits to words
+        
+        capitalize: bool
+            Capitalize the first word of each grammatical sentence
     """
 
     propositions = []
     result = ""
     return detokenize(
             normalize(
-                tokenize(sentence,
-                         autocorrect=autocorrect,
-                         norm_punct=norm_punct),
-                norm_case=norm_case),
-            normalize=True,
-            capitalize=capitalize)
+                tokenize(
+                    sentence,
+                    autocorrect=autocorrect,
+                    norm_punct=norm_punct
+                ),
+                norm_case=norm_case
+            ),
+            normalize=norm_digits,
+            capitalize=capitalize
+        )
 
 
 
 def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
     """ 
-        Apply different kind of normalization to a stream of tokens
+    Apply different kind of normalization to a stream of tokens
 
-        Options:
-            * norm_case: lowerize any word that shouldn't be capitalized
-        
+    Options:
+        * norm_case: lowerize any word that shouldn't be capitalized
+    
 
-        Bugs: the ordinal '3e' will be interpreted as a TIME token
+    Bugs: the ordinal '3e' will be interpreted as a TIME token
     """
 
     norm_case = options.pop('norm_case', False)

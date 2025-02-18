@@ -658,9 +658,10 @@ _VALID_PARAMS = {
 
 
 def extract_metadata(sentence: str) -> Tuple[str, dict]:
-    """ Returns the sentence stripped of its metadata (if any)
-        and a dictionary of metadata
-        Keeps unknown word markers '{?}'
+    """
+    Returns the sentence stripped of its metadata (if any)
+    and a dictionary of metadata
+    Keeps unknown word markers '{?}'
     """
     metadata = dict()
     remove_ranges = []

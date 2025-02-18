@@ -26,14 +26,14 @@ def sec2hms(seconds):
 
 def list_files_with_extension(ext: Union[str, tuple, list], rep, recursive=True) -> List[str]:
     """
-        Recursively list all files of the given extension(s) in a folder
+    Recursively list all files of the given extension(s) in a folder
 
-        Parameters
-        ----------
-            ext : str|list
-                file extension, including the extension separator (dot)
+    Parameters
+    ----------
+        ext : str|list
+            file extension, without the extension separator
     """
-    extensions = (ext) if isinstance(ext, str) else ext
+    extensions = [ext] if isinstance(ext, str) else ext
     file_list = []
     if os.path.isdir(rep):
         for filename in os.listdir(rep):
@@ -41,7 +41,7 @@ def list_files_with_extension(ext: Union[str, tuple, list], rep, recursive=True)
             if os.path.isdir(filename) and recursive:
                 file_list.extend(list_files_with_extension(extensions, filename))
             else:
-                file_ext = os.path.splitext(filename)[1]
+                file_ext = os.path.splitext(filename)[1].removeprefix(os.path.extsep)
                 if file_ext and file_ext in extensions:
                     file_list.append(filename)
     return file_list

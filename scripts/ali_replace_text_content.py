@@ -12,6 +12,10 @@ from ostilhou.asr.dataset import load_ali_file, create_ali_file
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: python3 ali_replace_text_content.py file.ali text.txt translated.ali")
+        sys.exit(1)
+    
     with open(sys.argv[2], 'r') as _f:
         tr_lines = _f.readlines()
         tr_lines = [l.strip() for l in tr_lines]
@@ -22,17 +26,16 @@ if __name__ == "__main__":
     m = min(len(tr_lines), len(tr_lines))
     
     tr = list(zip(tr_lines[:m], ali_data["sentences"][:m]))
-    print(tr)
-    for line in tr:
-        print('\t'.join(line))
+    
+    for i, line in enumerate(tr):
+        print(f"{i} {'\t'.join(line)}")
     
     assert len(tr_lines) == len(ali_data["sentences"]), "Number of sentences doesn't match"
     
-    with open(sys.argv[3], 'w', encoding="utf-8") as _f:
-        _f.write(
+    with open(sys.argv[3], 'w') as _fout:
+        _fout.write(
             create_ali_file(
-                tr_lines,
-                ali_data["segments"],
+                tr_lines, ali_data["segments"],
                 audio_path=ali_data["audio_path"]
             )
         )

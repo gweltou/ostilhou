@@ -5,7 +5,8 @@
 """
 Displays the distribution of segments's length in a given directory
 
-Usage : ./segment_stats.py aligned_data/
+Usage :
+    $ ./segment_stats.py aligned_data/
 
 Author:  Gweltaz Duval-Guennoc
 """
@@ -13,18 +14,17 @@ Author:  Gweltaz Duval-Guennoc
 
 import sys
 import os
-from math import floor, ceil
 
 import matplotlib.pyplot as plt
 
 from ostilhou.asr.dataset import load_ali_file
-from ostilhou.utils import sec2hms, list_files_with_extension, read_file_drop_comments
+from ostilhou.utils import list_files_with_extension, read_file_drop_comments
 
 
 if __name__ == "__main__":
     bins = [0]*16
 
-    aligned_files = list_files_with_extension([".ali", ".seg", ".split"], sys.argv[1])
+    aligned_files = list_files_with_extension(["ali", "seg", "split"], sys.argv[1])
     for filename in aligned_files:
         if filename.lower().endswith(".ali"):
             segments = load_ali_file(filename)["segments"]

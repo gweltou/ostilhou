@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-    Score the alignment of an ali file, given a reference ali file
-    
-    Usage: ./compare_alignment.py ref.ali hyp.ali
+Score the alignment of an ali file, given a reference ali file
+
+Usage:
+    $ ./compare_alignment.py ref.ali hyp.ali
 """
 
 import sys
@@ -28,4 +29,4 @@ if __name__ == "__main__":
         print(ref_seg, hyp_seg, round(d_start + d_end, 2))
         score += d_start + d_end
     
-    print(f"Alignment score: {score/len(ref["segments"])}")
+    print(f"Alignment score: {score/len(ref["segments"]):.6} (the less the better)")

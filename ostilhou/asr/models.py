@@ -149,7 +149,7 @@ def load_model(model_name: str = None) -> Model:
             f"Model {model_name} is not a valid model; available models = {get_all_models()}"
         )
 
-    print(f"Loading {os.path.basename(model_path)}", file=sys.stderr)
+    print(f"Loading {os.path.basename(model_path.rstrip(os.path.sep))}", file=sys.stderr)
     SetLogLevel(-1)
     _loaded_model = Model(model_path)
     _loaded_model_name = model_name

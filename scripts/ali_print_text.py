@@ -18,6 +18,11 @@ if __name__ == "__main__":
     ali_data = load_ali_file(sys.argv[1])
 
     for line in ali_data["sentences"]:
-        line = re.sub(r"<br>", '\u2028', line, flags=re.IGNORECASE)
-        line = re.sub(r"</?([a-zA-Z \']+)>", '', line)
+        #line = re.sub(r"<br>", '\u2028', line, flags=re.IGNORECASE)
+        line = re.sub(r"<br>", ' ', line, flags=re.IGNORECASE)
+        line = re.sub('\u2028', ' ', line, flags=re.IGNORECASE)
+        #line = re.sub(r"</?([a-zA-Z \']+)>", '', line)
+        
+        if '<i>' in line.lower() or '</i>' in line.lower():
+            assert line.count("<i>") == line.count("</i>"), line
         print(line)

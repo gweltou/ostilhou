@@ -22,7 +22,7 @@ from ostilhou.asr.dataset import get_text_header, load_ali_file
 
 
 if __name__ == "__main__":
-    seg_files = list_files_with_extension((".split", ".seg", ".ali"), sys.argv[1])
+    seg_files = list_files_with_extension(("split", "seg", "ali"), sys.argv[1])
     seg_files.sort()
     all_tags = set()
     tag = None if len(sys.argv) <= 2 else sys.argv[2]

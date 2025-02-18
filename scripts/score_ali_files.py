@@ -52,7 +52,7 @@ if __name__ == "__main__":
     load_model(args.model)
 
     if os.path.isdir(args.data_folder):
-        ali_files = list_files_with_extension('.ali', args.data_folder)
+        ali_files = list_files_with_extension('ali', args.data_folder)
     elif args.data_folder.lower().endswith('.ali'):
         ali_files = [args.data_folder]
     elif os.path.isfile(args.data_folder):

@@ -122,7 +122,7 @@ if __name__ == "__main__":
         for file in args.lm_corpus:
             if os.path.isdir(file):
                 # Expand directory
-                corpus_files.extend(list_files_with_extension(['.txt', '.cor'], file))
+                corpus_files.extend(list_files_with_extension(['txt', 'cor'], file))
             else:
                 corpus_files.append(file)
                     

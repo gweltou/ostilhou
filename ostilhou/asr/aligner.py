@@ -10,7 +10,11 @@ from math import inf
 
 from tqdm import tqdm
 
-from ..text import pre_process, filter_out_chars, PUNCTUATION
+from ..text import (
+    pre_process, filter_out_chars,
+    sentence_stats, normalize_sentence,
+    PUNCTUATION,
+)
 
 
 
@@ -26,9 +30,10 @@ def _prepare_text(s: str) -> str:
     s = re.sub(r"{.+?}", '', s) # Ignore metadata
     s = re.sub(r"<[A-Z\']+?>", '', s) # Ignore special tokens
     s = pre_process(s.lower())
+    if sentence_stats(s)["decimal"] > 0:
+        s = normalize_sentence(s, autocorrect=True)
     s = s.replace("c'h", 'X').replace('ch', 'S')
     s = s.replace('ù', 'u').replace('ê', 'e')
-    s = filter_out_chars(s, PUNCTUATION + " '-h ")
     # Remove double-letters
     chars = []
     for c in s:
@@ -37,6 +42,7 @@ def _prepare_text(s: str) -> str:
         elif c != chars[-1]:
             chars.append(c)
     s = ''.join(chars)
+    s = filter_out_chars(s, PUNCTUATION + " '-h ")
     return s
 
 
@@ -74,19 +80,23 @@ def align(
     """
     
     n_ref_words = [ _count_words(s) for s in sentences ]
-    norm_sentences = [ _prepare_text(s) for s in sentences ]
+    # norm_sentences = [ _prepare_text(s) for s in sentences ]
 
     # Remove empty lines
-    norm_sentences = [s for s in norm_sentences if s]
+    # norm_sentences = [s for s in norm_sentences if s]
     
     total_ref_words = sum(n_ref_words)
     total_hyp_words = len(hyp)
     matches = []
 
     if progress_bar:
-        norm_sentences = tqdm(norm_sentences)
+        sentences = tqdm(sentences)
     
-    for sent_idx, norm_sentence in enumerate(norm_sentences):
+    for sent_idx, sentence in enumerate(sentences):
+        norm_sentence = _prepare_text(sentence)
+        if not norm_sentence:
+            continue
+
         match = []
         sentence_pos = left_boundary + sum(n_ref_words[:sent_idx]) / total_ref_words
         for i in range(left_boundary, right_boundary):
@@ -107,7 +117,6 @@ def align(
                     best_hyp = hyp_windowed
                     best_span = (i, i+offset)
                     best_score = score
-                    # print(score, hyp_sentence)
                 else:
                     break
             
@@ -117,9 +126,10 @@ def align(
         
         # Keep only best match location for each sentence
         try:
-            match[0]["sentence"] = sentences[sent_idx]
-            assert match[0]["span"][0] < match[0]["span"][1], f"wrong segment {match[0]}"
-            matches.append(match[0])
+            best_match = match[0]
+            best_match["sentence"] = sentence.strip()
+            assert best_match["span"][0] < best_match["span"][1], f"wrong segment {best_match}"
+            matches.append(best_match)
         except:
             print(f"{match=}")
             print(f"{norm_sentence=}")
@@ -142,16 +152,16 @@ def get_next_word_idx(matches, idx, hyp):
 
 
 
-def add_reliability_score(matches: list, hyp: list, verbose=False):
+def add_reliability_score(matches:list, hyp:list, verbose=False):
     """
-        Infer the reliability of each location by checking its adjacent neighbours
-        Modifies `matches` in-place
+    Infer the reliability of each location by checking its adjacent neighbours
+    Modifies `matches` in-place
     """
     
     last_reliable_wi = 0
     for i, match in enumerate(matches):
-        if not match: # Empty or metadata only lines
-            continue
+        # if not match: # Empty or metadata only lines
+        #     continue
 
         span = match["span"]
         prev_dist = get_prev_word_idx(matches, i) - span[0]
@@ -171,26 +181,26 @@ def add_reliability_score(matches: list, hyp: list, verbose=False):
         else:
             r = 'X' # Obviously wrong alignment
 
-        matches[i]["reliability"] = r
+        match["reliability"] = r
         
         if verbose:
             print(f"{i} {span}\t{r}", file=sys.stderr)
 
 
 
-def get_unaligned_ranges(sentences, matches, rel=['O']):
-    """ Find ill-aligned sentence ranges """
+def get_unaligned_ranges(matches, rel=['O']) -> List:
+    """Find ill-aligned sentence ranges"""
     
     wrong_ranges = []
     start = 0
     end = 0
     while True:
-        while start < len(sentences) and matches[start]["reliability"] in rel:
+        while start < len(matches) and matches[start]["reliability"] in rel:
             start += 1
         end = start
-        while end < len(sentences) and matches[end]["reliability"] not in rel:
+        while end < len(matches) and matches[end]["reliability"] not in rel:
             end += 1
-        if start >= len(sentences):
+        if start >= len(matches):
             break
         wrong_ranges.append((start, end))
         start = end
@@ -210,10 +220,10 @@ def count_aligned_utterances(matches: list):
 
 
 def find_best_cut(sentence_a, sentence_b, hyp) -> int:
-    """ Returns the word index """
+    """Return the word index of best cut in given hypothesis tokens"""
     sentence_a = _prepare_text(sentence_a)
     sentence_b = _prepare_text(sentence_b)
-    best_score = 999
+    best_score = inf
     best_cut = -1
     for i in range(1, len(hyp)):
         hyp_a = _prepare_text(''.join([ t["word"] for t in hyp[:i] ]))
@@ -222,7 +232,6 @@ def find_best_cut(sentence_a, sentence_b, hyp) -> int:
         if score < best_score:
             best_score = score
             best_cut = i
-    # hyp = [ t["word"] for t in hyp ]
     return best_cut
 
 
@@ -235,19 +244,23 @@ def resolve_boundaries(matches: list, max_dist=2):
 
     for m in range(len(matches) - 1):
         prev, next = matches[m:m+2]
+        if next["span"][0] < prev["span"][0]:
+            continue
         overlap = prev["span"][1] - next["span"][0]
         if 0 < overlap <= max_dist:
-            # End of prev goes beyond start of next
-            hyp = prev["hyp"][:-overlap] + next["hyp"]
-            i = find_best_cut(prev["sentence"], next["sentence"], hyp)
+            # End of prev goes past start of next
+            combined_hyp = prev["hyp"][:-overlap] + next["hyp"]
+            i = find_best_cut(prev["sentence"], next["sentence"], combined_hyp)
             diff = len(prev["hyp"]) - i
-            pstart, pend = prev["span"]
-            pend -= diff
-            prev["span"] = (pstart, pend)
-            prev["hyp"] = hyp[:i]
-            _, nend = next["span"]
-            next["span"] = (pend, nend)
-            next["hyp"] = hyp[i:]
+            if diff >= len(prev["hyp"]):
+                continue
+            p_start, p_end = prev["span"]
+            p_end -= diff
+            prev["span"] = (p_start, p_end)
+            prev["hyp"] = combined_hyp[:i]
+            _, n_end = next["span"]
+            next["span"] = (p_end, n_end)
+            next["hyp"] = combined_hyp[i:]
 
 
 

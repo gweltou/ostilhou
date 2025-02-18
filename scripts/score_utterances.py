@@ -30,7 +30,7 @@ if __name__ == "__main__":
     all_hypothesis = []
 
     # print(args.data_folder)
-    split_files = list_files_with_extension('.split', args.data_folder)
+    split_files = list_files_with_extension('split', args.data_folder)
     for split_file in sorted(split_files):
         basename, _ = os.path.splitext(split_file)
         wav_file = basename + os.path.extsep + "wav"
