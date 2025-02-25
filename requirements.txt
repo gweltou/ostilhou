@@ -10,3 +10,5 @@ certifi
 tqdm
 sentence-splitter
 srt
+spylls
+audioop-lts; python_version>='3.13'

@@ -16,11 +16,18 @@ def red(s:str) -> str:
 
 
 
-def sec2hms(seconds):
-    """ Return a string of hours, minutes, seconds from a given number of seconds """
-    minutes, seconds = divmod(round(seconds), 60)
+def sec2hms(seconds, sep=' ', precision=0, h_unit='h', m_unit='\'', s_unit="''"):
+    """Return a string of hours, minutes, seconds from a given number of seconds"""
+    minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    return f"{hours}h {minutes}' {seconds}''"
+    parts = []
+    if hours > 0:
+        parts.append(f"{int(hours)}{h_unit}")
+    if hours > 0 or minutes > 0:
+        parts.append(f"{int(minutes)}{m_unit}")
+    seconds = round(seconds, precision)
+    parts.append(f"{seconds}{s_unit}")
+    return sep.join(parts)
 
 
 

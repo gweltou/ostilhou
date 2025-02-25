@@ -88,3 +88,7 @@ Parser commands.
 Sentence scope. Applies until another `{parser: no-lm/add-lm}` is found or end of document is reached.
 
 Exclude/add sentence to language model training dataset. Defaults to `add-lm` (add).
+
+`{parser: ignore/add}`
+
+Text between a `{parser: ignore}` and a `{parser: add}` will be removed from the utterance. Defaults to `add`.

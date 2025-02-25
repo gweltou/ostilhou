@@ -19,7 +19,7 @@ additional_words = ["add.txt", "add_gwe.txt"]
 _hs = None
 
 
-def get_hunspell_dict():
+def get_hunspell_dict():    
     global _hs
     if _hs != None:
         return _hs
@@ -38,6 +38,18 @@ def get_hunspell_dict():
                     _hs.add(w.strip())
     for w in interjections:
         _hs.add(w)
+    return _hs
+
+def get_hunspell_spylls():    
+    global _hs
+    if _hs != None:
+        return _hs
+    
+    print("Loading Hunspell dictionary...", file=sys.stderr)
+    from spylls.hunspell import Dictionary
+
+    _hs = Dictionary.from_files(hs_dic_path)
+    
     return _hs
 
 
