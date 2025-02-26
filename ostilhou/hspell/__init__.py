@@ -40,6 +40,7 @@ def get_hunspell_dict():
         _hs.add(w)
     return _hs
 
+
 def get_hunspell_spylls():    
     global _hs
     if _hs != None:

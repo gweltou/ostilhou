@@ -1,10 +1,11 @@
 from typing import List, Optional
 
 import sys
+from os import listdir
+import os.path
 import subprocess
 import json
-import os.path
-from os import listdir
+import array
 from random import choice
 from tempfile import NamedTemporaryFile
 
@@ -376,3 +377,40 @@ def add_whitenoise(voice_file, output_file, gain=-20):
     combined = voice.overlay(noise)
     print("Exporting to", output_file)
     combined.export(output_file, format='wav', parameters=['-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000'])
+
+
+def get_audio_samples(filepath: str, sample_rate: int):
+    # Configure ffmpeg command to convert audio to required format
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-i', filepath,
+        '-ar', str(sample_rate),       # 8kHz sample rate
+        '-ac', '1',          # Mono
+        '-f', 's16le',       # 16-bit signed little-endian PCM
+        '-',                 # Output to stdout
+        '-loglevel', 'error' # Reduce ffmpeg output
+    ]
+    
+    # Run ffmpeg as subprocess and capture output
+    process = subprocess.Popen(
+        ffmpeg_cmd, 
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    
+    # Read all audio data
+    stdout_data, stderr_data = process.communicate()
+    
+    if process.returncode != 0:
+        error_msg = stderr_data.decode() if stderr_data else "Unknown error"
+        raise RuntimeError(f"ffmpeg conversion failed: {error_msg}")
+    
+    # Convert raw bytes to array of 16-bit samples
+    audio_data = array.array('h')  # 'h' is for signed short (16-bit) values
+    audio_data.frombytes(stdout_data)
+    
+    # Create normalized samples (float values between -1 and 1)
+    sample_max = 2**(16-1)  # For 16-bit audio, max value is 2^15
+    normalized_samples = [s/sample_max for s in audio_data]
+    
+    return normalized_samples

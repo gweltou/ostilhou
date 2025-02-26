@@ -37,6 +37,79 @@ def transcribe_segment(segment: AudioSegment) -> str:
     return text
 
 
+def transcribe_segment_ffmpeg(
+    input_file: str, 
+    start_time: float, 
+    duration: float,
+    model=None
+) -> str:
+    """ 
+    Transcribe a segment of an audio file by streaming from ffmpeg to Vosk
+    
+    Args:
+        input_file: Path to the audio file
+        start_time: Start time in seconds
+        duration: Duration of segment in seconds
+        model: Optional pre-loaded Vosk model (will load default if None)
+        
+    Returns:
+        Transcribed text from the segment
+    """
+    from vosk import Model, KaldiRecognizer
+    
+    # Load model if not provided
+    if model is None:
+        model = load_model()
+    
+    recognizer = KaldiRecognizer(model, 16000)
+    recognizer.SetWords(True)
+    
+    # Configure ffmpeg to output raw audio in the format we need
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-i', input_file,
+        '-ss', str(start_time),
+        '-t', str(duration),
+        '-ar', '16000',  # 16kHz sample rate
+        '-ac', '1',      # Mono
+        '-f', 's16le',   # 16-bit signed little-endian PCM
+        '-',             # Output to stdout
+        '-loglevel', 'error'  # Reduce ffmpeg output
+    ]
+    
+    # Start ffmpeg process and read its output
+    process = subprocess.Popen(
+        ffmpeg_cmd, 
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    
+    text = []
+    chunk_size = 4000  # Same chunk size as original function
+    
+    # Process the audio stream in chunks
+    while True:
+        data = process.stdout.read(chunk_size)
+        if len(data) == 0:
+            break
+            
+        if recognizer.AcceptWaveform(data):
+            text.append(json.loads(recognizer.Result())["text"])
+    
+    # Get final result and clean up
+    text.append(json.loads(recognizer.FinalResult())["text"])
+    
+    # Ensure the process is terminated properly
+    process.terminate()
+    process.wait()
+    
+    # Check for any stderr output from ffmpeg
+    error = process.stderr.read()
+    if error and len(error) > 0:
+        print(f"ffmpeg warning/error: {error.decode()}")
+    
+    return " ".join(filter(None, text))
+
 
 def transcribe_segment_timecoded(segment: AudioSegment) -> List[dict]:
     """ Transcribe a short AudioSegment, keeping the timecodes
