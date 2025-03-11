@@ -3,7 +3,7 @@
 
 """
 Usage:
-    $ python3 clean_rtf.py infile.txt outfile.txt
+    $ python3 clean_rtf.py infile.txt > outfile.txt
 """
 
 import sys
@@ -19,13 +19,20 @@ from ostilhou.text import (
 INCLUDE_SPEAKER_NAMES = False
 IGNORE_SPEAKERS = ["NAD"]
 IGNORE_WORDS = [
-    "aaa", "argh",
+    "aaa", "aaah", "argh",
     "huu",
     "hañ", "mhañ",
     "mm", "mh", "mmm", "mmr", "mmrr", "mff",
     "oo", "ooo", "oooh",
-    "rhh", "rha",
+    "rhh", "rha", "rhaa",
+    "c'heum",
 ]
+REPLACE_WORDS = [
+    ("'meus", "'m eus"),
+    ("'neus", "'n eus"),
+    ("'moa", "'m oa"),
+    ("'noa", "'n oa"),
+] # TODO
 
 
 def is_keeper(sentence:str) -> bool:
@@ -36,6 +43,15 @@ def is_keeper(sentence:str) -> bool:
     if words:
         return True
     return False
+
+
+def replace_words(sentence:str) -> str:
+    words = sentence.split()
+    for pattern, sub in REPLACE_WORDS:
+        for i, w in enumerate(words):
+            if pattern in w:
+                words[i] = w.replace(pattern, sub)
+    return ' '.join(words)
 
 
 if __name__ == "__main__":
@@ -57,6 +73,10 @@ if __name__ == "__main__":
             normalize_sentence(s, norm_punct=True, norm_digits=False)
             for s in splitted_line if is_keeper(s)
         ]
+        
+        # Replace words
+        splitted_line = [replace_words(s) for s in splitted_line]
+
         if not splitted_line:
             continue
         
@@ -66,7 +86,8 @@ if __name__ == "__main__":
     lines = new_lines
     
     #lines = [f"{' '.join(l)}\nFR:\t\n" for l in lines if l]
-    lines = [f"{' '.join(l)}\n" for l in lines if l]
+    lines = [f"{' '.join(l)}" for l in lines if l]
 
-    with open(sys.argv[2], 'w') as fout:
-        fout.writelines(lines)
+
+    for l in lines:
+        print(l)
