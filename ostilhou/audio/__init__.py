@@ -187,12 +187,13 @@ def convert_to_mp3(src, dst, verbose=True, keep_orig=True):
 
 
 def concatenate_audiofiles(file_list, out_filename, remove=False):
-    """ Concatenate a list of audio files to a single audio file
+    """
+    Concatenate a list of audio files to a single audio file
 
-        Parameters
-        ----------
-            remove (bool):
-                remove original files
+    Parameters
+    ----------
+        remove (bool):
+            remove original files
     """
 
     if len(file_list) <= 1:
@@ -216,13 +217,14 @@ def concatenate_audiofiles(file_list, out_filename, remove=False):
 
 
 def export_segment(audio_path: str, start: float, end: float, new_path: str):
-    """ Split an audiofile in many segments
+    """
+    Split an audiofile in many segments
 
-        Arguments:
-            audio_path (str): the path of the original audiofile
-            start (float) : time offset of beginning of segment
-            end (float) : time offset of end of segment
-            new_path (str): path of output file
+    Arguments:
+        audio_path (str): the path of the original audiofile
+        start (float) : time offset of beginning of segment
+        end (float) : time offset of end of segment
+        new_path (str): path of output file
     """
     # Cut the audio into segments using FFmpeg and suppress output
     subprocess.run([
@@ -252,6 +254,9 @@ def get_min_max_energy(segment: AudioSegment, chunk_size=100, overlap=50):
 
 
 def binary_split(audio: AudioSegment, treshold_ratio=0.1):
+    """
+    Split audio at the quietest point.
+    """
     min_e, max_e = get_min_max_energy(audio)
     delta_e = max_e - min_e
     thresh = min_e + delta_e * treshold_ratio
@@ -262,6 +267,7 @@ def binary_split(audio: AudioSegment, treshold_ratio=0.1):
     segments = []
     seg_start = 0 # millisec
     in_noisy_chunk = False
+    
     for i in range(0, len(audio), chunk_size-overlap):
         chunk = audio[i: i+chunk_size]  # Pydub will take care of overflow
         if chunk.rms >= thresh:
@@ -294,19 +300,18 @@ def binary_split(audio: AudioSegment, treshold_ratio=0.1):
 
 
 
-def split_to_segments(audio: AudioSegment, max_length=10, threshold_ratio=0.1) -> List:
+def split_to_segments(audio: AudioSegment, max_length=10, threshold_ratio=0.1) -> list:
     """
-        Return a list of shorter sub-segments from a pydub AudioSegment.
+    Return a list of shorter sub-segments from a pydub AudioSegment.
 
-        Sub-segments are represented as 2-elements lists [start, end]
-        where 'start' and 'end' are in milliseconds.
+    Sub-segments are represented as 2-elements lists [start, end]
+    where 'start' and 'end' are in milliseconds.
 
-        Parameters
-        ----------
-            max_length (float):
-                sub-segments maximum length (in seconds)
-            threshold_ratio (0.0 < float < 1.0):
-                the silence threshold (depending on min/max energy of the audio segment)
+    Args:
+        max_length (float):
+            sub-segments maximum length (in seconds)
+        threshold_ratio (0.0 < float < 1.0):
+            the silence threshold (depending on min/max energy of the audio segment)
     """
     segments_stack = [(0, len(audio))]
     short_segments = []
@@ -331,7 +336,7 @@ if os.path.exists(_AMB_REP):
                         for f in listdir(_AMB_REP)
                         if f[-3:] in ("wav", "mp3")]
 else:
-    print("Empty 'amb' folder (samples of ambient audio)")
+    print("Empty 'amb' folder (samples of ambient audio)", file=sys.stderr)
 
 
 
