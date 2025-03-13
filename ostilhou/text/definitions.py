@@ -1,6 +1,9 @@
 from typing import List
 import re
-from ..dicts import proper_nouns, nouns_f, nouns_m
+from ..dicts import (
+    nouns_f, nouns_m,
+    dicts
+)
 
 
 LETTERS = "aâàbcçdeêéèëfghiïjklmnñoôpqrstuüùûvwxyzœ"
@@ -42,15 +45,24 @@ match_word_inclusive = lambda s: re_word_inclusive.fullmatch(s)
 is_word_inclusive = lambda s: bool(match_word_inclusive(s))
 
 
+
 # Nouns and proper nouns
-def is_proper_noun(word: str) -> bool:
+def is_first_name(word: str) -> bool:
+    for sub in word.split('-'):
+        if sub not in dicts["first_names"]:
+            return False
+    return True
+
+
+def is_last_name(word: str) -> bool:
     if '-' in word:
         for sub in word.split('-'):
-            if sub not in proper_nouns:
+            if sub not in dicts["last_names"]:
                 return False
         return True
     else:
-        return word in proper_nouns
+        return word in dicts["last_names"]
+
 
 
 def is_noun_f(word: str) -> bool:

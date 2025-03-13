@@ -12,7 +12,7 @@ from .definitions import (
     ORDINALS, match_ordinal,
     ROMAN_ORDINALS, match_roman_ordinal,
     )
-from .tokenizer import tokenize, detokenize, Token
+from .tokenizer import tokenize, detokenize, Token, TokenType
 from ..dicts import nouns_f, nouns_m
 
 
@@ -363,23 +363,23 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
 
 
     for tok in token_stream:
-        if tok.kind == Token.PROPER_NOUN: tok.norm.append(tok.data)
-        elif tok.kind == Token.WORD and norm_case:
+        if tok.kind == TokenType.PROPER_NOUN: tok.norm.append(tok.data)
+        elif tok.kind == TokenType.WORD and norm_case:
             tok.norm.append(tok.data.lower())
-        elif tok.kind == Token.NUMBER:
+        elif tok.kind == TokenType.NUMBER:
             tok.norm.append(num2txt(int(tok.data)))
-        elif tok.kind == Token.ROMAN_NUMBER: tok.norm.append(roman2br[tok.data])
-        elif tok.kind == Token.TIME: tok.norm.extend(norm_time(tok.data))
-        elif tok.kind == Token.ORDINAL:
+        elif tok.kind == TokenType.ROMAN_NUMBER: tok.norm.append(roman2br[tok.data])
+        elif tok.kind == TokenType.TIME: tok.norm.extend(norm_time(tok.data))
+        elif tok.kind == TokenType.ORDINAL:
             tok.norm.append(norm_ordinal(tok.data))
-        elif tok.kind == Token.ROMAN_ORDINAL: tok.norm.append(norm_roman_ordinal(tok.data))
-        elif tok.kind == Token.QUANTITY:
+        elif tok.kind == TokenType.ROMAN_ORDINAL: tok.norm.append(norm_roman_ordinal(tok.data))
+        elif tok.kind == TokenType.QUANTITY:
             if tok.unit == '%':
                 tok.norm.append(num2txt(int(tok.number)) + " dre gant")
             else:
                 noun = tok.unit if tok.unit not in SI_UNITS else SI_UNITS[tok.unit][0]
                 tok.norm.append(norm_number_noun(int(tok.number), noun))
-        elif tok.kind == Token.UNIT:
+        elif tok.kind == TokenType.UNIT:
             tok.norm.append(SI_UNITS[tok.data][0])
 
         yield tok

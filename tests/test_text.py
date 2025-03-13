@@ -1,5 +1,5 @@
 from ostilhou.text import extract_parenthesis_content, capitalize, correct_sentence
-from ostilhou.text.definitions import is_proper_noun
+from ostilhou.text.definitions import is_first_name, is_last_name
 
 
 def test_extract_parenthesis_content():
@@ -9,11 +9,11 @@ def test_extract_parenthesis_content():
     assert len(p) == 1
 
 
-def test_proper_noun():
-    assert is_proper_noun("Eleonore")
-    assert is_proper_noun("Marie-Jeanne")
-    assert is_proper_noun("Marie-Christine")
-    assert not is_proper_noun("Debdeb")
+def test_proper_nouns():
+    assert is_first_name("Eleonore")
+    assert is_first_name("Marie-Jeanne")
+    assert is_first_name("Marie-Christine")
+    assert not is_first_name("Debdeb")
 
 
 def test_capitalize():

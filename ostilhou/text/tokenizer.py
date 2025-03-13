@@ -6,8 +6,8 @@
 """
 
 
-from typing import Iterator, Iterable, List, Any, Union, Set
-from enum import Enum
+from typing import Iterator, Iterable, Optional, List, Any, Union, Set
+from enum import Enum, auto
 import os.path
 import re
 
@@ -16,86 +16,92 @@ from sentence_splitter import SentenceSplitter, split_text_into_sentences
 from .definitions import (
     re_word, is_word, is_word_inclusive, re_extended_word,
     is_roman_number, is_ordinal, is_roman_ordinal,
-    is_noun, is_noun_f, is_noun_m, is_proper_noun,
+    is_noun, is_noun_f, is_noun_m,
     is_time, match_time,
     is_unit_number, match_unit_number,
+    is_first_name, is_last_name,
     PUNCTUATION, LETTERS, SI_UNITS,
     OPENING_QUOTES, CLOSING_QUOTES,
     PUNCT_PAIRS, OPENING_PUNCT, CLOSING_PUNCT,
 )
 from .utils import capitalize, is_capitalized
-from ..dicts import acronyms, abbreviations, corrected_tokens, standard_tokens
+from ..dicts import (
+    acronyms,
+    abbreviations,
+    corrected_tokens,
+    standard_tokens,
+    nouns_f, nouns_m,
+    dicts
+)
 
+
+
+class TokenType(Enum):
+    """Token types"""
+    RAW = auto()
+    METADATA = auto()
+    SPECIAL_TOKEN = auto()
+    END_OF_SENTENCE = auto()
+    PUNCTUATION = auto()
+    WORD = auto()
+    FIRST_NAME = auto()
+    LAST_NAME = auto()
+    NUMBER = auto()
+    ROMAN_NUMBER = auto()
+    NOUN = auto()
+    PLACE = auto()
+    PROPER_NOUN = auto()
+    VERB = auto()
+    ACRONYM = auto()
+    ORDINAL = auto()
+    ROMAN_ORDINAL = auto()
+    TIME = auto()
+    UNIT = auto()         # %, m, km2, kg...
+    QUANTITY = auto()     # a number and a unit (%, m, km2, kg, bloaz, den...)
+    ABBREVIATION = auto()
+    UNKNOWN = auto()
+    
+    def __str__(self) -> str:
+        return self.name
+
+
+
+class Flag(Enum):
+    """Enumeration of possible token flags."""
+    FIRST_WORD = auto()
+    MASCULINE = auto()
+    FEMININE = auto()
+    INCLUSIVE = auto()
+    CAPITALIZED = auto()
+    CORRECTED = auto()
+    OPENING_PUNCT = auto()
+    CLOSING_PUNCT = auto()
 
 
 
 class Token:
-    # Enum
-    RAW = -1
-    SPECIAL_TOKEN = 0
-    END_OF_SENTENCE = 1
-    PUNCTUATION = 2
-    WORD = 3
-    NUMBER = 4
-    ROMAN_NUMBER = 5
-    NOUN = 6
-    PROPER_NOUN = 7
-    VERB = 8
-    ACRONYM = 9
-    ORDINAL = 10
-    ROMAN_ORDINAL = 11
-    TIME = 12
-    UNIT = 13         # %, m, km2, kg...
-    QUANTITY = 14     # a number and a unit (%, m, km2, kg, bloaz, den...)
-    ABBREVIATIION = 15
-    UNKNOWN = 99
-
-    descr = {
-        RAW: "RAW",
-        SPECIAL_TOKEN: "SPECIAL_TOKEN",
-        END_OF_SENTENCE: "END_OF_SENTENCE",
-        WORD: "WORD",
-        NUMBER: "NUMBER",
-        ROMAN_NUMBER: "ROMAN_NUMBER",
-        PUNCTUATION: "PUNCTUATION",
-        NOUN: "NOUN",
-        PROPER_NOUN: "PROPER_NOUN",
-        VERB: "VERB",
-        ACRONYM: "ACRONYM",
-        ORDINAL: "ORDINAL",
-        ROMAN_ORDINAL: "ROMAN_ORDINAL",
-        TIME: "TIME",
-        UNIT: "UNIT",
-        QUANTITY: "QUANTITY",
-        # PERCENT: "PERCENT",
-        ABBREVIATIION: "ABBREVIATION",
-        UNKNOWN: "UNKNOWN",
-    }
-
-    def __init__(self, data: str, kind: int=RAW, *flags):
-        self.data = data
-        self.norm = []
-        self.kind = kind
-        self.flags: Set[Flag] = set(flags)
-        self.next = None # The token following this one, after "generate_tokens_lookahead" is called
+    """
+    Represents a token in text processing.
     
-    def __repr__(self):
-        flags_name = [flag.name for flag in self.flags]
-        return "Token(" + \
-            f"{repr(self.data)}, {self.descr[self.kind]}" + \
-            f", {flags_name if flags_name else ''}" + \
-            ")"
-
-
-class Flag(Enum):
-    FIRST_WORD = 1
-    MASCULINE = 2
-    FEMININE = 3
-    INCLUSIVE = 4
-    CAPITALIZED = 5
-    CORRECTED = 6
-    OPENING_PUNCT = 7
-    CLOSING_PUNCT = 8
+    Attributes:
+        data: The original token text
+        norm: Normalized forms of the token
+        kind: The type of token
+        flags: Set of flags associated with this token
+        next: Reference to the next token in sequence
+    """
+    
+    def __init__(self, data: str, kind: TokenType = TokenType.RAW, *flags: Flag):
+        self.data: str = data
+        self.norm: List[str] = []
+        self.kind: TokenType = kind
+        self.flags: Set[Flag] = set(flags)
+        self.next: Optional[Token] = None  # Set after "generate_tokens_lookahead" is called
+    
+    def __repr__(self) -> str:
+        flag_names = [flag.name for flag in self.flags]
+        flags_str = f", {flag_names}" if flag_names else ""
+        return f"Token({repr(self.data)}, {self.kind}{flags_str})"
 
 
 
@@ -145,7 +151,7 @@ def split_sentences_old(text_or_gen: Union[str, Iterable[str]], **options: Any) 
 
     current_sentence = []
     for tok in token_stream:
-        if tok.kind == Token.END_OF_SENTENCE:
+        if tok.kind == TokenType.END_OF_SENTENCE:
             yield detokenize(current_sentence, **options) + end_char
             current_sentence = []
         else:
@@ -218,7 +224,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
             capitalize_next_word = False
 
         prefix = ''
-        if tok.kind == Token.PUNCTUATION:
+        if tok.kind == TokenType.PUNCTUATION:
             if data in '!?:;–':
                 prefix = '\xa0' # Non-breakable space
             elif data == '"':
@@ -251,7 +257,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
             elif data == '/…':
                 prefix = ''
         
-        elif tok.kind == Token.END_OF_SENTENCE:
+        elif tok.kind == TokenType.END_OF_SENTENCE:
             prefix = end_sentence
             if capitalize_opt:
                 capitalize_next_word = True
@@ -286,10 +292,16 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
 
 def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Token]:
     """ 
-        Generate raw tokens by splitting strings on whitespaces
+    Generate raw tokens by splitting strings on whitespaces
 
-        <SPECIAL_TOKENS> will be generated at this stage as well
+    <SPECIAL_TOKENS> and <METADATA> will be generated at this stage as well
     """
+    def split_and_tokenize(s: str):
+        for t in s.split():
+            if re.fullmatch(r"<[A-Z']+>", s):
+                yield Token(t, TokenType.SPECIAL_TOKEN)
+            else:
+                yield Token(t, TokenType.RAW)
     
     if isinstance(text_or_gen, str):
         if not text_or_gen:
@@ -297,11 +309,13 @@ def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Toke
         text_or_gen = [text_or_gen]
     
     for sentence in text_or_gen:
-        for s in sentence.split():
-            if re.fullmatch(r"<[A-Z']+>", s):
-                yield Token(s, Token.SPECIAL_TOKEN)
-            else:
-                yield Token(s, Token.RAW)
+        # Extract metadata
+        while match := re.search(r"{\s*(.+?)\s*}", sentence):
+            yield from split_and_tokenize(sentence[:match.start()])
+            yield Token(sentence[match.start():match.end()], TokenType.METADATA)
+            sentence = sentence[match.end():]
+        yield from split_and_tokenize(sentence)
+
 
 
 def generate_tokens_lookahead(token_stream: Iterator[Token]):
@@ -331,11 +345,13 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
     first_in_sentence = True
 
     for token in token_stream:
-        if first_in_sentence and not token.kind == Token.PUNCTUATION:
+        if first_in_sentence and token.kind not in (
+            TokenType.PUNCTUATION, TokenType.METADATA,
+        ):
             token.flags.add(Flag.FIRST_WORD)
             first_in_sentence = False
         
-        if token.kind != Token.PUNCTUATION:
+        if token.kind != TokenType.PUNCTUATION:
             yield token
             continue
 
@@ -356,12 +372,12 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
             yield token
             first_in_sentence = True
             if subsentence_depth == 0:
-                yield Token('', Token.END_OF_SENTENCE)
+                yield Token('', TokenType.END_OF_SENTENCE)
         elif punct == '…' or re.fullmatch(r"\.\.+", punct):
             yield token
             first_in_sentence = True
             if subsentence_depth == 0 and token.next and is_capitalized(token.next.data):
-                yield Token('', Token.END_OF_SENTENCE)
+                yield Token('', TokenType.END_OF_SENTENCE)
         else:
             yield token
 
@@ -384,7 +400,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
     norm_punct = options.pop('norm_punct', False)
 
     for tok in token_stream:
-        if tok.kind == Token.RAW:
+        if tok.kind == TokenType.RAW:
             data = tok.data
             subtokens = []
             post_subtokens = []
@@ -396,7 +412,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 # Check for opening punctuation
                 if data[0] in OPENING_PUNCT:
                     # punct_stack.append(data[0])
-                    subtokens.append(Token(data[0], Token.PUNCTUATION, Flag.OPENING_PUNCT))
+                    subtokens.append(Token(data[0], TokenType.PUNCTUATION, Flag.OPENING_PUNCT))
                     data = data[1:]
                     continue
 
@@ -404,20 +420,20 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 if data[0] in CLOSING_PUNCT:
                     # if punct_stack and data[0] == PUNCT_PAIRS[punct_stack[-1]]:
                     #     punct_stack.pop()
-                    subtokens.append(Token(data[0], Token.PUNCTUATION, Flag.CLOSING_PUNCT))
+                    subtokens.append(Token(data[0], TokenType.PUNCTUATION, Flag.CLOSING_PUNCT))
                     data = data[1:]
                     continue
                 
                 # Check for ellipsis
                 m = re.match(r"\.\.+", data)
                 if m:
-                    subtokens.append(Token(m.group(), Token.PUNCTUATION))
+                    subtokens.append(Token(m.group(), TokenType.PUNCTUATION))
                     data = data[m.end():]
                     continue
                 
                 # Check for single punctuation mark
                 if data[0] in PUNCTUATION:
-                    subtokens.append(Token(data[0], Token.PUNCTUATION))
+                    subtokens.append(Token(data[0], TokenType.PUNCTUATION))
                     data = data[1:]
                     continue
                 
@@ -429,7 +445,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                     # m = re.fullmatch(pattern, data, re.IGNORECASE)
                     # if m:
                     if data == abbr:
-                        t = Token(data, Token.ABBREVIATIION)
+                        t = Token(data, TokenType.ABBREVIATION)
                         t.norm.append(abbreviations[abbr])
                         subtokens.append(t)
                         data = data[len(abbr):]
@@ -440,10 +456,10 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
 
                 m = re.match(r"h\.a(?=…)", data, re.IGNORECASE)
                 if m:
-                    t = Token(m.group(), Token.ABBREVIATIION)
+                    t = Token(m.group(), TokenType.ABBREVIATION)
                     t.norm.append("hag all")
                     subtokens.append(t)
-                    subtokens.append(Token('…', Token.PUNCTUATION))
+                    subtokens.append(Token('…', TokenType.PUNCTUATION))
                     data = data[4:]
                     continue
 
@@ -451,7 +467,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 # Single initial or group of initials (i.e: I.E. or U.N.…)
                 m = re.match(r"([A-Z]\.)+", data)
                 if m:
-                    subtokens.append(Token(m.group(), Token.ACRONYM))
+                    subtokens.append(Token(m.group(), TokenType.ACRONYM))
                     data = data[m.end():]
                     continue
                 
@@ -460,14 +476,14 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 # Trailing ellipsis
                 m = re.search(r"\.\.+$", data)
                 if m:
-                    post_subtokens.insert(0, Token(m.group(), Token.PUNCTUATION))
+                    post_subtokens.insert(0, Token(m.group(), TokenType.PUNCTUATION))
                     data = data[:m.start()]
                     continue
 
                 # Other trailing punctuation
                 m = re.match(r"\!(\!)*$", data)
                 if m:
-                    t = Token(m.group(), Token.PUNCTUATION)
+                    t = Token(m.group(), TokenType.PUNCTUATION)
                     t.norm.append('!')
                     post_subtokens.insert(0, t)
                     data = data[:m.start()]
@@ -475,19 +491,19 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 
                 m = re.match(r"\?(\?)*$", data)
                 if m:
-                    t = Token(m.group(), Token.PUNCTUATION)
+                    t = Token(m.group(), TokenType.PUNCTUATION)
                     t.norm.append('?')
                     post_subtokens.insert(0, t)
                     data = data[:m.start()]
                     continue
                 
                 if data[-1] in CLOSING_PUNCT:
-                    post_subtokens.insert(0, Token(data[-1], Token.PUNCTUATION, Flag.CLOSING_PUNCT))
+                    post_subtokens.insert(0, Token(data[-1], TokenType.PUNCTUATION, Flag.CLOSING_PUNCT))
                     data = data[:-1]
                     continue
 
                 if data[-1] in PUNCTUATION:
-                    post_subtokens.insert(0, Token(data[-1], Token.PUNCTUATION))
+                    post_subtokens.insert(0, Token(data[-1], TokenType.PUNCTUATION))
                     data = data[:-1]
                     continue
 
@@ -530,17 +546,29 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
     # Arg options
 
     for tok in token_stream:
-        if tok.kind == Token.RAW:
+        if tok.kind == TokenType.RAW:
             if tok.data in acronyms:
-                tok.kind = Token.ACRONYM
+                tok.kind = TokenType.ACRONYM
             elif tok.data.isupper() and Flag.FIRST_WORD not in tok.flags:
-                tok.kind = Token.ACRONYM
+                tok.kind = TokenType.ACRONYM
             elif is_word(tok.data):
                 # Token is a simple and well formed word
-                if is_proper_noun(tok.data):
-                    tok.kind = Token.PROPER_NOUN
+                # if is_proper_noun(tok.data):
+                #     tok.kind = TokenType.PROPER_NOUN
+                if is_first_name(tok.data):
+                    tok.kind = TokenType.FIRST_NAME
+                elif is_last_name(tok.data):
+                    tok.kind = TokenType.LAST_NAME
+                elif tok.data in dicts["places"]:
+                    tok.kind = TokenType.PLACE
+                elif is_noun_f(tok.data):
+                    tok.kind = TokenType.NOUN
+                    tok.flags.add(Flag.FEMININE)
+                elif is_noun_m(tok.data):
+                    tok.kind = TokenType.NOUN
+                    tok.flags.add(Flag.MASCULINE)
                 else:
-                    tok.kind = Token.WORD
+                    tok.kind = TokenType.WORD
                     if is_word_inclusive(tok.data):
                         tok.flags.add(Flag.INCLUSIVE)
             yield tok
@@ -566,7 +594,7 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
     # prev_token = None
     num_concat = "" # buffer to contatenate numeral forms such as '12 000' -> '12000'
     for tok in token_stream:
-        if tok.kind == Token.RAW:
+        if tok.kind == TokenType.RAW:
             # r"[+-]?\d+(?:,\d+)"
 
             if tok.data.isdecimal():
@@ -576,26 +604,26 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                     num_concat += tok.data                    
                 else:
                     # A full number
-                    tok.kind = Token.NUMBER
+                    tok.kind = TokenType.NUMBER
             elif re.fullmatch(r"\d{1,3}(\.\d\d\d)+", tok.data):
                 # Big number with dotted thousands (i.e: 12.000.000)
                 tok.data = tok.data.replace('.', '')
-                tok.kind = Token.NUMBER
+                tok.kind = TokenType.NUMBER
             else:
                 if is_roman_number(tok.data):
-                    tok.kind = Token.ROMAN_NUMBER
+                    tok.kind = TokenType.ROMAN_NUMBER
                 elif is_ordinal(tok.data):
-                    tok.kind = Token.ORDINAL
+                    tok.kind = TokenType.ORDINAL
                 elif is_roman_ordinal(tok.data):
-                    tok.kind = Token.ROMAN_ORDINAL
+                    tok.kind = TokenType.ROMAN_ORDINAL
                 elif is_time(tok.data):
                     # TODO: Check for token 'gm', 'g.m', 'GM'...
-                    tok.kind = Token.TIME
+                    tok.kind = TokenType.TIME
                 elif is_unit_number(tok.data):
                     # ex: "10m2"
                     number, unit = match_unit_number(tok.data).groups()
                     number = number.replace('.', '')
-                    tok.kind = Token.QUANTITY
+                    tok.kind = TokenType.QUANTITY
                     tok.data = f"{num_concat}{number}{unit}"
                     tok.number = num_concat + number
                     tok.unit = unit
@@ -604,16 +632,16 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                 elif tok.data in SI_UNITS:
                     if num_concat:
                         # ex: "10 s"
-                        tok.kind = Token.QUANTITY
+                        tok.kind = TokenType.QUANTITY
                         tok.number = num_concat
                         tok.unit = tok.data
                         tok.data = num_concat + tok.data
                         num_concat = ""
                     elif tok.data not in ('l', 'm', 't', 'g'):
-                        tok.kind = Token.UNIT
+                        tok.kind = TokenType.UNIT
                 elif num_concat and is_noun(tok.data):
                     # ex: "32 bloaz"
-                    tok.kind = Token.QUANTITY
+                    tok.kind = TokenType.QUANTITY
                     tok.number = num_concat
                     tok.unit = tok.data
                     if is_word_inclusive(tok.data):
@@ -627,19 +655,19 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                     num_concat = ""
                 
                 if num_concat:
-                    yield Token(num_concat, Token.NUMBER)
+                    yield Token(num_concat, TokenType.NUMBER)
                     num_concat = ""
         
         else:
             if num_concat:
-                yield Token(num_concat, Token.NUMBER)
+                yield Token(num_concat, TokenType.NUMBER)
                 num_concat = ""
 
         if not num_concat:
             yield tok
     
     if num_concat:
-        yield(Token(num_concat, Token.NUMBER))
+        yield(Token(num_concat, TokenType.NUMBER))
 
 
 
@@ -672,18 +700,18 @@ def correct_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
 
 
     for tok in token_stream:
-        if tok.kind == Token.RAW:
+        if tok.kind == TokenType.RAW:
             lowered = tok.data.lower()
             substitutes = get_susbitution(tok.data)
             if substitutes:
                 # We must keep the prepended apostrophe (there could be a substitution rule for it)
-                yield from [ Token(s, Token.RAW, Flag.CORRECTED) for s in substitutes ]
+                yield from [ Token(s, TokenType.RAW, Flag.CORRECTED) for s in substitutes ]
             elif lowered.startswith("'") and lowered[1:] not in ('n', 'm', 'z'):
                 # Remove prepended apostrophies
                 # Check if there is a susbstitution rule for the remaining word
                 substitutes = get_susbitution(tok.data[1:])
                 if substitutes:
-                    yield from [ Token(s, Token.RAW, Flag.CORRECTED) for s in substitutes ]
+                    yield from [ Token(s, TokenType.RAW, Flag.CORRECTED) for s in substitutes ]
                 else:
                     # Pass the word without the apostrophe
                     tok.data = tok.data[1:]

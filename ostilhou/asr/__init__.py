@@ -4,7 +4,7 @@ import os
 import platform
 
 from .post_processing import verbal_fillers
-from ..dicts import proper_nouns, acronyms
+from ..dicts import acronyms, dicts
 
 from .dataset import *
 from .recognizer import *
@@ -258,11 +258,17 @@ def phonetize_word(word: str) -> tuple[List[str], int]:
     
     if word in acr2f:
         return acr2f[word], 0
-
-    if word in proper_nouns:
-        if proper_nouns[word]:
-            return proper_nouns[word], 0
     
+    for d in [
+        "first_names",
+        "last_names",
+        "places",
+        "proper_nouns"
+    ]:
+        if word in dicts[d]:
+            if dicts[d][word]:
+                return dicts[d][word], 0
+
     if lowered in lexicon_sub:
         alter = lexicon_add.get(lowered, [])
         return lexicon_sub[lowered] + alter, 0

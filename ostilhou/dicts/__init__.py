@@ -1,69 +1,60 @@
+"""
+Load various dictionaries from local resources
+
+The option should be given to load user dictionaries as well, stored in a system folder
+"""
+
 import sys
-import os
-import platform
+import importlib.resources
 
 
-dict_root = os.path.dirname(os.path.abspath(__file__))
-
-# Check if there is any tsv file in folder
-if dict_root and os.path.exists(dict_root):
-    for filename in os.listdir(dict_root):
-        if filename.endswith(".tsv"):
-            break
-    else:
-        dict_root = None
-else:
-    dict_root = None
-
-if dict_root is None:
-    if platform.system() in ("Linux", "Darwin"):
-        default = os.path.join(os.path.expanduser("~"), ".local", "share")
-    elif platform.system() == "Windows":
-        default = os.getenv("LOCALAPPDATA")
-    else:
-        raise OSError("Unsupported operating system")
-    dict_root = os.path.join(os.getenv("XDG_DATA_HOME ", default), "anaouder", "dicts")
+# if dict_root is None:
+#     if platform.system() in ("Linux", "Darwin"):
+#         default = os.path.join(os.path.expanduser("~"), ".local", "share")
+#     elif platform.system() == "Windows":
+#         default = os.getenv("LOCALAPPDATA")
+#     else:
+#         raise OSError("Unsupported operating system")
+#     dict_root = os.path.join(os.getenv("XDG_DATA_HOME", default), "anaouder", "dicts")
     
-    if not os.path.exists(dict_root):
-        os.makedirs(dict_root)
-
-print(f"loading dicts in {dict_root}", file=sys.stderr)
-
+#     if not os.path.exists(dict_root):
+#         os.makedirs(dict_root)
 
 # Proper nouns dictionary
 # with phonemes when name has a foreign or particular pronunciations
 
-def load_proper_nouns():
-    proper_nouns = dict()
-    proper_nouns_files = [
-        "proper_nouns_phon.tsv",
-        "places.tsv",
-        "first_names.tsv",
-        "last_names.tsv",
-        # "countries.tsv",
-    ]
+dicts = dict()
 
-    for file in proper_nouns_files:
-        path = os.path.join(dict_root, file)
-        if not os.path.exists(path):
-            print(f"Missing dictionary file {file}")
-            continue
-        with open(path, 'r', encoding='utf-8') as f:
+
+
+def load_dictionary_pron(file_path: str) -> dict:
+    """Load a case-sensitive lexicon file, with optional pronuciations"""
+    dictionary_pron = dict()
+
+    try:
+        with importlib.resources.files(__name__).joinpath(file_path).open('r', encoding='utf-8') as f:
             for l in f.readlines():
                 l = l.strip()
                 if l.startswith('#') or not l: continue
                 w, *pron = l.split(maxsplit=1)
                 pron = pron or []
                 
-                if w in proper_nouns and pron:
-                    if pron[0] not in proper_nouns[w]: # Avoid duplicate entries, which Kaldi hates
-                        proper_nouns[w].append(pron[0])
+                if w in dictionary_pron and pron:
+                    if pron[0] not in dictionary_pron[w]: # Avoid duplicate entries, which Kaldi hates
+                        dictionary_pron[w].append(pron[0])
                 else:
-                    proper_nouns[w] = pron
-    
-    return proper_nouns
+                    dictionary_pron[w] = pron
+    except FileNotFoundError:
+        print(f"Missing dictionary file {file_path}", file=sys.stderr)
 
-proper_nouns = load_proper_nouns()
+    return dictionary_pron
+
+
+dicts["first_names"] = load_dictionary_pron("first_names.tsv")
+dicts["last_names"] = load_dictionary_pron("last_names.tsv")
+dicts["places"] = load_dictionary_pron("places.tsv")
+dicts["proper_nouns"] = load_dictionary_pron("proper_nouns_phon.tsv")
+
 
 
 # Nouns dictionary
@@ -71,57 +62,57 @@ proper_nouns = load_proper_nouns()
 
 def load_nouns_f():
     nouns_f = set()
-    _nouns_f_path = os.path.join(dict_root, "noun_f.tsv")
+    filepath = "noun_f.tsv"
 
-    if not os.path.exists(_nouns_f_path):
-        print(f"Missing dictionary file noun_f.tsv")
+    try:
+        with importlib.resources.files(__name__).joinpath(filepath).open('r', encoding='utf-8') as f:
+            
+            for l in f.readlines():
+                l = l.strip()
+                if l.startswith('#') or not l: continue
+                nouns_f.add(l)
+        
         return nouns_f
-
-    with open(_nouns_f_path, 'r', encoding='utf-8') as f:
-        for l in f.readlines():
-            l = l.strip()
-            if l.startswith('#') or not l: continue
-            nouns_f.add(l)
-    
-    return nouns_f
+    except FileNotFoundError:
+        print(f"Missing dictionary file {filepath}", file=sys.stderr)
 
 nouns_f = load_nouns_f()
 
 
 def load_nouns_m():
     nouns_m = set()
-    _nouns_m_path = os.path.join(dict_root, "noun_m.tsv")
+    filepath = "noun_m.tsv"
 
-    if not os.path.exists(_nouns_m_path):
-        print(f"Missing dictionary file noun_m.tsv")
+    try:
+        with importlib.resources.files(__name__).joinpath(filepath).open('r', encoding='utf-8') as f:
+            for l in f.readlines():
+                l = l.strip()
+                if l.startswith('#') or not l: continue
+                nouns_m.add(l)
+        
         return nouns_m
-
-    with open(_nouns_m_path, 'r', encoding='utf-8') as f:
-        for l in f.readlines():
-            l = l.strip()
-            if l.startswith('#') or not l: continue
-            nouns_m.add(l)
-    
-    return nouns_m
+    except FileNotFoundError:
+        print(f"Missing dictionary file {filepath}", file=sys.stderr)
 
 nouns_m = load_nouns_m()
+
 
 
 # Acronyms dictionary
 
 def load_acronyms():
     """
-        Acronyms are stored in UPPERCASE in dictionary
-        Values are lists of strings for all possible pronunciation of an acronym
+    Acronyms are stored in UPPERCASE in dictionary
+    Values are lists of strings for all possible pronunciation of an acronym
     """
     acronyms = dict()
-    _acronyms_path = os.path.join(dict_root, "acronyms.tsv")
+    filepath = "acronyms.tsv"
 
     # for l in "BCDFGHIJKLMPQRSTUVWXZ":
     #     acronyms[l] = [acr2f[l]]
     
-    if os.path.exists(_acronyms_path):
-        with open(_acronyms_path, 'r', encoding='utf-8') as f:
+    try:
+        with importlib.resources.files(__name__).joinpath(filepath).open('r', encoding='utf-8') as f:
             for l in f.readlines():
                 l = l.strip()
                 if l.startswith('#') or not l: continue
@@ -130,31 +121,31 @@ def load_acronyms():
                     acronyms[acr].append(pron)
                 else:
                     acronyms[acr] = [pron]
-    else:
-        print("Acronym dictionary not found... creating file")
-        open(_acronyms_path, 'a', encoding='utf-8').close()
+    except FileNotFoundError:
+        print(f"Missing dictionary file {filepath}", file=sys.stderr)
+    
     return acronyms
 
 acronyms = load_acronyms()
+
 
 
 # Abbreviations
 
 def load_abbreviations():
     abbreviations = dict()
-    _abbreviations_path = os.path.join(dict_root, "abbreviations.tsv")
+    filepath = "abbreviations.tsv"
 
-    if not os.path.exists(_abbreviations_path):
-        print(f"Missing dictionary file abbreviations.tsv")
-        return abbreviations
-    
-    with open(_abbreviations_path, 'r', encoding='utf-8') as f:
-        for l in f.readlines():
-            l = l.strip()
-            if l.startswith('#') or not l: continue
-            k, v = l.split('\t')
-            # v = v.split()
-            abbreviations[k] = v
+    try:
+        with importlib.resources.files(__name__).joinpath(filepath).open('r', encoding='utf-8') as f:
+            for l in f.readlines():
+                l = l.strip()
+                if l.startswith('#') or not l: continue
+                k, v = l.split('\t')
+                # v = v.split()
+                abbreviations[k] = v
+    except FileNotFoundError:
+        print(f"Missing dictionary file {filepath}", file=sys.stderr)
     
     return abbreviations
 
@@ -163,20 +154,16 @@ abbreviations = load_abbreviations()
 
 # Interjections
 
-
 def load_interjections():
     """
-        Acronyms are stored in UPPERCASE in dictionary
-        Values are lists of strings for all possible pronunciation of an acronym
+    Acronyms are stored in UPPERCASE in dictionary
+    Values are lists of strings for all possible pronunciation of an acronym
     """
     interjections = dict()
-    _interjections_path = os.path.join(dict_root, "interjections.tsv")
-
-    # for l in "BCDFGHIJKLMPQRSTUVWXZ":
-    #     acronyms[l] = [acr2f[l]]
+    filepath = "interjections.tsv"
     
-    if os.path.exists(_interjections_path):
-        with open(_interjections_path, 'r', encoding='utf-8') as f:
+    try:
+        with importlib.resources.files(__name__).joinpath(filepath).open('r', encoding='utf-8') as f:
             for l in f.readlines():
                 l = l.strip()
                 if l.startswith('#') or not l: continue
@@ -187,9 +174,9 @@ def load_interjections():
                     interjections[interj].append(pron)
                 else:
                     interjections[interj] = pron
-    else:
-        print("Interjections dictionary not found... creating file")
-        open(_interjections_path, 'a', encoding='utf-8').close()
+    except FileNotFoundError:
+        print(f"Missing dictionary file {filepath}", file=sys.stderr)
+
     return interjections
 
 interjections = load_interjections()
@@ -199,19 +186,18 @@ interjections = load_interjections()
 
 def load_corrected_tokens():
     corrected_tokens = dict()
-    _corrected_tokens_path = os.path.join(dict_root, "corrected_tokens.tsv")
+    filepath = "corrected_tokens.tsv"
 
-    if not os.path.exists(_corrected_tokens_path):
-        print(f"Missing dictionary file corrected_tokens.tsv")
-        return corrected_tokens
-    
-    with open(_corrected_tokens_path, 'r', encoding='utf-8') as f:
-        for l in f.readlines():
-            l = l.strip()
-            if l.startswith('#') or not l: continue
-            k, v = l.split('\t')
-            v = v.split()
-            corrected_tokens[k] = v
+    try:
+        with importlib.resources.files(__name__).joinpath(filepath).open('r', encoding='utf-8') as f:
+            for l in f.readlines():
+                l = l.strip()
+                if l.startswith('#') or not l: continue
+                k, v = l.split('\t')
+                v = v.split()
+                corrected_tokens[k] = v
+    except FileNotFoundError:
+        print(f"Missing dictionary file {filepath}", file=sys.stderr)
     
     return corrected_tokens
 
@@ -222,19 +208,18 @@ corrected_tokens = load_corrected_tokens()
 
 def load_standard_tokens():
     standard_tokens = dict()
-    _standard_tokens_path = os.path.join(dict_root, "standard_tokens.tsv")
+    filepath = "standard_tokens.tsv"
 
-    if not os.path.exists(_standard_tokens_path):
-        print(f"Missing dictionary file standard_tokens.tsv")
-        return standard_tokens
-
-    with open(_standard_tokens_path, 'r', encoding='utf-8') as f:
-        for l in f.readlines():
-            l = l.strip()
-            if l.startswith('#') or not l: continue
-            k, v = l.split('\t')
-            v = v.split()
-            standard_tokens[k] = v
+    try:
+        with importlib.resources.files(__name__).joinpath(filepath).open('r', encoding='utf-8') as f:
+            for l in f.readlines():
+                l = l.strip()
+                if l.startswith('#') or not l: continue
+                k, v = l.split('\t')
+                v = v.split()
+                standard_tokens[k] = v
+    except FileNotFoundError:
+        print(f"Missing dictionary file {filepath}", file=sys.stderr)
     
     return standard_tokens
 
@@ -245,17 +230,16 @@ standard_tokens = load_standard_tokens()
 
 def load_stopwords():
     stopwords = set()
-    _stopwords_path = os.path.join(dict_root, "stopwords.tsv")
+    filepath = "stopwords.tsv"
 
-    if not os.path.exists(_stopwords_path):
-        print(f"Missing dictionary file stopwords.tsv", file=sys.stderr)
-        return stopwords
-
-    with open(_stopwords_path, 'r', encoding='utf-8') as f:
-        for l in f.readlines():
-            l = l.strip()
-            if l.startswith('#') or not l: continue
-            stopwords.add(l)
+    try:
+        with importlib.resources.files(__name__).joinpath(filepath).open('r', encoding='utf-8') as f:
+            for l in f.readlines():
+                l = l.strip()
+                if l.startswith('#') or not l: continue
+                stopwords.add(l)
+    except FileNotFoundError:
+        print(f"Missing dictionary file {filepath}", file=sys.stderr)
     
     return stopwords
 

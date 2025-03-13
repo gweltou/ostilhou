@@ -1,6 +1,7 @@
 
 from ostilhou import tokenize, detokenize
 from ostilhou.text import split_sentences
+from ostilhou.text.tokenizer import TokenType
 
 
 
@@ -123,3 +124,9 @@ def test_abbreviations():
         assert detokenize(tokenize(sent), normalize=True) == correction
     
     should_be("Demat It. Marie", "Demat Itron Marie")
+
+
+
+def test_metadata():
+    sentence = "{parser: ignore}– Kerry Scully o komz. Ezhomm skoazell 'm eus.{parser: add}"
+    assert list(tokenize(sentence))[0].kind == TokenType.METADATA
