@@ -34,8 +34,11 @@ def load_dictionary_pron(file_path: str) -> dict:
     try:
         with importlib.resources.files(__name__).joinpath(file_path).open('r', encoding='utf-8') as f:
             for l in f.readlines():
+                comment_start = l.find('#')
+                if comment_start >= 0:
+                    l = l[:comment_start]
                 l = l.strip()
-                if l.startswith('#') or not l: continue
+                if not l: continue
                 w, *pron = l.split(maxsplit=1)
                 pron = pron or []
                 
@@ -50,10 +53,83 @@ def load_dictionary_pron(file_path: str) -> dict:
     return dictionary_pron
 
 
+def load_dictionary_comp_pron(file_path: str) -> dict:
+    """
+    Load a case-sensitive lexicon file, with optional pronuciations
+    The dictionary's keys can be a compound word (separated with spaces)
+    """
+    dictionary_pron = dict()
+
+    try:
+        with importlib.resources.files(__name__).joinpath(file_path).open('r', encoding='utf-8') as f:
+            for l in f.readlines():
+                # comment_start = l.find('#')
+                # print(l.strip(), comment_start)
+                if comment_start := l.find('#') >= 0:
+                # if comment_start >= 0:
+                    l = l[:comment_start]
+                l = l.strip()
+                if not l: continue
+                w, *pron = l.split('\t', maxsplit=1)
+                pron = pron or []
+                
+                if w in dictionary_pron and pron:
+                    if pron[0] not in dictionary_pron[w]: # Avoid duplicate entries, which Kaldi hates
+                        dictionary_pron[w].append(pron[0])
+                else:
+                    dictionary_pron[w] = pron
+    except FileNotFoundError:
+        print(f"Missing dictionary file {file_path}", file=sys.stderr)
+
+    return dictionary_pron
+
+
+def augment_dict_mutations(d: dict):
+    """
+    Duplicate words that can be mutated.
+    Modifies the dictionary in-place.
+    """
+
+    for k in list(d):
+        first = k[0]
+        first_maj = first.upper()
+        if first_maj == 'P':
+            mutation = 'B'
+        elif first_maj == 'B':
+            mutation = 'V'
+        elif first_maj == 'M':
+            mutation = 'V'
+        elif first_maj == 'K':
+            mutation = 'G'
+        elif first_maj == 'T':
+            mutation = 'D'
+        # elif first_maj == 'G':
+        #     mutation = "C'h"
+        else:
+            continue
+        mutation = mutation.upper() if first.isupper() else mutation.lower()
+        mutated_word = mutation + k[1:]
+        mutated_prons = [ mutation.upper() + pron[1:] for pron in d[k] ]
+        d[mutated_word] = mutated_prons
+
+
+
 dicts["first_names"] = load_dictionary_pron("first_names.tsv")
 dicts["last_names"] = load_dictionary_pron("last_names.tsv")
 dicts["places"] = load_dictionary_pron("places.tsv")
 dicts["proper_nouns"] = load_dictionary_pron("proper_nouns_phon.tsv")
+dicts["countries"] = load_dictionary_comp_pron("countries_phon.tsv")
+dicts["adjectives"] = load_dictionary_pron("adjectives.tsv")
+
+
+# Apply breton mutations
+for d in [
+    "places",
+    "first_names",
+    "adjectives",
+]:
+    augment_dict_mutations(dicts[d])
+    print(dicts[d].keys())
 
 
 

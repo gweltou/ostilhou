@@ -151,6 +151,7 @@ fosil
 fotovoltaek
 foutr
 fouzañ
+freied
 frigo
 gall'
 gapitalouriezh
@@ -365,6 +366,7 @@ surtoud
 tabletennoù
 taksoù
 tañvet
+tatouet
 telennerez
 temperadur
 tempo
