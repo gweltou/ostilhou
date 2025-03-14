@@ -52,6 +52,7 @@ class TokenType(Enum):
     PLACE = auto()
     PROPER_NOUN = auto()
     VERB = auto()
+    ADJECTIVE = auto()
     ACRONYM = auto()
     ORDINAL = auto()
     ROMAN_ORDINAL = auto()
@@ -71,6 +72,7 @@ class Flag(Enum):
     FIRST_WORD = auto()
     MASCULINE = auto()
     FEMININE = auto()
+    PLURAL = auto()
     INCLUSIVE = auto()
     CAPITALIZED = auto()
     CORRECTED = auto()
@@ -561,16 +563,25 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
                     tok.kind = TokenType.LAST_NAME
                 elif tok.data in dicts["places"]:
                     tok.kind = TokenType.PLACE
-                elif is_noun_f(tok.data):
-                    tok.kind = TokenType.NOUN
-                    tok.flags.add(Flag.FEMININE)
-                elif is_noun_m(tok.data):
-                    tok.kind = TokenType.NOUN
-                    tok.flags.add(Flag.MASCULINE)
+                elif tok.data.lower() in dicts["adjectives"]:
+                    tok.kind = TokenType.ADJECTIVE
                 else:
-                    tok.kind = TokenType.WORD
+                    # Add flags
+                    if tok.data.lower().endswith('où'):
+                        tok.flags.add(Flag.PLURAL)
                     if is_word_inclusive(tok.data):
                         tok.flags.add(Flag.INCLUSIVE)
+
+                    # Nouns
+                    if is_noun_f(tok.data):
+                        tok.kind = TokenType.NOUN
+                        tok.flags.add(Flag.FEMININE)
+                    elif is_noun_m(tok.data):
+                        tok.kind = TokenType.NOUN
+                        tok.flags.add(Flag.MASCULINE)
+                    else:
+                        tok.kind = TokenType.WORD
+
             yield tok
         else:
             yield tok

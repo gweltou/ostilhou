@@ -1,4 +1,3 @@
-import os
 from typing import List
 from .definitions import is_noun
 

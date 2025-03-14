@@ -363,7 +363,12 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
 
 
     for tok in token_stream:
-        if tok.kind == TokenType.PROPER_NOUN: tok.norm.append(tok.data)
+        if tok.kind in (
+            TokenType.PROPER_NOUN,
+            TokenType.FIRST_NAME,
+            TokenType.LAST_NAME,
+            TokenType.PLACE,
+        ): tok.norm.append(tok.data)
         elif tok.kind == TokenType.WORD and norm_case:
             tok.norm.append(tok.data.lower())
         elif tok.kind == TokenType.NUMBER:

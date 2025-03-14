@@ -42,12 +42,12 @@ def is_capitalized(word: str) -> bool:
 
 def capitalize(word: str) -> str:
     """
-        Capitalize a single word or the first word of a given sentence
+    Capitalize a single word or the first word of a given sentence
+
+    TODO:
+        * Capitalize compound names, i.e "marie-thérèse" -> "Marie-Thérèse"
     
-        TODO:
-            * Capitalize compound names, i.e "marie-thérèse" -> "Marie-Thérèse"
-        
-        Should we capitalize the whole "C'H" character ? For now we don't.
+    Should we capitalize the whole "C'H" character ? For now we don't.
     """
 
     # Find first letter
