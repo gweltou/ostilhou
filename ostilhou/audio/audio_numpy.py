@@ -16,7 +16,8 @@ def get_samples(path: str, sample_rate=16000, buffer_size=8000):
     if chunks:
         raw_data = b''.join(chunks)
         samples = np.frombuffer(raw_data, dtype=np.int16)
-        return samples
+        normalized_samples = (samples.astype(np.float32) / 32767.0).astype(np.float16)
+        return normalized_samples
     else:
         return np.array([], dtype=np.int16)
 

@@ -129,7 +129,6 @@ for d in [
     "adjectives",
 ]:
     augment_dict_mutations(dicts[d])
-    print(dicts[d].keys())
 
 
 
