@@ -378,7 +378,7 @@ def parse_data_file(filepath, exclude, args) -> dict:
         # Filter out utterances with numbers or foreign chars (not counting acronyms)
         sent_no_acronyms = detokenize(
             normalize(
-                filter(lambda t: not t.kind == Token.ACRONYM, tokens),
+                filter(lambda t: not t.type == Token.ACRONYM, tokens),
                 norm_case=True
             ), normalize=True
         )

@@ -60,6 +60,7 @@ class TokenType(Enum):
     UNIT = auto()         # %, m, km2, kg...
     QUANTITY = auto()     # a number and a unit (%, m, km2, kg, bloaz, den...)
     ABBREVIATION = auto()
+    PERSON = auto()
     UNKNOWN = auto()
     
     def __str__(self) -> str:
@@ -96,14 +97,15 @@ class Token:
     def __init__(self, data: str, kind: TokenType = TokenType.RAW, *flags: Flag):
         self.data: str = data
         self.norm: List[str] = []
-        self.kind: TokenType = kind
+        self.type: TokenType = kind
         self.flags: Set[Flag] = set(flags)
+        self.subtokens: List[Token]
         self.next: Optional[Token] = None  # Set after "generate_tokens_lookahead" is called
     
     def __repr__(self) -> str:
         flag_names = [flag.name for flag in self.flags]
         flags_str = f", {flag_names}" if flag_names else ""
-        return f"Token({repr(self.data)}, {self.kind}{flags_str})"
+        return f"Token({repr(self.data)}, {self.type}{flags_str})"
 
 
 
@@ -153,7 +155,7 @@ def split_sentences_old(text_or_gen: Union[str, Iterable[str]], **options: Any) 
 
     current_sentence = []
     for tok in token_stream:
-        if tok.kind == TokenType.END_OF_SENTENCE:
+        if tok.type == TokenType.END_OF_SENTENCE:
             yield detokenize(current_sentence, **options) + end_char
             current_sentence = []
         else:
@@ -226,7 +228,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
             capitalize_next_word = False
 
         prefix = ''
-        if tok.kind == TokenType.PUNCTUATION:
+        if tok.type == TokenType.PUNCTUATION:
             if data in '!?:;–':
                 prefix = '\xa0' # Non-breakable space
             elif data == '"':
@@ -259,7 +261,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
             elif data == '/…':
                 prefix = ''
         
-        elif tok.kind == TokenType.END_OF_SENTENCE:
+        elif tok.type == TokenType.END_OF_SENTENCE:
             prefix = end_sentence
             if capitalize_opt:
                 capitalize_next_word = True
@@ -347,13 +349,13 @@ def generate_eos_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
     first_in_sentence = True
 
     for token in token_stream:
-        if first_in_sentence and token.kind not in (
+        if first_in_sentence and token.type not in (
             TokenType.PUNCTUATION, TokenType.METADATA,
         ):
             token.flags.add(Flag.FIRST_WORD)
             first_in_sentence = False
         
-        if token.kind != TokenType.PUNCTUATION:
+        if token.type != TokenType.PUNCTUATION:
             yield token
             continue
 
@@ -402,7 +404,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
     norm_punct = options.pop('norm_punct', False)
 
     for tok in token_stream:
-        if tok.kind == TokenType.RAW:
+        if tok.type == TokenType.RAW:
             data = tok.data
             subtokens = []
             post_subtokens = []
@@ -548,23 +550,23 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
     # Arg options
 
     for tok in token_stream:
-        if tok.kind == TokenType.RAW:
+        if tok.type == TokenType.RAW:
             if tok.data in acronyms:
-                tok.kind = TokenType.ACRONYM
+                tok.type = TokenType.ACRONYM
             elif tok.data.isupper() and Flag.FIRST_WORD not in tok.flags:
-                tok.kind = TokenType.ACRONYM
+                tok.type = TokenType.ACRONYM
             elif is_word(tok.data):
                 # Token is a simple and well formed word
                 # if is_proper_noun(tok.data):
                 #     tok.kind = TokenType.PROPER_NOUN
                 if is_first_name(tok.data):
-                    tok.kind = TokenType.FIRST_NAME
+                    tok.type = TokenType.FIRST_NAME
                 elif is_last_name(tok.data):
-                    tok.kind = TokenType.LAST_NAME
+                    tok.type = TokenType.LAST_NAME
                 elif tok.data in dicts["places"]:
-                    tok.kind = TokenType.PLACE
+                    tok.type = TokenType.PLACE
                 elif tok.data.lower() in dicts["adjectives"]:
-                    tok.kind = TokenType.ADJECTIVE
+                    tok.type = TokenType.ADJECTIVE
                 else:
                     # Add flags
                     if tok.data.lower().endswith('où'):
@@ -574,13 +576,13 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
 
                     # Nouns
                     if is_noun_f(tok.data):
-                        tok.kind = TokenType.NOUN
+                        tok.type = TokenType.NOUN
                         tok.flags.add(Flag.FEMININE)
                     elif is_noun_m(tok.data):
-                        tok.kind = TokenType.NOUN
+                        tok.type = TokenType.NOUN
                         tok.flags.add(Flag.MASCULINE)
                     else:
-                        tok.kind = TokenType.WORD
+                        tok.type = TokenType.WORD
 
             yield tok
         else:
@@ -605,7 +607,7 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
     # prev_token = None
     num_concat = "" # buffer to contatenate numeral forms such as '12 000' -> '12000'
     for tok in token_stream:
-        if tok.kind == TokenType.RAW:
+        if tok.type == TokenType.RAW:
             # r"[+-]?\d+(?:,\d+)"
 
             if tok.data.isdecimal():
@@ -615,26 +617,26 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                     num_concat += tok.data                    
                 else:
                     # A full number
-                    tok.kind = TokenType.NUMBER
+                    tok.type = TokenType.NUMBER
             elif re.fullmatch(r"\d{1,3}(\.\d\d\d)+", tok.data):
                 # Big number with dotted thousands (i.e: 12.000.000)
                 tok.data = tok.data.replace('.', '')
-                tok.kind = TokenType.NUMBER
+                tok.type = TokenType.NUMBER
             else:
                 if is_roman_number(tok.data):
-                    tok.kind = TokenType.ROMAN_NUMBER
+                    tok.type = TokenType.ROMAN_NUMBER
                 elif is_ordinal(tok.data):
-                    tok.kind = TokenType.ORDINAL
+                    tok.type = TokenType.ORDINAL
                 elif is_roman_ordinal(tok.data):
-                    tok.kind = TokenType.ROMAN_ORDINAL
+                    tok.type = TokenType.ROMAN_ORDINAL
                 elif is_time(tok.data):
                     # TODO: Check for token 'gm', 'g.m', 'GM'...
-                    tok.kind = TokenType.TIME
+                    tok.type = TokenType.TIME
                 elif is_unit_number(tok.data):
                     # ex: "10m2"
                     number, unit = match_unit_number(tok.data).groups()
                     number = number.replace('.', '')
-                    tok.kind = TokenType.QUANTITY
+                    tok.type = TokenType.QUANTITY
                     tok.data = f"{num_concat}{number}{unit}"
                     tok.number = num_concat + number
                     tok.unit = unit
@@ -643,16 +645,16 @@ def parse_numerals(token_stream: Iterator[Token]) -> Iterator[Token]:
                 elif tok.data in SI_UNITS:
                     if num_concat:
                         # ex: "10 s"
-                        tok.kind = TokenType.QUANTITY
+                        tok.type = TokenType.QUANTITY
                         tok.number = num_concat
                         tok.unit = tok.data
                         tok.data = num_concat + tok.data
                         num_concat = ""
                     elif tok.data not in ('l', 'm', 't', 'g'):
-                        tok.kind = TokenType.UNIT
+                        tok.type = TokenType.UNIT
                 elif num_concat and is_noun(tok.data):
                     # ex: "32 bloaz"
-                    tok.kind = TokenType.QUANTITY
+                    tok.type = TokenType.QUANTITY
                     tok.number = num_concat
                     tok.unit = tok.data
                     if is_word_inclusive(tok.data):
@@ -707,11 +709,8 @@ def correct_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
         else:
             return substitutes
 
-        
-
-
     for tok in token_stream:
-        if tok.kind == TokenType.RAW:
+        if tok.type == TokenType.RAW:
             lowered = tok.data.lower()
             substitutes = get_susbitution(tok.data)
             if substitutes:
@@ -731,3 +730,63 @@ def correct_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
                 yield tok
         else:
             yield tok
+
+
+
+
+def generate_person_tokens(token_stream: Iterator[Token]) -> Iterator[Token]:
+    """
+    Adds the PERSON token type in a stream of pre-processed tokens
+    
+    Person identifier patterns :
+        * <FIRST_NAME> [<Le|Du|De|Ar|An>] <LAST_NAME>
+        * Ao. <LAST_NAME>
+        * It. <LAST_NAME
+    """
+
+    parts = []
+
+    for token in token_stream:
+        if token.type in (
+            TokenType.FIRST_NAME,
+            TokenType.LAST_NAME,
+        ):
+            parts.append(token)
+        elif (
+            token.data.lower() in ("itron", "aotrou", "ao.", "it.")
+            and token.next
+            and (
+                is_last_name(token.next.data)
+                or is_first_name(token.next.data)
+            )
+        ):
+            parts.append(token)
+        elif (
+            token.type == TokenType.ACRONYM
+            and token.next
+            and (
+                is_last_name(token.next.data)
+                or is_first_name(token.next.data)
+            )
+        ):
+            parts.append(token)
+        elif (
+            len(parts) > 0
+            and token.data.lower() in ("an", "ar", "al", "le", "la", "de", "du")
+            and token.next
+            and is_last_name(token.next.data)
+        ):
+            parts.append(token)
+        else:
+            if parts:
+                text = ' '.join( [ t.data for t in parts ] )
+                compound_token = Token(text, TokenType.PERSON)
+                compound_token.subtokens = parts
+                yield compound_token
+                parts = []
+            yield token
+    if parts:
+        text = ' '.join( [ t.data for t in parts ] )
+        compound_token = Token(text, TokenType.PERSON)
+        compound_token.subtokens = parts
+        yield compound_token

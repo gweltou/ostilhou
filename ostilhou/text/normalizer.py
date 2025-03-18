@@ -363,28 +363,28 @@ def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
 
 
     for tok in token_stream:
-        if tok.kind in (
+        if tok.type in (
             TokenType.PROPER_NOUN,
             TokenType.FIRST_NAME,
             TokenType.LAST_NAME,
             TokenType.PLACE,
         ): tok.norm.append(tok.data)
-        elif tok.kind == TokenType.WORD and norm_case:
+        elif tok.type == TokenType.WORD and norm_case:
             tok.norm.append(tok.data.lower())
-        elif tok.kind == TokenType.NUMBER:
+        elif tok.type == TokenType.NUMBER:
             tok.norm.append(num2txt(int(tok.data)))
-        elif tok.kind == TokenType.ROMAN_NUMBER: tok.norm.append(roman2br[tok.data])
-        elif tok.kind == TokenType.TIME: tok.norm.extend(norm_time(tok.data))
-        elif tok.kind == TokenType.ORDINAL:
+        elif tok.type == TokenType.ROMAN_NUMBER: tok.norm.append(roman2br[tok.data])
+        elif tok.type == TokenType.TIME: tok.norm.extend(norm_time(tok.data))
+        elif tok.type == TokenType.ORDINAL:
             tok.norm.append(norm_ordinal(tok.data))
-        elif tok.kind == TokenType.ROMAN_ORDINAL: tok.norm.append(norm_roman_ordinal(tok.data))
-        elif tok.kind == TokenType.QUANTITY:
+        elif tok.type == TokenType.ROMAN_ORDINAL: tok.norm.append(norm_roman_ordinal(tok.data))
+        elif tok.type == TokenType.QUANTITY:
             if tok.unit == '%':
                 tok.norm.append(num2txt(int(tok.number)) + " dre gant")
             else:
                 noun = tok.unit if tok.unit not in SI_UNITS else SI_UNITS[tok.unit][0]
                 tok.norm.append(norm_number_noun(int(tok.number), noun))
-        elif tok.kind == TokenType.UNIT:
+        elif tok.type == TokenType.UNIT:
             tok.norm.append(SI_UNITS[tok.data][0])
 
         yield tok

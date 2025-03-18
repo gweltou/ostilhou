@@ -137,6 +137,7 @@ etanol
 fablab
 falc'hañ
 fartienn
+fekañ	# galleg "fouiner" (Devri)
 feneant
 fenomen
 fenotip
@@ -283,6 +284,7 @@ objedoù
 okupe
 okupet
 orgasm
+ostant	# galle "chef de famille" (Devri)
 ounner
 pagailh
 pakout

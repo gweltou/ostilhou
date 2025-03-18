@@ -72,7 +72,7 @@ def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
     # colored = ""
 
     for tok in tokenize(sentence, autocorrect=True):
-        if tok.kind == Token.WORD:
+        if tok.type == Token.WORD:
             if tok.data.lower() in lexicon_sub:
                 tok.data = Fore.YELLOW + tok.data + Fore.RESET
             elif tok.data.lower() in verbal_fillers:
@@ -87,13 +87,13 @@ def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
             elif not hs.spell(tok.data):
                 n_mistakes += 1
                 tok.data = Fore.RED + tok.data + Fore.RESET
-        elif tok.kind == Token.PROPER_NOUN:
+        elif tok.type == Token.PROPER_NOUN:
             tok.data = Fore.GREEN + tok.data + Fore.RESET
-        elif tok.kind == Token.ACRONYM:
+        elif tok.type == Token.ACRONYM:
             tok.data = Fore.BLUE + tok.data + Fore.RESET
-        elif tok.kind in (tok.ROMAN_NUMBER, tok.ROMAN_ORDINAL, tok.TIME, tok.UNIT, tok.QUANTITY):
+        elif tok.type in (tok.ROMAN_NUMBER, tok.ROMAN_ORDINAL, tok.TIME, tok.UNIT, tok.QUANTITY):
             tok.data = Fore.YELLOW + tok.data + Fore.RESET
-        elif tok.kind == Token.RAW:
+        elif tok.type == Token.RAW:
             tok.data = Fore.BLACK + tok.data + Fore.RESET
             n_mistakes += 1
         colored_tokens.append(tok)

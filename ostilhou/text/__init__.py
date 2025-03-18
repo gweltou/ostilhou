@@ -103,7 +103,7 @@ def count_words(sentence: str) -> int:
     """ Return number of regular words in sentence """
     n = 0
     for t in tokenize(sentence, norm_punct=True, autocorrect=True):
-        if t.kind == Token.WORD:
+        if t.type == Token.WORD:
             n += 1
     return n
 
@@ -148,7 +148,7 @@ def score_sentence(sentence: str):
     n_mistakes = 0
 
     for tok in tokenize(sentence, autocorrect=True):
-        if tok.kind == Token.WORD:
+        if tok.type == Token.WORD:
             if tok.data.lower() in lexicon_sub:
                 n_mistakes -= 1
             elif tok.data.lower() in verbal_fillers:
@@ -161,7 +161,7 @@ def score_sentence(sentence: str):
                 n_mistakes -= 1
             elif not hs_dict.spell(tok.data):
                 n_mistakes += 1
-        elif tok.kind == Token.RAW:
+        elif tok.type == Token.RAW:
             n_mistakes += 1
 
     return 1.0

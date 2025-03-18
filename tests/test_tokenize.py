@@ -129,4 +129,4 @@ def test_abbreviations():
 
 def test_metadata():
     sentence = "{parser: ignore}– Kerry Scully o komz. Ezhomm skoazell 'm eus.{parser: add}"
-    assert list(tokenize(sentence))[0].kind == TokenType.METADATA
+    assert list(tokenize(sentence))[0].type == TokenType.METADATA
