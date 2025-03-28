@@ -701,9 +701,9 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
                         speaker_name_depr = SPEAKER_ID_PATTERN_DEPR.fullmatch(unit)
                         if speaker_name_depr:
                             print(red(f"Deprecated metadata: {unit}"))
-                            metadata["speaker"] = speaker_name_depr.group(1)
-                            if speaker_name_depr.group(2) in 'fm':
-                                metadata["gender"] = speaker_name_depr.group(2)
+                            #metadata["speaker"] = speaker_name_depr.group(1)
+                            #if speaker_name_depr.group(2) in 'fm':
+                            #    metadata["gender"] = speaker_name_depr.group(2)
                         else:
                             print(red(f"Wrong metadata: {unit}"))
                 else:
