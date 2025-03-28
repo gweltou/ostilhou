@@ -25,7 +25,7 @@ def _count_words(s: str) -> int:
     return len(s.split())
 
 
-def _prepare_text(s: str) -> str:
+def prepare_text_for_alignment(s: str) -> str:
     """ Process sentence for alignment matching """
     s = re.sub(r"{.+?}", '', s) # Ignore metadata
     s = re.sub(r"<[A-Z\']+?>", '', s) # Ignore special tokens
@@ -93,7 +93,7 @@ def align(
         sentences = tqdm(sentences)
     
     for sent_idx, sentence in enumerate(sentences):
-        norm_sentence = _prepare_text(sentence)
+        norm_sentence = prepare_text_for_alignment(sentence)
         if not norm_sentence:
             continue
 
@@ -108,7 +108,7 @@ def align(
             for offset in range(1, right_boundary - i + 1):
                 hyp_windowed = hyp[i: i+offset]
                 hyp_sentence = ''.join( [t["word"] for t in hyp_windowed] )
-                hyp_sentence = _prepare_text(hyp_sentence)
+                hyp_sentence = prepare_text_for_alignment(hyp_sentence)
                 score = (
                     jiwer.cer(norm_sentence, hyp_sentence) * (1.0 - positional_weight) +
                     dist * positional_weight
@@ -221,13 +221,13 @@ def count_aligned_utterances(matches: list):
 
 def find_best_cut(sentence_a, sentence_b, hyp) -> int:
     """Return the word index of best cut in given hypothesis tokens"""
-    sentence_a = _prepare_text(sentence_a)
-    sentence_b = _prepare_text(sentence_b)
+    sentence_a = prepare_text_for_alignment(sentence_a)
+    sentence_b = prepare_text_for_alignment(sentence_b)
     best_score = inf
     best_cut = -1
     for i in range(1, len(hyp)):
-        hyp_a = _prepare_text(''.join([ t["word"] for t in hyp[:i] ]))
-        hyp_b = _prepare_text(''.join([ t["word"] for t in hyp[i:] ]))
+        hyp_a = prepare_text_for_alignment(''.join([ t["word"] for t in hyp[:i] ]))
+        hyp_b = prepare_text_for_alignment(''.join([ t["word"] for t in hyp[i:] ]))
         score = jiwer.cer(sentence_a, hyp_a) + jiwer.cer(sentence_b, hyp_b)
         if score < best_score:
             best_score = score
@@ -270,7 +270,7 @@ def calculate_global_score(matches: list):
     for match in matches:
         if not match:
             continue
-        num_char = len(_prepare_text(match["sentence"]))
+        num_char = len(prepare_text_for_alignment(match["sentence"]))
         total_score += match["score"] * num_char
         total_num_char += num_char
 

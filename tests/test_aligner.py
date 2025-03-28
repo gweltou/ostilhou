@@ -1,4 +1,4 @@
-from ostilhou.asr.aligner import align, _prepare_text
+from ostilhou.asr.aligner import align, prepare_text_for_alignment
 
 
 
@@ -8,7 +8,7 @@ def test_prepare_text():
     ]
 
     for ref, hyp in test_cases:
-        assert hyp == _prepare_text(ref)
+        assert hyp == prepare_text_for_alignment(ref)
 
 
 
