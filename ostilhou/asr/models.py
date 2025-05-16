@@ -42,7 +42,7 @@ _model_root = _get_model_directory()
 
 
 
-def _get_model_list():
+def _get_model_list() -> list:
     global _model_list
     if _model_list:
         return _model_list
@@ -139,7 +139,7 @@ def load_model(model_name: str = None) -> Model:
         # Given path to a model on local storage
         model_path = model_name
     elif model_name in get_available_models():
-        # Model is already downloaded
+        # Model is already cached
         model_path = os.path.join(_get_model_directory(), model_name)
     elif model_name in get_all_models():
         # Model needs to be downloaded
@@ -159,8 +159,9 @@ def load_model(model_name: str = None) -> Model:
 
 
 def _download(model_name: str, root: str) -> str:
-    """ Code modified from https://github.com/openai/whisper
-        Get the requested model path on disk or download it if not present
+    """
+    Code modified from https://github.com/openai/whisper
+    Get the requested model path on disk or download it if not present
     """
     os.makedirs(root, exist_ok=True)
     

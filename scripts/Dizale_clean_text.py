@@ -19,13 +19,15 @@ from ostilhou.text import (
 INCLUDE_SPEAKER_NAMES = False
 IGNORE_SPEAKERS = ["NAD"]
 IGNORE_WORDS = [
-    "aaa", "aaah", "argh",
+    "aaa", "aah", "aaah", "argh", "ahm",
     "huu",
-    "hañ", "mhañ",
-    "mm", "mh", "mmm", "mmr", "mmrr", "mff",
+    "hañ", "mhañ", "mfhañ", "hañf",
+    "mm", "mh", "mmm", "mmr", "mmrr", "mff", "mrh",
+    "grm",
     "oo", "ooo", "oooh",
-    "rhh", "rha", "rhaa",
+    "rhh", "rha", "rhaa", "rhañ",
     "c'heum",
+    "pft",
 ]
 REPLACE_WORDS = [
     ("'meus", "'m eus"),

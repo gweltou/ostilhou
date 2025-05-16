@@ -30,7 +30,7 @@ if __name__ == "__main__":
     for i, line in enumerate(tr):
         print(f"{i} {'\t'.join(line)}")
     
-    assert len(tr_lines) == len(ali_data["sentences"]), "Number of sentences doesn't match"
+    assert len(tr_lines) == len(ali_data["sentences"]), f"Number of sentences doesn't match {len(ali_data["sentences"])} != {len(tr_lines)}"
     
     with open(sys.argv[3], 'w') as _fout:
         _fout.write(

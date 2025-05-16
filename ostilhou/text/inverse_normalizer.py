@@ -122,8 +122,8 @@ def solve_num_tokens(numerical_tokens: List[float]) -> float:
 
 
 def inverse_normalize_sentence(sentence: str, min_num=5) -> str:
-    """ Translate spelled numbers to more readable numbers
-        This is a simple function expected on plain sentences with no punctuation
+    """ Translate spelled numbers to digits
+        This is a simple function that expects plain sentences with no punctuation
         The sentence is simply split on whitespaces
 
         Parameter

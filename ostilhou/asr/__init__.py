@@ -19,16 +19,17 @@ w2f = {
     'an'    :   'AN N',
     'amm'   :   'AN M',     # liAMM
     'añv.'  :   'AN',       # klAÑV {gouzañv ?}
+    'aux.'  :   'O',        # chevAUX (galleg)
     'b'     :   'B',
     'ch'    :   'CH',       # CHom
     "c'h"   :   'X',        # 
     'd'     :   'D',
     'dei'   :   'D EH I',   # DEIlenn
-    'c'     :   'K',        # xxx GALLEG xxx
+    'c'     :   'K',        # (galleg)
     'e'     :   'E',        # spEred
     'ê'     :   'E',        # gÊr
-    'é'     :   'E',        # xxx GALLEG xxx
-    'è'     :   'EH',       # galleg / gwennedeg
+    'é'     :   'E',        # (galleg)
+    'è'     :   'EH',       # (galleg/gwennedeg)
     "ec'h"  :   'EH X',     # nec'h
     'ei'    :   'EY',       # kEIn      # could replace with (EH I) maybe ?
     'eiñ'   :   'EY',       # savetEIÑ

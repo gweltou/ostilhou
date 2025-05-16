@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 
-# import random
-import re
 from typing import Iterator, List, Any
 
 from .tokenizer import match_time

@@ -68,6 +68,8 @@ def transcribe_segment_ffmpeg(
     # Configure ffmpeg to output raw audio in the format we need
     ffmpeg_cmd = [
         'ffmpeg',
+        '-loglevel', 'error',  # Reduce ffmpeg output
+        '-hide_banner',
         '-i', input_file,
         '-ss', str(start_time),
         '-t', str(duration),
@@ -75,7 +77,6 @@ def transcribe_segment_ffmpeg(
         '-ac', '1',      # Mono
         '-f', 's16le',   # 16-bit signed little-endian PCM
         '-',             # Output to stdout
-        '-loglevel', 'error'  # Reduce ffmpeg output
     ]
     
     # Start ffmpeg process and read its output
@@ -141,13 +142,14 @@ def transcribe_file_timecoded_callback_ffmpeg(
     
     # Configure ffmpeg to output raw audio in the format we need
     ffmpeg_cmd = [
-        'ffmpeg',
-        '-i', input_file,
-        '-ar', '16000',  # 16kHz sample rate
-        '-ac', '1',      # Mono
-        '-f', 's16le',   # 16-bit signed little-endian PCM
-        '-',             # Output to stdout
-        '-loglevel', 'error'  # Reduce ffmpeg output
+        "ffmpeg",
+        "-loglevel", "error",  # Reduce ffmpeg output
+        "-hide_banner",
+        "-i", input_file,
+        "-ar", "16000",  # 16kHz sample rate
+        "-ac", "1",      # Mono
+        "-f", "s16le",   # 16-bit signed little-endian PCM
+        "-",             # Output to stdout
     ]
     
     # Start ffmpeg process and read its output
@@ -157,7 +159,6 @@ def transcribe_file_timecoded_callback_ffmpeg(
         stderr=subprocess.PIPE
     )
     
-    text = []
     chunk_size = 4000  # Same chunk size as original function
     
     # Process the audio stream in chunks
@@ -264,13 +265,16 @@ def transcribe_file(filepath: str) -> List[str]:
     
     text = []
 
-    with subprocess.Popen(["ffmpeg", "-loglevel", "quiet",
-                                "-i", filepath,
-                                "-ar", "16000",
-                                "-ac", "1",
-                                "-f", "s16le",
-                                "-"],
-                                stdout=subprocess.PIPE) as process:
+    with subprocess.Popen([
+                            "ffmpeg",
+                            "-loglevel", "quiet",
+                            "-hide_banner",
+                            "-i", filepath,
+                            "-ar", "16000",
+                            "-ac", "1",
+                            "-f", "s16le",
+                            "-"],
+                            stdout=subprocess.PIPE) as process:
 
         while True:
             data = process.stdout.read(4000)
@@ -317,10 +321,17 @@ def transcribe_file_timecoded(filepath: str, show_progress_bar=True) -> List[dic
         progress_bar = tqdm(total=total_duration, unit='s', unit_scale=True)
     
     tokens = []
-    with subprocess.Popen(["ffmpeg", "-loglevel", "quiet", "-i",
-                            filepath,
-                            "-ar", "16000" , "-ac", "1", "-f", "s16le", "-"],
-                            stdout=subprocess.PIPE) as process:
+    with subprocess.Popen(
+        [
+            "ffmpeg",
+            "-loglevel", "quiet",
+            "-hide_banner",
+            "-i", filepath,
+            "-ar", "16000",
+            "-ac", "1",
+            "-f", "s16le",
+            "-"
+        ], stdout=subprocess.PIPE) as process:
 
         while True:
             data = process.stdout.read(4000)

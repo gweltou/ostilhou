@@ -138,7 +138,7 @@ def post_process_timecoded(
                         "end": tok["end"],
                         "conf": tok["conf"]
                         }
-            parsed.pop()
+            parsed.pop()  # Remove the last word since we're joining it
             parsed.append(new_token)
         else:
             parsed.append(tok)
