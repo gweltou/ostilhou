@@ -86,7 +86,10 @@ def get_audiofile_info(filename) -> dict:
 
 
 def get_audiofile_length(filename) -> float:
-    """ Get audio file length in seconds """
+    """
+    Get audio file length in seconds
+    (not very accurate)
+    """
     info = get_audiofile_info(filename)
     if "duration" in info:
         return float(info["duration"])
@@ -123,14 +126,14 @@ def play_with_ffplay(seg, speed=1.0):
 
 def convert_to_wav(src, dst, verbose=True, keep_orig=True):
     """
-        Convert to 16kHz s16le mono PCM
+    Convert to 16kHz s16le mono PCM
 
-        Parameters
-        ----------
-            verbose (bool):
-                Info text to stdout
-            keep_orig (bool):
-                keep  original file (or rename if src and dst are the same)
+    Parameters
+    ----------
+        verbose (bool):
+            Info text to stdout
+        keep_orig (bool):
+            keep  original file (or rename if src and dst are the same)
     """
     src = os.path.abspath(src)
     dst = os.path.abspath(dst)
@@ -166,7 +169,7 @@ def convert_to_wav(src, dst, verbose=True, keep_orig=True):
 
 
 def convert_to_mp3(src, dst, verbose=True, keep_orig=True):
-    """ Convert to MP3 """
+    """Convert audio file to MP3"""
     if verbose:
         print(Fore.YELLOW + f"AUDIO_CONV: converting '{src}' to '{dst}'..." + Fore.RESET)
         
@@ -186,7 +189,7 @@ def convert_to_mp3(src, dst, verbose=True, keep_orig=True):
 
 
 
-def concatenate_audiofiles(file_list, out_filename, remove=False):
+def concatenate_audiofiles(file_list: list, out_filename: str, remove=False):
     """
     Concatenate a list of audio files to a single audio file
 
@@ -195,6 +198,7 @@ def concatenate_audiofiles(file_list, out_filename, remove=False):
         remove (bool):
             remove original files
     """
+    print(f"concatenating {len(file_list)} files")
 
     if len(file_list) <= 1:
         return
@@ -203,11 +207,13 @@ def concatenate_audiofiles(file_list, out_filename, remove=False):
     with open(file_list_filename, 'w', encoding='utf-8') as f:
         f.write('\n'.join([f"file '{wav}'" for wav in file_list]))
     
-    subprocess.call(['ffmpeg', '-v', 'panic',
-                     '-f', 'concat',
-                     '-safe', '0',
-                     '-i', file_list_filename,
-                     '-c', 'copy', out_filename])
+    subprocess.call([
+        'ffmpeg', '-v', 'panic',
+        '-f', 'concat',
+        '-safe', '0',
+        '-i', file_list_filename,
+        '-c', 'copy', out_filename
+    ])
     os.remove(file_list_filename)
     
     if remove:
@@ -220,7 +226,8 @@ def export_segment(audio_path: str, start: float, end: float, new_path: str):
     """
     Split an audiofile in many segments
 
-    Arguments:
+    Arguments
+    ---------
         audio_path (str): the path of the original audiofile
         start (float) : time offset of beginning of segment
         end (float) : time offset of end of segment

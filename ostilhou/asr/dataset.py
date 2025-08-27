@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict
+from typing import Optional, Tuple, List, Dict
 import sys
 import os.path
 import re
@@ -126,14 +126,16 @@ def format_timecode(timecode):
 
 def create_ali_file(sentences, segments, **kwargs) -> str:
     """
-        Common header metadata:
-            audio-path
-            source
-            audio-source
-            author
-            transcription: name of transcribers
-            licence
-            tags: list of tags separated by commas
+    Common header metadata:
+        audio-path      path to local audio file
+        source          URL of hosting website
+        audio-source    URL to original audio file
+        author:         name(s) of transcriber(s)
+        transcription:  name(s) of transcriber(s)
+        adaptation:
+        licence:        type of licence attached to media file
+        tags:           list of tags separated by commas
+        status:         status of document
     """
     data = []
 
@@ -141,7 +143,12 @@ def create_ali_file(sentences, segments, **kwargs) -> str:
         data.append(f"{{audio-path: {value}}}")
     if value := kwargs.pop("audio_path", None):
         data.append(f"{{audio-path: {value}}}")
-    for key, value in sorted(kwargs.items()):
+    if value := kwargs.pop("tags", None):
+        if isinstance(value, list):
+            data.append(f"{{tags: {', '.join(value)}}}")
+        elif isinstance(value, str):
+            data.append(f"{{{key}: {value}}}")
+    for key, value in kwargs.items():
         key = key.replace('_', '-')
         data.append(f"{{{key}: {value}}}")
     data.append("")
@@ -157,7 +164,10 @@ def create_ali_file(sentences, segments, **kwargs) -> str:
 
 def load_ali_file(filepath) -> Dict:
     """
-        Return a dictionary containing the data from an `ali` file :
+    Parse an ALI file
+
+    Returns:
+        A dictionary containing the data from an `ali` file :
             audio_path: str,
             sentences: list,
             raw_sentences: list,
@@ -232,6 +242,46 @@ def load_ali_file(filepath) -> Dict:
         "metadata": metadatas,
     }
 
+
+def parse_ali_file(filepath, filter: Optional[dict]=None) -> list:
+    """
+    Parse an ALI file.
+
+    Arguments:
+        filepath (str):
+            Path to an ALI file
+        filters (list):
+            List of keys that should have their value set to True to be kept
+    
+    Returns:
+        utterances (list):
+            List of utterances
+    """
+
+    audio_path = None
+    utterances = []
+    parser = MetadataParser()
+    if filter:
+        parser.set_filter(filter)
+
+    with open(filepath, 'r', encoding='utf-8') as f:
+        # Find associated audio file in metadata
+
+        for line in f.readlines():
+            line = line.strip()
+            if line.startswith('#'):
+                continue
+
+            regions = parser.parse_sentence(line)
+            text = ''.join([ r[0] for r in regions ]).strip()
+            if text:
+                print(text)
+
+        # Try to find an associated audiofile if it was not explicitely set in metadata
+        if not audio_path:
+            audio_path = find_associated_audiofile(filepath, silent=True)
+    
+    return utterances
 
 
 def parse_dataset(file_or_dir, exclude:list, args) -> dict:
@@ -719,3 +769,185 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
         nchars_removed += end-start
     
     return sentence.strip(), metadata
+
+
+############################     ALI PARSER     ############################
+
+
+class MetadataParser():
+    """
+    Segments the sentence depending on metadata definitions.
+    Each successive region consists of the text and its metadata dictionary.
+
+    Metadata are of the format: "{key: value; key2: v1, v2, v3}"
+    Keeps unknown word markers '{?}'
+    """
+
+    METADATA_PATTERN = re.compile(r"{\s*(.+?)\s*}")
+    SPEAKER_NAME_PATTERN = re.compile(r"(?:(?:spk|speaker)\s*:\s*)?([\w '_-]+?)")
+    SPEAKER_ID_PATTERN_DEPR = re.compile(r"([-\'\w]+):*([mf])*")
+
+    VALID_PARAMS = {
+        "audio-path",
+        "source",
+        "source-audio", "audio-source",
+        "author", "authors",
+        "licence",
+        "modifications",
+        "adaptation",
+        "transcription",
+        "tags",
+        "speaker", "spk",
+        "gender",
+        "lang",
+        "accent",
+        "start", "end",
+        "parser",
+        "lm",
+        "subtitles"
+    }
+
+    def __init__(self):
+        self.names = dict() # Dictionary of already seen names
+        self.short_names = dict()
+        self.filter_in = dict()
+        self.reset()
+    
+    def reset(self, init: Optional[dict]=None):
+        self.current_metadata = {
+            "lang": "unknown",
+            "accent": "unknown",
+            "speaker": "unknown",
+            "gender": "unknown",
+            "parser": True,
+            "lm": True,
+            "subtitles": True,
+        }
+
+        if init:
+            self.current_metadata.update(init)
+        
+        self.names.clear()
+        self.short_names.clear()
+        self.filter_in.clear()
+
+    def set_filter(self, filter: dict):
+        self.filter_in = filter
+    
+    def filtered(self, metadata: dict) -> bool:
+        for k, v in self.filter_in.items():
+            if not k in metadata or metadata[k] != v:
+                return True
+        return False
+
+    def parse_sentence(self, sentence: str) -> List[Tuple[str, dict]]:
+        regions = []
+        region_start = 0
+        
+        for match in self.METADATA_PATTERN.finditer(sentence):
+            # Shouldn't match with '{?}'
+            content = match.group(1).strip()
+            if content == '?':
+                continue
+            
+            metadata = self.current_metadata.copy()
+            start, end = match.span()
+            text = sentence[region_start:start]
+            region_start = end
+
+            metadata_units = content.split(';')
+            for unit in metadata_units:
+                unit = unit.strip()
+                if ':' in unit:
+                    # Key-value pair
+                    key, val = unit.split(':', maxsplit=1)
+                    key = key.strip()
+                    val = val.strip()
+
+                    if not key in self.VALID_PARAMS:
+                        speaker_name_depr = self.SPEAKER_ID_PATTERN_DEPR.fullmatch(unit)
+                        if speaker_name_depr:
+                            print(red(f"Deprecated metadata: {unit}"))
+                            #metadata["speaker"] = speaker_name_depr.group(1)
+                            #if speaker_name_depr.group(2) in 'fm':
+                            #    metadata["gender"] = speaker_name_depr.group(2)
+                        else:
+                            print(red(f"Wrong metadata: {unit}"))
+                        continue
+
+                    if key in ("speaker", "spk"):
+                        key = "speaker"
+                        name = val
+                        if name.isupper() and ' ' not in name:
+                            # Treat as a short name
+                            if name in self.short_names:
+                                name = self.short_names[name]
+                        else:
+                            # Replace spaces in speaker names
+                            name = name.replace(' ', '_').lower()
+                        
+                        if name in self.names:
+                            # Automatically set the gender and accent, if already known
+                            gender, accent = self.names[name]
+                            self.current_metadata["gender"] = gender
+                            self.current_metadata["accent"] = accent
+                        else:
+                            # Record this name
+                            self.names[name] = ["unknown", "unknown"]
+                            short_name = self.get_short_name(val)
+                            if short_name not in self.short_names:
+                                self.short_names[short_name] = name
+                            else:
+                                print(red(f"Short name collision: {short_name} ({name}/{self.short_names[short_name]})"))
+                        self.current_metadata["speaker"] = name
+                        continue
+                    elif key == "gender":
+                        name = self.current_metadata["speaker"]
+                        if name != "unknown" and name in self.names:
+                            self.names[name][0] = val[0].lower()
+                    elif key == "accent":
+                        name = self.current_metadata["speaker"]
+                        if name != "unknown" and name in self.names:
+                            self.names[name][1] = val.lower()
+                    elif key in ("tags", "author", "accent"):
+                        val = [v.strip().replace(' ', '_') for v in val.split(',') if v.strip()]
+                    elif key in ("start", "end"):
+                        val = float(val)
+                    elif key in ("parser", "lm", "subtitles"):
+                        # A boolean
+                        val = False if val.lower() == "false" else True
+                    self.current_metadata[key] = val                        
+
+                else:
+                    # A simplified speaker name
+                    name = unit
+                    if name.isupper():
+                        # Could be a short name
+                        if name in self.short_names:
+                            name = self.short_names[name]
+                            gender, accent = self.names[name]
+                            self.current_metadata["gender"] = gender
+                            self.current_metadata["accent"] = accent
+                    else:
+                        # Keep all-caps names (Acronyms)
+                        name = name.replace(' ', '_').lower()
+                    
+                    self.current_metadata["speaker"] = name
+            
+            if text.strip() and not self.filtered(metadata):
+                regions.append( (text, metadata) )
+        
+        # Parse remaining of text
+        if region_start < len(sentence):
+            text = sentence[region_start:].strip()
+            if text and not self.filtered(self.current_metadata):
+                regions.append( (text, self.current_metadata.copy()) )
+        
+        # If there are no text regions, return the updated metadata
+        if not regions:
+            regions.append( ('', self.current_metadata.copy()) )
+        return regions
+
+    def get_short_name(self, name: str):
+        name = name.lower().replace('-', ' ')
+        return ''.join( [ n[0].upper() for n in name.split() ] )

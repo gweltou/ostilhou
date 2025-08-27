@@ -150,6 +150,7 @@ def load_nouns_f():
         return nouns_f
     except FileNotFoundError:
         print(f"Missing dictionary file {filepath}", file=sys.stderr)
+        return nouns_f
 
 nouns_f = load_nouns_f()
 
@@ -168,6 +169,7 @@ def load_nouns_m():
         return nouns_m
     except FileNotFoundError:
         print(f"Missing dictionary file {filepath}", file=sys.stderr)
+        return nouns_m
 
 nouns_m = load_nouns_m()
 
