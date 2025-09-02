@@ -3,7 +3,10 @@ import sys
 from typing import Tuple
 from colorama import Fore
 
-from ..text.tokenizer import Token, Flag, tokenize, detokenize
+from ..text.tokenizer import (
+    Token, TokenType, Flag,
+    tokenize, detokenize
+)
 from ..asr import lexicon_sub, verbal_fillers
 from ..dicts import interjections
 
@@ -56,47 +59,52 @@ def get_hunspell_spylls():
 
 
 def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
-    """ Return a string which is a colored correction of the sentence
-        and the number of spelling mistakes in the sentence.
+    """
+    Return a string which is a colored correction of the sentence
+    and the number of spelling mistakes in the sentence.
 
-        Parameters
-        ----------
-            autocorrect: bool
-                Apply autocorrection before countint errors
+    Parameters
+    ----------
+        autocorrect: bool
+            Apply autocorrection before counting errors
     """
 
     hs = get_hunspell_dict()
 
     n_mistakes = 0
     colored_tokens = []
-    # colored = ""
 
     for tok in tokenize(sentence, autocorrect=True):
-        if tok.type == Token.WORD:
-            if tok.data.lower() in lexicon_sub:
-                tok.data = Fore.YELLOW + tok.data + Fore.RESET
-            elif tok.data.lower() in verbal_fillers:
-                tok.data = Fore.YELLOW + tok.data + Fore.RESET
-            elif Flag.INCLUSIVE in tok.flags:
+        if tok.type == TokenType.WORD:
+            if Flag.INCLUSIVE in tok.flags:
                 head, *_ = tok.data.split('·')
                 if not hs.spell(head):
                     n_mistakes += 1
                     tok.data = Fore.RED + tok.data + Fore.RESET
             elif Flag.CORRECTED in tok.flags:
                 tok.data = Fore.YELLOW + tok.data + Fore.RESET
+            elif tok.data.lower() in lexicon_sub:
+                tok.data = Fore.YELLOW + tok.data + Fore.RESET
             elif not hs.spell(tok.data):
                 n_mistakes += 1
                 tok.data = Fore.RED + tok.data + Fore.RESET
-        elif tok.type == Token.PROPER_NOUN:
+        elif tok.type in (TokenType.PROPER_NOUN, TokenType.COUNTRY, TokenType.FIRST_NAME, TokenType.LAST_NAME):
             tok.data = Fore.GREEN + tok.data + Fore.RESET
-        elif tok.type == Token.ACRONYM:
+        elif tok.type == TokenType.ACRONYM:
             tok.data = Fore.BLUE + tok.data + Fore.RESET
-        elif tok.type in (tok.ROMAN_NUMBER, tok.ROMAN_ORDINAL, tok.TIME, tok.UNIT, tok.QUANTITY):
+        elif tok.type in (
+                TokenType.ROMAN_NUMBER,
+                TokenType.ROMAN_ORDINAL,
+                TokenType.TIME,
+                TokenType.UNIT,
+                TokenType.QUANTITY
+        ):
             tok.data = Fore.YELLOW + tok.data + Fore.RESET
-        elif tok.type == Token.RAW:
-            tok.data = Fore.BLACK + tok.data + Fore.RESET
+        elif tok.type == TokenType.SPECIAL_TOKEN:
+            tok.data = Fore.BLUE + tok.data + Fore.RESET
+        elif tok.type == TokenType.RAW:
+            tok.data = Fore.RED + tok.data + Fore.RESET
             n_mistakes += 1
         colored_tokens.append(tok)
     
     return detokenize(colored_tokens), n_mistakes
-    

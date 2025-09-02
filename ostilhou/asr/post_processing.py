@@ -1,37 +1,8 @@
 import os
 from typing import List, Optional
 from ..text.inverse_normalizer import inverse_normalize_sentence, inverse_normalize_timecoded
-from ..text.definitions import is_noun
+from ..text.definitions import is_noun, verbal_fillers
 from ..utils import read_file_drop_comments
-
-
-
-# Verbal fillers with phonetization
-
-verbal_fillers = {
-    'boñ'   :   'B ON',
-    'bah'   :   'B A',
-    'beñ'   :   'B EN',
-    'beh'   :   'B E',
-    'euh'   :   'OE',
-    'euhm'  :   'OE M',
-    'ebah'   :   'E B A',
-    'ebeñ'  :   'E B EN',
-    'feñ'   :   'F EN',
-    'kwa'   :   'K W A',
-    'hañ'   :   'H AN',
-    'heñ'   :   'EN',
-    'enfin' :   'AN F EN',
-    'tiens' :   'T I EN',
-    'alors' :   'A L OH R',
-    'allez' :   'A L E',
-    'voilà' :   'V O A L A',
-    'pff'   :   'P F F',
-    'mais'  :   'M EH',
-    'hmm'   :   'M M',
-    # 'oh'    :   'O',
-    # 'ah'    :   'A',
-}
 
 
 

@@ -1,16 +1,15 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 """
-	Converts a folder of audio and subtitle files downloaded with youtube-dl,
-	to local dataset format
+Converts a folder of audio and subtitle files downloaded with youtube-dl,
+to local dataset format
 
-	Usage:
-		python3 convert_youtube-dl.py SOURCE_DIR [-o OUTPUT_DIR]
+Usage:
+	python3 convert_youtube-dl.py SOURCE_DIR [-o OUTPUT_DIR]
 
-	youtube-dl command:
-		youtube-dl --download-archive ${DOWNLOAD_DIR}/downloaded.txt --rm-cache-dir -cwi --no-post-overwrites -o ${DOWNLOAD_DIR}'/%(playlist_index)s-%(title)s.%(ext)s' --cookies=cookies.txt --write-sub --sub-lang br --sub-format vtt --extract-audio --audio-format mp3 https://www.youtube.com/playlist?list=$PLAYLIST
+youtube-dl command:
+	youtube-dl --download-archive ${DOWNLOAD_DIR}/downloaded.txt --rm-cache-dir -cwi --no-post-overwrites -o ${DOWNLOAD_DIR}'/%(playlist_index)s-%(title)s.%(ext)s' --cookies=cookies.txt --write-sub --sub-lang br --sub-format vtt --extract-audio --audio-format mp3 https://www.youtube.com/playlist?list=$PLAYLIST
 """
 
 

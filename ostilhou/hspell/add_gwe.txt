@@ -43,6 +43,7 @@ aveitoñ
 baeiñ
 bamdé
 bamnoz
+barh
 barrouz
 beajourion
 behe
@@ -117,6 +118,7 @@ disheñval
 diskoueziñ
 diskwel
 dislâra
+doc'h
 doc'hte
 doc'htoñ
 doc'htu
@@ -132,6 +134,7 @@ dustu
 é
 éc'h
 eh
+ehamp
 e'it
 èl
 èldoc'h
@@ -152,6 +155,7 @@ feñvo
 fichal
 foetal
 founapl
+founnabl
 founnaploc'h
 gadoer
 ganac'h
@@ -244,6 +248,7 @@ kousta
 koutant
 kouzhet
 kristenion
+krogay
 krogiñ
 labourerion
 laoskel
@@ -328,6 +333,7 @@ partiañ
 pegiz
 pehani
 penaoz
+pesketourion
 piàr
 pigouilh
 pikiñ
@@ -367,6 +373,7 @@ staotaat
 stoup
 studierion
 stummiñ
+suhuniad
 surtout
 tait
 tañval
@@ -388,6 +395,7 @@ vizitiñ
 vlead
 vlez
 vlezad
+vout
 vuzuriñ
 warnezhi
 wela

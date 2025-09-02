@@ -18,6 +18,33 @@ CLOSING_PUNCT = PUNCT_PAIRS.values()
 VALID_CHARS = LETTERS + LETTERS.upper() + PUNCTUATION + "-'<> "
 
 
+# Verbal fillers with phonetization
+verbal_fillers = {
+    'boñ'   :   'B ON',
+    'bah'   :   'B A',
+    'beñ'   :   'B EN',
+    'beh'   :   'B E',
+    'euh'   :   'OE',
+    'euhm'  :   'OE M',
+    'ebah'   :   'E B A',
+    'ebeñ'  :   'E B EN',
+    'enfin' :   'AN F EN',
+    'feñ'   :   'F EN',
+    'hañ'   :   'H AN',
+    'heñ'   :   'EN',
+    'kwa'   :   'K W A',
+    'tiens' :   'T I EN',
+    'alors' :   'A L OH R',
+    'allez' :   'A L E',
+    'voilà' :   'V O A L A',
+    'pff'   :   'P F F',
+    'mais'  :   'M EH',
+    'hmm'   :   'M M',
+    # 'oh'    :   'O',
+    # 'ah'    :   'A',
+}
+
+
 substitutions = {
     "+"     : ["mui"],
     "="     : ["kevatal da"],

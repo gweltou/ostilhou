@@ -10,6 +10,7 @@ a'i
 aktourez
 alambig
 alemañ
+algo	# Berradur algoritm
 algoritm
 algoritmoù
 allelouia
@@ -18,11 +19,13 @@ anatomiezh
 annezadez
 aotism
 aotomatek
+apartamant	# ranndi
 apero
 apeupre
 arc'hweloù
 arkitektour
 artifisiel
+astrologiezh	# steredouriezh
 astronomek
 a'ta
 atersadenn 
@@ -158,6 +161,7 @@ gall'
 gapitalouriezh
 g'ar
 geek
+geiel	# Keiel (pistolet)
 genitervez
 geriaduriñ
 geriaouegi
@@ -207,6 +211,7 @@ kantilitrad
 kantoner
 kapitalist
 kardio
+kartografiezh
 katana
 kayak
 kenasantiñ
@@ -326,6 +331,8 @@ red'
 referañs
 reform
 relativel
+reskont	# Sinonim respont
+restaorant	# preti
 rezonapl
 roeñviñ
 romantik

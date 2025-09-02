@@ -23,6 +23,7 @@ from .definitions import (
     PUNCTUATION, LETTERS, SI_UNITS,
     OPENING_QUOTES, CLOSING_QUOTES,
     PUNCT_PAIRS, OPENING_PUNCT, CLOSING_PUNCT,
+    verbal_fillers
 )
 from .utils import capitalize, is_capitalized
 from ..dicts import (
@@ -33,7 +34,6 @@ from ..dicts import (
     nouns_f, nouns_m,
     dicts
 )
-
 
 
 class TokenType(Enum):
@@ -50,6 +50,7 @@ class TokenType(Enum):
     ROMAN_NUMBER = auto()
     NOUN = auto()
     PLACE = auto()
+    COUNTRY = auto()
     PROPER_NOUN = auto()
     VERB = auto()
     ADJECTIVE = auto()
@@ -61,6 +62,7 @@ class TokenType(Enum):
     QUANTITY = auto()     # a number and a unit (%, m, km2, kg, bloaz, den...)
     ABBREVIATION = auto()
     PERSON = auto()
+    FILLER = auto()
     UNKNOWN = auto()
     
     def __str__(self) -> str:
@@ -79,6 +81,7 @@ class Flag(Enum):
     CORRECTED = auto()
     OPENING_PUNCT = auto()
     CLOSING_PUNCT = auto()
+    STUTTER = auto()        # Words ending with '-'
 
 
 
@@ -112,21 +115,25 @@ class Token:
 _root = os.path.dirname(os.path.abspath(__file__))
 _moses_prefix_file = os.path.join(_root, "moses_br.txt")
 
-def split_sentences(text_or_gen: Union[str, Iterable[str]]) -> Iterator[str]:
+def split_sentences(text_or_gen: Union[str, Iterable[str]]) -> List[str]:
     """ Split a line (or list of lines) according to its punctuation
         This function can be used independently
     """
-   #print(text_or_gen)
     if isinstance(text_or_gen, str):
-        text = text_or_gen
+        text = text_or_gen.replace('\n', ' ')
     else:
         text = ' '.join([line.strip() for line in text_or_gen])
     
-    return split_text_into_sentences(
+    # Hack so the module can split sentences ending with "c'h"
+    text = text.replace("C'h", 'Ꭓ').replace("C'H", 'Ꭓ').replace("c'h", 'ꭓ')
+    
+    ret = split_text_into_sentences(
             text=text,
             language='br',
             non_breaking_prefix_file=_moses_prefix_file
         )
+
+    return [ s.replace('Ꭓ', "C'h").replace('ꭓ', "c'h") for s in ret ]
 
 
 def split_sentences_old(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[str]:
@@ -165,20 +172,18 @@ def split_sentences_old(text_or_gen: Union[str, Iterable[str]], **options: Any) 
 
 
 
-
-
 def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator[Token]:
     """
-        Parameters
-        ----------
-            autocorrect: boolean
-                Try to correct typos with a substitution dictionary
-            
-            norm_punct: boolean
-                Normalize punctuation
+    Parameters
+    ----------
+        autocorrect: boolean
+            Try to correct typos with a substitution dictionary
         
-        TODO:
-            * &
+        norm_punct: boolean
+            Normalize punctuation
+    
+    TODO:
+        * &
     """
 
     # Arg options
@@ -201,19 +206,33 @@ def tokenize(text_or_gen: Union[str, Iterable[str]], **options: Any) -> Iterator
 
 def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
     """
-        Parameters
-        ----------
-            capitalize: boolean
-                Capitalize sentence
-            
-            end: str
-                String to append at end of each sentence
+    Detokenize a stream of tokens to a string.
+
+    Parameters
+    ----------
+        token_stream: Iterator[Token]
+            Stream of tokens
+    
+    Optional parameters
+    -------------------
+        capitalize: boolean
+            Capitalize sentence
+        
+        end: str
+            String to append at end of each sentence
+        
+        normalize: boolean
+            Normalize sentence
+        
+        filter_out: Set[TokenType]
+            Set of token types of flags to filter out
     """
     
     # Parse options
     end_sentence = options.pop('end', '')
     capitalize_opt = options.pop('capitalize', False)
     normalize = options.pop("normalize", False)
+    filter_out = options.pop("filter_out", set())
     # colored = options.pop("colored", False)
 
     parts: List[str] = []
@@ -221,6 +240,11 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
     capitalize_next_word = capitalize_opt
 
     for tok in token_stream:
+        if tok.type in filter_out:
+            continue
+        if not tok.flags.isdisjoint(filter_out):
+            continue
+
         data = tok.norm[0] if (normalize and tok.norm) else tok.data
 
         if capitalize_next_word:
@@ -274,7 +298,7 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
                 prefix = ''
             elif punct_stack and last_char == '“':
                 prefix = ''
-            elif last_char not in '-/':
+            elif last_char not in '/':
                 prefix = ' '
 
         if parts:
@@ -410,8 +434,6 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
             post_subtokens = []
 
             while data:
-                #print(f"'{data}'")
-
                 # Check at the beggining of the token
                 # Check for opening punctuation
                 if data[0] in OPENING_PUNCT:
@@ -458,6 +480,7 @@ def parse_punctuation(token_stream: Iterator[Token], **options: Any) -> Iterator
                 if skip:
                     continue
 
+                # h.a (hag all)
                 m = re.match(r"h\.a(?=…)", data, re.IGNORECASE)
                 if m:
                     t = Token(m.group(), TokenType.ABBREVIATION)
@@ -557,8 +580,6 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
                 tok.type = TokenType.ACRONYM
             elif is_word(tok.data):
                 # Token is a simple and well formed word
-                # if is_proper_noun(tok.data):
-                #     tok.kind = TokenType.PROPER_NOUN
                 if is_first_name(tok.data):
                     tok.type = TokenType.FIRST_NAME
                 elif is_last_name(tok.data):
@@ -567,12 +588,20 @@ def parse_regular_words(token_stream: Iterator[Token], **options: Any) -> Iterat
                     tok.type = TokenType.PLACE
                 elif tok.data.lower() in dicts["adjectives"]:
                     tok.type = TokenType.ADJECTIVE
+                elif tok.data in dicts["countries"]:
+                    tok.type = TokenType.COUNTRY
+                elif tok.data in dicts["proper_nouns"]:
+                    tok.type = TokenType.PROPER_NOUN
+                elif tok.data.lower() in verbal_fillers:
+                    tok.type = TokenType.FILLER
                 else:
                     # Add flags
                     if tok.data.lower().endswith('où'):
                         tok.flags.add(Flag.PLURAL)
                     if is_word_inclusive(tok.data):
                         tok.flags.add(Flag.INCLUSIVE)
+                    if tok.data.endswith('-'):
+                        tok.flags.add(Flag.STUTTER)
 
                     # Nouns
                     if is_noun_f(tok.data):

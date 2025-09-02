@@ -204,6 +204,9 @@ if __name__ == "__main__":
 
     for corpus_name in corpora:
         corpus = corpora[corpus_name]
+        if not corpus:
+            continue
+
         save_dir = os.path.join(args.output, corpus_name)
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
@@ -288,6 +291,9 @@ if __name__ == "__main__":
 
     for corpus_name in corpora:
         corpus = corpora[corpus_name]
+        if not corpus:
+            continue
+        
         print(f"== {corpus_name.capitalize()} ==")
         print(f"- {len(corpus['text'])} utterances")
         audio_length_m = corpus["audio_length"]['m']
@@ -314,7 +320,7 @@ if __name__ == "__main__":
             + corpora["train"]["audio_length"]["m"] \
             + corpora["train"]["audio_length"]["u"]
         keys, val = zip(*corpora["train"]["subdir_audiolen"].items())
-        keys = [ k.replace('_', ' ') if v/total_audio_length>0.02 else ''
+        keys = [ k.replace('_', ' ').rstrip('.ali') if v/total_audio_length>0.02 else ''
                  for k,v in corpora["train"]["subdir_audiolen"].items() ]
         
         def labelfn(pct):

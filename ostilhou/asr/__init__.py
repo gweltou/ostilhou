@@ -178,9 +178,9 @@ print(f"loading lexicons in {lexicon_root}", file=sys.stderr)
 
 def load_lexicon_add():
     """
-        Lexicon_add contains pronunciation variants of words that can't be infered
-        by the `phonetize` function from their spelling in 'peurunvan' alone.
-        Those pronunciation should be added to the ones infered by `phonetize`.
+    Lexicon_add contains pronunciation variants of words that can't be infered
+    by the `phonetize` function from their spelling in 'peurunvan' alone.
+    Those pronunciation should be added to the ones infered by `phonetize`.
     """
 
     lexicon_add: Dict[str, List[str]] = dict()
@@ -201,15 +201,15 @@ lexicon_add = load_lexicon_add()
 
 def load_lexicon_sub():
     """
-        Lexicon_sub contains hardcoded pronunciations for (mostly) foreign words and
-        pronunciation exceptions.
+    Lexicon_sub contains hardcoded pronunciations for (mostly) foreign words and
+    pronunciation exceptions.
 
-        When a word is present in `lexicon_sub`, the `phonetize` function will not
-        infer it's pronunciation from its spelling. Only the harcoded one(s) will
-        be returned.
+    When a word is present in `lexicon_sub`, the `phonetize` function will not
+    infer it's pronunciation from its spelling. Only the harcoded one(s) will
+    be returned.
 
-        When there is more than one possible particular pronunciation for a word,
-        supplementary pronunciation can be put in `lexicon_sub.dic` or `lexicon_add.dic`
+    When there is more than one possible particular pronunciation for a word,
+    supplementary pronunciation can be put in `lexicon_sub.dic` or `lexicon_add.dic`
     """
 
     lexicon_sub: Dict[str, List[str]] = dict()
@@ -230,11 +230,12 @@ lexicon_sub = load_lexicon_sub()
 
 
 def phonetize_word(word: str) -> tuple[List[str], int]:
-    """ Simple phonetizer
-        Returns a string of phonemes representing the pronunciation
-        of a single given word.
-        All words must be given in lowercase, except acronyms
-        Numbers can't be phonetized, so they need to be normalized first.
+    """
+    Simple phonetizer
+    Returns a string of phonemes representing the pronunciation
+    of a single given word.
+    All words must be given in lowercase, except acronyms
+    Numbers can't be phonetized, so they need to be normalized first.
     """
     
     word = word.strip()

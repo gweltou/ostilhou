@@ -1,7 +1,7 @@
 
 from ostilhou import tokenize, detokenize
 from ostilhou.text import split_sentences
-from ostilhou.text.tokenizer import TokenType
+from ostilhou.text.tokenizer import TokenType, Flag
 
 
 
@@ -29,14 +29,14 @@ def test_split_sentence():
         ("E 1938 e voe he gwaz harzet ha lazhet en U. R. S. S., ar pezh na viras ket ouzh Ana Pauker a chom feal d'ar gomunouriezh, d'an U. R. S. S. ha da Jozef Stalin.", 1),
         ("Ur maen-koun zo war lein, da bevar barzh eus ar vro : T. Hughes Jones, B.T. Hopkins, J. M. Edwards hag Edward Prosser Rhys.", 1),
         ("Dindan anv A. J. Orde, E. E. Horlak, ha B. J. Oliphant he-deus skrivet hag hec'h oberennoù kentañ a voe embannet dindan anv Sheri S. Eberhart.", 1),
-        ("""Hervez Levr ar C'heneliezh ec'h eo Yafet eil mab Noah. Hervez ar Bibl e tiskouezas doujañs e-kenver e dad mezv-dall. Benniget e voe gantañ evel Shem : "Frankiz ra roio Doue da Yafet ! Ha ra chomo e tinelloù Shem !" """, 3),
-        ("""C'hoariet en deus evit Stade Rennais Football Club etre 1973 ha 1977 hag e 1978-1979. Unan eus ar c'hoarierien wellañ bet gwelet e klub Roazhon e oa. Pelé en deus lavaret diwar e benn : « Kavet 'm eus an hini a dapo ma flas. Laurent Pokou e anv. ».""", 3),
         ("Sed aze pal ar « c'hendivizad a-ziforc'h evit treuzkas yezhoù Breizh (2022-2027) ». Sinet e oa bet ivez d'ar Meurzh 15 a viz Meurzh 2022 e Roazhon.", 2),
         ("Eilpennet dehoù/kleiz eo ar skoed a zo diskouezet war Commons e-keñver an hini a zo war lec'hienn kêr Lambal, war Armor Magazine (Mae 1997) hag en Armorial des communes des Côtes-d'Armor Froger & Pressensé, 2008, p. 34 ; Kuzul ar Gumun : 16 a viz Here 1994.", 1),
         ("""Dirak an it. Lena Louarn, besprezidantez ar C’huzul-rannvro karget eus yezhoù Breizh ha prezidantez OPAB,
             an it. Solange Creignou, besprezidantez Kuzul-departamant Penn-ar-Bed dileuriet evit ar brezhoneg,
             an it. Isabelle ar Bal, eilmaerez 1añ Kemper hag an ao. Jean-Luc Bleunven, kannad eus Penn-ar-Bed,
             eo bet sinet an emglev Ya d’ar brezhoneg gant an ao. Mathieu Gallou, prezidant ar skol-veur.""", 1),
+        ("""C'hoariet en deus evit Stade Rennais Football Club etre 1973 ha 1977 hag e 1978-1979. Unan eus ar c'hoarierien wellañ bet gwelet e klub Roazhon e oa. Pelé en deus lavaret diwar e benn : « Kavet 'm eus an hini a dapo ma flas. Laurent Pokou e anv. ».""", 3),
+        ("""Hervez Levr ar C'heneliezh ec'h eo Yafet eil mab Noah. Hervez ar Bibl e tiskouezas doujañs e-kenver e dad mezv-dall. Benniget e voe gantañ evel Shem : "Frankiz ra roio Doue da Yafet ! Ha ra chomo e tinelloù Shem !" """, 3),
         ("O teskin brezhoneg emaoc’h (live 1, 2) ha c’hoant ho peus d’en em lakaat da gaozeal Deuit gant Kristin Ar Menn evit un endervezh plijus e brezhoneg Petra vo graet ? C’hoarioù (daou-ha-daou, a-stroll, etc..) evit gwelout penaos ober anaoudegezh ha kaozeal e-pad ar predoù. E fin an endervezh e vo graet merenn-vihan ganeomp ha implijet […]", 4),
     ]
 
@@ -63,7 +63,7 @@ def test_detokenize():
     should_be('Un deiz bennag, he \ndoa lâret ar brezidantez, e \nvint sovet marse ha lakaet da \nzoned a varw da véw gant ar\n"jeni-jenetik".',
                 'Un deiz bennag, he doa lâret ar brezidantez, e vint sovet marse ha lakaet da zoned a varw da véw gant ar "jeni-jenetik".')
     should_be('Ha setu perak ‚oa bet divizet ganeomp', 'Ha setu perak‚ oa bet divizet ganeomp') # Sneaky fake comma
-    should_be("al labour- \ndouar", "al labour-douar")
+    # should_be("al labour- \ndouar", "al labour-douar") # Can't allow that anymore because of stutters ("da- da")
     should_be('3 / 4 eus an dud.', '3/4 eus an dud.')
     should_be('Dindan c\'hwec\'h vloaz :digoust.', 'Dindan c\'hwec\'h vloaz\xa0: digoust.')
     should_be("unan... daou ...tri ... pevar ....pemp!... c'hwec'h,....seizh", "unan... daou... tri... pevar.... pemp !... c'hwec'h,.... seizh")
@@ -113,8 +113,6 @@ def test_autocorrection():
         assert detokenize(tokenize(sent, autocorrect=True)) == correction
     
     should_be("kemer an taski", "kemer an taxi") 
-    should_be("abadenn France 3", "abadenn Frañs 3")
-    should_be("abadenn France 3", "abadenn Frañs 3")
     should_be("Hirio on aet war twitter", "Hiziv on aet war Twitter")
     should_be("Ar bleuñ", "Ar bleuñv")
 
@@ -130,3 +128,25 @@ def test_abbreviations():
 def test_metadata():
     sentence = "{parser: ignore}– Kerry Scully o komz. Ezhomm skoazell 'm eus.{parser: add}"
     assert list(tokenize(sentence))[0].type == TokenType.METADATA
+
+
+def test_filter():
+    test_cases = [
+        (
+            "Da lâret eo zo dalc'h mat un- moaien deomp dibab kwa. Ha se an hini eo a- an alc'hwez... an arouez... hag- a- zi-, a gav din barzh- ar-, barzh ar blantenn-se.",
+            "Da lâret eo zo dalc'h mat moaien deomp dibab. Ha se an hini eo an alc'hwez... an arouez..., a gav din, barzh ar blantenn-se."
+        ),
+        (
+            "Euh neuze vije tapet euh ar-... ar bod drez... euh pezh oa hir ha- ha peus- prop kwa feñ hep- euh, hep re a brankennoù.",
+            "Neuze vije tapet... ar bod drez... pezh oa hir ha prop, hep re a brankennoù."
+        )
+    ]
+
+    for t in test_cases:
+        hyp = detokenize(tokenize(t[0]), capitalize=True, filter_out={TokenType.FILLER, Flag.STUTTER})
+        assert hyp == t[1]
+
+
+def test_stutter():
+    s = "Euh neuze vije tapet euh ar-... ar bod drez... euh pezh oa hir ha- ha peus- prop kwa feñ hep- euh, hep re a brankennoù."
+    assert s == detokenize(tokenize(s))

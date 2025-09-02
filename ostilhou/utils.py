@@ -31,7 +31,7 @@ def sec2hms(seconds, sep=' ', precision=0, h_unit='h', m_unit='\'', s_unit="''")
 
 
 
-def list_files_with_extension(ext: Union[str, tuple, list], rep, recursive=True) -> List[str]:
+def list_files_with_extension(ext: Union[str, tuple, list], path, recursive=True) -> List[str]:
     """
     Recursively list all files of the given extension(s) in a folder
 
@@ -39,12 +39,14 @@ def list_files_with_extension(ext: Union[str, tuple, list], rep, recursive=True)
     ----------
         ext : str|list
             file extension, without the extension separator
+        path : str
+            path to a folder
     """
     extensions = [ext] if isinstance(ext, str) else ext
     file_list = []
-    if os.path.isdir(rep):
-        for filename in os.listdir(rep):
-            filename = os.path.join(rep, filename)
+    if os.path.isdir(path):
+        for filename in os.listdir(path):
+            filename = os.path.join(path, filename)
             if os.path.isdir(filename) and recursive:
                 file_list.extend(list_files_with_extension(extensions, filename))
             else:

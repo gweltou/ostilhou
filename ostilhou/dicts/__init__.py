@@ -233,7 +233,6 @@ abbreviations = load_abbreviations()
 
 def load_interjections():
     """
-    Acronyms are stored in UPPERCASE in dictionary
     Values are lists of strings for all possible pronunciation of an acronym
     """
     interjections = dict()

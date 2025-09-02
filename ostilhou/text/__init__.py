@@ -1,6 +1,10 @@
 from typing import Iterator, Any
 
-from .tokenizer import Token, tokenize, detokenize, split_sentences, split_sentences_old
+from .tokenizer import (
+    Token, TokenType,
+    tokenize, detokenize,
+    split_sentences, split_sentences_old
+)
 from .normalizer import normalize, normalize_sentence
 from .inverse_normalizer import inverse_normalize_sentence, inverse_normalize_timecoded
 from .utils import (
