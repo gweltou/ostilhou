@@ -1,6 +1,7 @@
 #! /bin/bash
 
 FILES="
+ostilhou/dicts/abbreviations.tsv
 ostilhou/dicts/proper_nouns_phon.tsv
 ostilhou/dicts/noun_m.tsv
 ostilhou/dicts/noun_f.tsv
