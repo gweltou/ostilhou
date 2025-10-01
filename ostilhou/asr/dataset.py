@@ -134,6 +134,15 @@ def format_timecode(timecode):
 
 def create_ali_file(sentences, segments, **kwargs) -> str:
     """
+    Create a ALI file from a list of sentences and segments
+
+    Parameters:
+        sentence (List[str]):
+            List of sentences
+        segments (List[list]):
+            Corresponding segments
+        **kwargs: other parameters to the ALI file (see 'common header metadata' below)
+
     Common header metadata:
         audio-path      path to local audio file
         source          URL of hosting website
@@ -155,7 +164,7 @@ def create_ali_file(sentences, segments, **kwargs) -> str:
         if isinstance(value, list):
             data.append(f"{{tags: {', '.join(value)}}}")
         elif isinstance(value, str):
-            data.append(f"{{{key}: {value}}}")
+            data.append(f"{{tags: {value}}}")
     for key, value in kwargs.items():
         key = key.replace('_', '-')
         data.append(f"{{{key}: {value}}}")
@@ -172,6 +181,8 @@ def create_ali_file(sentences, segments, **kwargs) -> str:
 
 def load_ali_file(filepath) -> Dict:
     """
+    **Deprecated**
+
     Parse an ALI file
 
     Returns:
@@ -212,12 +223,12 @@ def load_ali_file(filepath) -> Dict:
             else:
                 metadata["gender"] = current_gender
             
-            if "parser" in metadata:
-                if "no-lm" in metadata["parser"]: no_lm = True
-                elif "add-lm" in metadata["parser"]: no_lm = False
-            else:
-                if no_lm:
-                    metadata["parser"] = ["no-lm"]
+            # if "parser" in metadata:
+            #     if "no-lm" in metadata["parser"]: no_lm = True
+            #     elif "add-lm" in metadata["parser"]: no_lm = False
+            # else:
+            #     if no_lm:
+            #         metadata["parser"] = ["no-lm"]
 
             # match = re.search(r"{\s*start\s*:\s*([0-9\.]+)\s*;\s*end\s*:\s*([0-9\.]+)\s*}", line)
             # if match:
@@ -255,7 +266,8 @@ def load_ali_file(filepath) -> Dict:
 def parse_ali_file(
         filepath,
         init: Optional[dict]=None,
-        filter: Optional[dict]=None
+        filter_in: Optional[dict]=None,
+        filter_out: Optional[dict]=None
     ) -> List[Tuple[list, tuple]]:
     """
     Parse an ALI file.
@@ -265,8 +277,10 @@ def parse_ali_file(
             Path to an ALI file
         init (dict):
             Initial metadata
-        filter (dict):
-            List of keys that should have their value set to True to be kept
+        filter_in (dict):
+            Dictionary of key-values for which segments should be filtered in
+        filter_out (dict):
+            Dictionary of key-values for which segments should be filtered out
     
     Returns:
         utterances (list):
@@ -275,8 +289,10 @@ def parse_ali_file(
 
     utterances = []
     parser = MetadataParser(init)
-    if filter:
-        parser.set_filter(filter)
+    if filter_in:
+        parser.set_filter_in(filter_in)
+    if filter_out:
+        parser.set_filter_out(filter_out)
 
     with open(filepath, 'r', encoding='utf-8') as f:
         # Find associated audio file in metadata
@@ -289,7 +305,7 @@ def parse_ali_file(
             regions, segment = parser.parse_sentence(line)
             text = ''.join([ r['text'] for r in regions if 'text' in r ]).strip()
 
-            if text and segment != None:
+            if text and (segment != None):
                 utterances.append( (regions, segment) )
 
     return utterances
@@ -366,8 +382,9 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
     if seg_ext == ".ali":
         utterances = parse_ali_file(
             filepath,
-            init={"lang": "br"},
-            filter={"lang": "br", "parser": True}
+            init={"lang": "br", "speaker": "unknown", "gender": "unknown"},
+            filter_in={"lang": "br"},
+            filter_out={"train": False}
         )
         first_utt_metadata = utterances[0][0][0]
         if "audio-path" in first_utt_metadata:
@@ -379,12 +396,15 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
         sentences_and_metadata = []
         for regions, segment in utterances:
             text = ''.join([ r['text'] for r in regions ]).strip()
-            text = text.replace('<br>', ' ')
-            text = re.sub(r"\</?[ib]\>", '', text).strip()
+            # Remove html formatting elements
+            text = re.sub(r"\<br\>", '', text, flags=re.IGNORECASE)
+            text = re.sub(r"\</?[ib]\>", '', text, flags=re.IGNORECASE).strip()
             text = text.replace('{?}', '')
             metadata = {}
             for data in regions:
                 metadata.update(data)
+            if "text" in metadata:
+                metadata.pop("text")
             sentences_and_metadata.append( (text, metadata) )
             segments.append(segment)
 
@@ -399,9 +419,7 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
     
     # Look for accompanying audio file
     if not audio_path:
-        audio_path = os.path.abspath(filepath.replace(seg_ext, '.wav'))
-        if not os.path.exists(audio_path):
-            audio_path = os.path.abspath(filepath.replace(seg_ext, '.mp3'))
+        audio_path = find_associated_audiofile(filepath, silent=True)
     assert os.path.exists(audio_path), f"ERROR: no audio file found for {filepath}"
     
     recording_id = md5(audio_path.encode("utf8")).hexdigest()
@@ -809,6 +827,8 @@ class MetadataParser():
 
     Metadata are of the format: "{key: value; key2: v1, v2, v3}"
     Keeps unknown word markers '{?}'
+
+    'train', 'lm' and 'subtitles' metadata are normalized to boolean values
     """
 
     METADATA_PATTERN = re.compile(r"{\s*(.+?)\s*}")
@@ -816,6 +836,8 @@ class MetadataParser():
     SEGMENT_METADATA = re.compile(r"{\s*start\s*:\s*([0-9\.]+)\s*;\s*end\s*:\s*([0-9\.]+)\s*}")
 
     VALID_PARAMS = {
+        "start", "end",
+
         "audio-path",
         "source",
         "source-audio", "audio-source",
@@ -829,26 +851,28 @@ class MetadataParser():
         "gender",
         "lang",
         "accent",
-        "parser",
+        # "parser",
+        "train",
         "lm",
-        "subtitles"
+        "subtitles",
     }
 
     def __init__(self, init: Optional[dict]=None):
         self.names = dict() # Dictionary of already seen names
         self.short_names = dict()
         self.filter_in = dict()
+        self.filter_out = dict()
         self.reset(init)
     
     def reset(self, init: Optional[dict]=None):
         self.current_metadata = {
-            "lang": "unknown",
-            "accent": "unknown",
-            "speaker": "unknown",
-            "gender": "unknown",
-            "parser": True,
-            "lm": True,
-            "subtitles": True,
+            # "lang": "unknown",
+            # "accent": "unknown",
+            # "speaker": "unknown",
+            # "gender": "unknown",
+            # "parser": True,
+            # "lm": True,
+            # "subtitles": True,
         }
 
         if init:
@@ -857,13 +881,21 @@ class MetadataParser():
         self.names.clear()
         self.short_names.clear()
         self.filter_in.clear()
+        self.filter_out.clear()
 
-    def set_filter(self, filter: dict):
+    def set_filter_in(self, filter: dict):
         self.filter_in = filter
     
+    def set_filter_out(self, filter: dict):
+        self.filter_out = filter
+    
     def filtered(self, metadata: dict) -> bool:
+        """Return True if this segment needs to be filtered out"""
         for k, v in self.filter_in.items():
             if not k in metadata or metadata[k] != v:
+                return True
+        for k, v in self.filter_out.items():
+            if k in metadata and metadata[k] == v:
                 return True
         return False
 
@@ -910,7 +942,7 @@ class MetadataParser():
                             #if speaker_name_depr.group(2) in 'fm':
                             #    metadata["gender"] = speaker_name_depr.group(2)
                         else:
-                            print(red(f"Wrong metadata: {unit}"))
+                            print(red(f"Wrong metadata: {key=}"))
                         continue
 
                     if key in ("speaker", "spk"):
@@ -950,7 +982,7 @@ class MetadataParser():
                             self.names[name][1] = val.lower()
                     elif key in ("tags", "author", "accent"):
                         val = [v.strip().replace(' ', '_') for v in val.split(',') if v.strip()]
-                    elif key in ("parser", "lm", "subtitles"):
+                    elif key in ("train", "lm", "subtitles"):
                         # A boolean
                         val = False if val.lower() == "false" else True
                     self.current_metadata[key] = val                        

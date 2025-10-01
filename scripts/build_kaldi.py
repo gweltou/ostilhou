@@ -3,13 +3,12 @@
 
 
 """
-Build necessary files to train a model with Kaldi toolkit
+Build necessary files to train a model with the Kaldi toolkit
 All generated files are written in the `data` directory
 
-Usage : ./build_kaldi_files.py -h
+Usage: ./build_kaldi.py -h
 
 Author:  Gweltaz Duval-Guennoc
-
 
 Workflow details:
 

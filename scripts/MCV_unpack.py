@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 """
-    Author:        Gweltaz Duval-Guennoc
- 
-    Unpack Mozilla's Common Voice dataset and prepare data
-    to be used for Kaldi framework.
+Unpack the first Mozilla's Common Voice dataset archive in the current folder
+and prepare data to be used for Kaldi framework.
+
+usage:
+    $ python3 unpack.py train.tsv train
+    $ python3 unpack.py test.tsv test
     
-    usage:
-        $ python3 unpack.py train.tsv train
-        $ python3 unpack.py test.tsv test
+Author: Gweltaz Duval-Guennoc
 """
 
 
@@ -21,12 +21,13 @@ from math import floor, ceil
 from pydub import AudioSegment
 
 from ostilhou.asr import load_segments_data
-from ostilhou.asr.dataset import create_ali_file
+from ostilhou.asr.dataset import create_ali_file, load_ali_file
 from ostilhou.audio import play_audio_segment, convert_to_wav, get_audiofile_length, concatenate_audiofiles
 
 
 
 spk2gender_file = "spk2gender"
+accents_filepath = "accents.txt"
 blacklisted_speakers_file = "blacklisted_speakers.txt"
 blacklisted_sentences_file = "blacklisted_sentences.txt"
 
@@ -60,7 +61,17 @@ if __name__ == "__main__":
                 speaker, gender = l.split()
                 speakers_gender[speaker] = gender
     else:
-        print("spk2gender file not found")
+        print(f"Gender file not found {spk2gender_file}")
+    
+    # Accents
+    accents = dict()
+    if os.path.exists(accents_filepath):
+        with open(accents_filepath, 'r') as f:
+            for l in f.readlines():
+                speaker, accent = l.split()
+                accents[speaker] = accent
+    else:
+        print(f"Accent file not found {accents_filepath}")
     
     # Don't use data from those speakers
     blacklisted_speakers = []
@@ -131,7 +142,8 @@ if __name__ == "__main__":
             print("File not found:", data_file)
             continue
         
-        speakers = set([l[0] for l in data])
+        # Keep only the 16 first chars for each speaker ID, slightly risky...
+        speakers = set([l[0][:16] for l in data])
         print(f"{len(speakers)} speakers found...")
         
         for speaker in speakers:
@@ -157,7 +169,7 @@ if __name__ == "__main__":
                     cumul_time += l
                 continue
             
-            utterances = [utt for utt in data if utt[0] == speaker]
+            utterances = [utt for utt in data if utt[0][:16] == speaker]
             
             if speaker not in speakers_gender:
                 if utterances[0][8] in ('female', 'male'):
@@ -218,30 +230,42 @@ if __name__ == "__main__":
             else:
                 concatenate_audiofiles(audiofiles, wav_concat, remove=True)
             
+            metadata = {
+                "audio_path": speaker + ".wav",
+                "licence": "CC0",
+                "tags": ["MCV"],
+                "speaker": speaker,
+                "gender": speakers_gender[speaker] if speaker in speakers_gender else 'u',
+            }
+
+            if speaker in accents:
+                print("yopiyop")
+                metadata["accent"] = accents[speaker]
+
+            # Create the ALI file
             ali_path = os.path.join(speaker_folder, speaker + ".ali")
-            create_ali_file(text, segments, ali_path,
-                    audio_path=speaker + ".wav",
-                    licence="CC0",
-                    tags="MCV",
-                    speaker=speaker,
-                    gender=speakers_gender[speaker] if speaker in speakers_gender else 'u',
-                )
+            ali_data = create_ali_file(text, segments, **metadata)
+            with open(ali_path, 'w', encoding='utf-8') as _fout:
+                _fout.write(ali_data)
             
             print('|')
     
         minutes, seconds = divmod(round(cumul_time), 60)
         hours, minutes = divmod(minutes, 60)
         print(f"Total clip time kept: {hours}h {minutes}' {seconds}''")
-        print(f"Total utterance kept: {num_kept} ({num_kept/len(parsed_audiofiles):.2%})")
+        if len(parsed_audiofiles) > 0:
+            print(f"Total utterance kept: {num_kept} ({num_kept/len(parsed_audiofiles):.2%})")
     
     
     # Categorize speakers of unknown gender
     # (this will help us measure the gender bias more precisely later)
     for speaker in ungendered_speakers:
         speaker_folder = os.path.join(dest_folder, speaker)
-        split_file = os.path.join(speaker_folder, speaker+".split")
-        segments = load_segments_data(split_file)
-        wav_filename = os.path.join(speaker_folder, speaker+'.wav')
+        ali_file = os.path.join(speaker_folder, speaker + ".ali")
+        ali_data = load_ali_file(ali_file)
+        segments = ali_data["segments"] 
+        # segments = load_segments_data(ali_file)
+        wav_filename = os.path.join(speaker_folder, speaker + '.wav')
         song = AudioSegment.from_wav(wav_filename)
         gender = ''
         i = 0

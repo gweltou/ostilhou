@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Create subtitles (a `srt` file) from an audio file
-and a text file, using a Vosk model
-
-Author:  Gweltaz Duval-Guennoc
+Create an aligned file (`srt` or `ali`) from an audio file
+and a text file, using a Vosk model (forced alignment).
 
 Usage:
     ./aligner.py audio_file text_file
+    
+Author:  Gweltaz Duval-Guennoc
 """
 
 SHOW_PROGRESS_BAR = True

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Prints the textual content of an ALI file to stdout
+Print the textual content of an ALI file to stdout.
 
 Usage:
     $ ali_print_text.py file.ali
