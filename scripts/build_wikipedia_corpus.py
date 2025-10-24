@@ -1,19 +1,19 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 """
 Build a text corpus from wikipedia-br dumps
+
 Outputs text files:
-    * "corpus/wiki_corpus.txt", the main corpus of sentences
+    * "corpus/wikipedia_keepers.txt", the main corpus of sentences
     * "wikipedia_corpus/wiki_acronyms.txt", a list of possible acronyms
     * "wikipedia_corpus/wiki_capitalized.txt", a list of capitalized words
     * "wikipedia_corpus/wiki_sant.txt", a list of saints, convenient to retrieve first names
-    * "wikipedia_corpus/wiki_vocab.txt", the vocabulary of the corpus
+    * "wikipedia_corpus/vocab.txt", the vocabulary of the corpus
 
 Usage: python3 build_lm_corpus.py DIR_OR_FILE -o OUTPUT_DIR
 
-Author:  Gweltaz Duval-Guennoc
+Author: Gweltaz Duval-Guennoc
 """
 
 
@@ -36,8 +36,6 @@ LIMIT_VOCAB = False
 VOCAB_SIZE = 10000
 
 KEMMADUR_PATTERN = re.compile(r" (g|b|d|w|v|c'h){1}/[a-zñ']{3,}", re.IGNORECASE)
-
-
 
 
 if __name__ == "__main__":
@@ -123,7 +121,6 @@ if __name__ == "__main__":
                         vocabulary[w] = 1
                 
     #print(f"{num_outed} discarded sentences with 1 error")
-    
     
     if LIMIT_VOCAB:
         voc_list = sorted(vocabulary.items(), key=lambda x: x[1], reverse=True)

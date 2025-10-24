@@ -5,7 +5,7 @@ from .definitions import LETTERS, PUNCTUATION
 
 
 def strip_punct(word: str) -> str:
-    """ Strip punctuation left and right of a word """
+    """Strip punctuation left and right of a word"""
 
     while word and word[0] in PUNCTUATION:
         word = word[1:]
@@ -16,7 +16,7 @@ def strip_punct(word: str) -> str:
 
 
 def filter_out_chars(text: str, chars: str) -> str:
-    """ Remove given characters from a string """
+    """Remove given characters from a string"""
 
     filtered_text = ""
     for l in text:
@@ -26,7 +26,7 @@ def filter_out_chars(text: str, chars: str) -> str:
 
 
 def filter_in_chars(text: str, allowed_chars: str) -> str:
-    """ Remove all characters that are not in allowed list """
+    """Remove all characters that are not in allowed list"""
 
     filtered_text = []
     for c in text:

@@ -77,12 +77,14 @@ def load_segments_data(segfile: str) -> List[Segment]:
 
 def load_text_data(filename) -> List[Tuple[str, Dict]]:
     """ 
-        Return list of sentences with metadata.
-        Metadata dictionaries will always have, at least, the "speaker" and "gender" keys.
+    **Deprecated**
+    
+    Return list of sentences with metadata.
+    Metadata dictionaries will always have, at least, the "speaker" and "gender" keys.
 
-        Return
-        ------
-            list of tuple (text sentences, metadata)
+    Return
+    ------
+        list of tuple (text sentences, metadata)
     """
     utterances = []
     current_speaker = 'unknown'
@@ -397,7 +399,7 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
         for regions, segment in utterances:
             text = ''.join([ r['text'] for r in regions ]).strip()
             # Remove html formatting elements
-            text = re.sub(r"\<br\>", '', text, flags=re.IGNORECASE)
+            text = re.sub(r"\<br\>", ' ', text, flags=re.IGNORECASE)
             text = re.sub(r"\</?[ib]\>", '', text, flags=re.IGNORECASE).strip()
             text = text.replace('{?}', '')
             metadata = {}
@@ -801,7 +803,8 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
                             #if speaker_name_depr.group(2) in 'fm':
                             #    metadata["gender"] = speaker_name_depr.group(2)
                         else:
-                            print(red(f"Wrong metadata: {unit}"))
+                            print(red(f"Unknown metadata: {unit}"))
+                            metadata[key] = val
                 else:
                     # A simplified speaker name
                     if not unit.isupper():

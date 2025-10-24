@@ -346,7 +346,7 @@ def normalize_sentence(
 
 
 
-def normalize(token_stream: Iterator[Token], **options: Any) -> Iterator[Token]:
+def normalize(token_stream: Iterator[Token] | List[Token], **options: Any) -> Iterator[Token]:
     """ 
     Apply different kind of normalization to a stream of tokens
 

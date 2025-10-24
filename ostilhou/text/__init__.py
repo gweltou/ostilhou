@@ -32,7 +32,8 @@ def load_translation_dict(path: str) -> dict:
 
 
 def reverse_translation_dict(path: str, newpath: str) -> None:
-    """ Build a translation dictionary (tsv file) by reversing another translation dictionary
+    """
+    Build a translation dictionary (tsv file) by reversing another translation dictionary
     """
     reversed = dict()
     for line in read_file_drop_comments(path):
@@ -58,15 +59,16 @@ def correct_sentence(sentence: str) -> str:
 
 
 def translate_tokens(token_stream: Iterator[Token], tra_dict: dict, **options: Any) -> Iterator[Token]:
-    """ Substitute tokens according to a given dictionary
+    """
+    Substitute tokens according to a given dictionary
         
-        Keys with uppercase letters will be case-sentitive
-        Keys with lowercase letters only will be case-insensitive
-        Translate will operate according to the first match in the dictionary
+    Keys with uppercase letters will be case-sentitive
+    Keys with lowercase letters only will be case-insensitive
+    Translate will operate according to the first match in the dictionary
 
-        Key/value pairs of the translation dictionary can contain
-        the '*' character to match any character
-        Ex: "*a" : "*añ"    -> will change suffixes of words ending with 'a'
+    Key/value pairs of the translation dictionary can contain
+    the '*' character to match any character
+    Ex: "*a" : "*añ"    -> will change suffixes of words ending with 'a'
     """
 
     for tok in token_stream:
@@ -104,7 +106,7 @@ def translate_tokens(token_stream: Iterator[Token], tra_dict: dict, **options: A
 
 
 def count_words(sentence: str) -> int:
-    """ Return number of regular words in sentence """
+    """Return number of regular words in sentence"""
     n = 0
     for t in tokenize(sentence, norm_punct=True, autocorrect=True):
         if t.type == Token.WORD:
@@ -114,22 +116,30 @@ def count_words(sentence: str) -> int:
 
 def is_full_sentence(sentence: str) -> bool:
     """Check if sentence is a complete sentence, punctuation-wise"""
-    return sentence[0].isupper() and sentence[-1] in ".!?…"
+    simplified = filter_out_chars(sentence, "\"«»'’()").strip()
+    return simplified[0].isupper() and simplified[-1] in ".!?…;:"
+
 
 def is_sentence_start_open(sentence: str) -> bool:
+    """Returns True if the sentence starts irregularly"""
+    simplified = filter_out_chars(sentence, "\"«»'’()").strip()
     return (
-        sentence[0].islower()
-        or (sentence[0].isupper() and (sentence[1].isupper() or sentence[1].isdigit()))  # Acronym
-        or sentence[0] in "'’"
-        or sentence[0].isdigit()
+        simplified[0].islower()
+        or (simplified[0].isupper() and (simplified[1].isupper() or simplified[1].isdigit()))  # Acronym
+        or simplified[0].isdigit()
     )
 	
+
 def is_sentence_end_open(sentence: str) -> bool:
+    """Returns True if the sentence ends abruptly"""
+    simplified = filter_out_chars(sentence, "\"«»'’()").strip()
     return (
-        sentence[-1].islower()
-        or sentence[-1] in "…'’,»\""
-        or sentence[-1].isdigit()
+        simplified[-1].islower()
+        #or sentence[-1] in "…'’,»\":"
+        or simplified[-1] in "…,"
+        or simplified[-1].isdigit()
     )
+
 
 def is_sentence_punct_paired(sentence: str) -> bool:
     if sentence.count('"') % 2 != 0:
@@ -142,8 +152,8 @@ def is_sentence_punct_paired(sentence: str) -> bool:
 
 def score_sentence(sentence: str):
     """
-        NOT USED
-        TODO
+    NOT USED
+    TODO
     """
     n_word = count_words(sentence)
     highlighted_str, n_hspell_mistakes = get_hspell_mistakes(sentence, autocorrected=False)
