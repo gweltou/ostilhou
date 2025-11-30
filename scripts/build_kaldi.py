@@ -63,7 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
     parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
     parser.add_argument("-o", "--output", help="Output folder for generated Kalid files", default="data")
-    parser.add_argument("--lm-min-token", help="Minimum number of tokens in sentence for adding it to LM corpus", type=int, default=3)
+    parser.add_argument("--lm-min-token", help="Minimum number of tokens in sentence for adding it to LM corpus", type=int, default=2)
     parser.add_argument("--utt-min-len", help="Minimum length of audio utterances", type=float, default=0.0)
     parser.add_argument("--hash-id", help="Hash speaker ids", action="store_true")
     parser.add_argument("--exclude", help="filepath containing a list of data files to exclude from training", type=str)
@@ -162,15 +162,16 @@ if __name__ == "__main__":
         corpora["train"]["lexicon"].update(corpora["test"]["lexicon"])
 
     with open(lexicon_path, 'w', encoding='utf-8') as f_out:
-        f_out.write("!SIL SIL\n"
-                    "<SPOKEN_NOISE> SPN\n"
-                    "<UNK> SPN\n"
-                    "<C'HOARZH> LAU\n"
-                    "<NTT> SPN\n"
-                    "<HUM> SPN\n"
-                    "<PASAAT> SPN\n"
-                    "<FRONAL> SPN\n"
-                    "<SONEREZH> NSN\n")
+        for key, val in special_tokens.items():
+            f_out.write(f"{key} {val}\n")
+        # f_out.write("<SPOKEN_NOISE> SPN\n"
+        #             "<UNK> SPN\n"
+        #             "<C'HOARZH> LAU\n"
+        #             "<NTT> SPN\n"
+        #             "<HUM> SPN\n"
+        #             "<PASAAT> SPN\n"
+        #             "<FRONAL> SPN\n"
+        #             "<SONEREZH> NSN\n")
         for word in sorted(corpora["train"]["lexicon"]):
             if word.lower() in stopwords:
                 continue

@@ -16,7 +16,8 @@ import datetime, pytz
 from ..utils import read_file_drop_comments, green, yellow, red
 from ..text import (
     pre_process, normalize_sentence, filter_out_chars,
-    split_sentences, tokenize, detokenize, normalize, TokenType,
+    split_sentences, tokenize, detokenize, normalize,
+    TokenType, Flag,
     PUNCTUATION,
     VALID_CHARS
 )
@@ -46,7 +47,6 @@ special_tokens = {
     "<C'HWITELLAT>": "SPN",
     "<HUANAD>": "SPN",
     "<LENVAN>": "SPN",
-    "<SNIF>": "SPN",
     "<TOC>": "NSN",
     "<CLAP>": "NSN",
 }
@@ -274,7 +274,7 @@ def parse_ali_file(
     """
     Parse an ALI file.
 
-    Arguments:
+    Args:
         filepath (str):
             Path to an ALI file
         init (dict):
@@ -314,12 +314,12 @@ def parse_ali_file(
 
 
 
-def parse_dataset(file_or_dir, exclude:list, args) -> Optional[dict]:
+def parse_dataset(file_or_dir, exclude_files:list, args) -> Optional[dict]:
     if (file_or_dir.endswith(".split")
         or file_or_dir.endswith(".seg")
         or file_or_dir.lower().endswith('.ali')
     ):   # Single data item
-        return parse_data_file(file_or_dir, exclude, args)
+        return parse_data_file(file_or_dir, exclude_files, args)
 
     elif os.path.isdir(file_or_dir):
         data = {
@@ -342,7 +342,7 @@ def parse_dataset(file_or_dir, exclude:list, args) -> Optional[dict]:
             file_ext = os.path.splitext(filename)[1].lower()
             if os.path.isdir(os.path.join(file_or_dir, filename)) \
                     or file_ext in (".split", ".seg", ".ali"):
-                item_data = parse_dataset(os.path.join(file_or_dir, filename), exclude, args)
+                item_data = parse_dataset(os.path.join(file_or_dir, filename), exclude_files, args)
                 if not item_data:
                     continue
                 data["wavscp"].extend(item_data["wavscp"])
@@ -371,10 +371,27 @@ def parse_dataset(file_or_dir, exclude:list, args) -> Optional[dict]:
 valid_chars = set(VALID_CHARS)
 speakers_gender = {"unknown": 'u'}
 
-def parse_data_file(filepath, exclude, args) -> Optional[dict]:
+def parse_data_file(filepath, exclude_files, args) -> Optional[dict]:
+
+    def squeeze_regions(regions: list) -> Optional[tuple]:
+        # Squeeze regions and metadatas into a single sentence and metadata dictionary
+        text_segments = []
+        sentence_metadata = {}
+        for data in regions:
+            if "lang" in data and data["lang"] != "br":
+                # Skip utterance containing non breton regions
+                print(yellow("Skipped (non breton): ") + data.get("text", ''))
+                return None
+            if "text" in data:
+                text_segments.append(data.pop("text"))
+            sentence_metadata.update(data)
+        
+        sentence_text = ''.join(text_segments).strip()
+        return sentence_text, sentence_metadata
+
     print(green(f" * {filepath}"), end=' ', flush=True)
     
-    if os.path.abspath(filepath) in exclude:
+    if os.path.abspath(filepath) in exclude_files:
         print(red("Excluded"))
         return None
     
@@ -385,7 +402,7 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
         utterances = parse_ali_file(
             filepath,
             init={"lang": "br", "speaker": "unknown", "gender": "unknown"},
-            filter_in={"lang": "br"},
+            #filter_in={"lang": "br"},
             filter_out={"train": False}
         )
         first_utt_metadata = utterances[0][0][0]
@@ -397,17 +414,17 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
         segments = []
         sentences_and_metadata = []
         for regions, segment in utterances:
-            text = ''.join([ r['text'] for r in regions ]).strip()
+            ret = squeeze_regions(regions)
+            if ret is None:
+                continue
+            sentence_text, sentence_metadata = ret
+
             # Remove html formatting elements
-            text = re.sub(r"\<br\>", ' ', text, flags=re.IGNORECASE)
-            text = re.sub(r"\</?[ib]\>", '', text, flags=re.IGNORECASE).strip()
-            text = text.replace('{?}', '')
-            metadata = {}
-            for data in regions:
-                metadata.update(data)
-            if "text" in metadata:
-                metadata.pop("text")
-            sentences_and_metadata.append( (text, metadata) )
+            sentence_text = re.sub(r"\<br\>", ' ', sentence_text, flags=re.IGNORECASE)
+            sentence_text = re.sub(r"\</?[ib]\>", '', sentence_text, flags=re.IGNORECASE).strip()
+            sentence_text = sentence_text.replace('{?}', '')
+
+            sentences_and_metadata.append( (sentence_text, sentence_metadata) )
             segments.append(segment)
 
     else: # .seg, .split
@@ -445,14 +462,13 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
     # if not args.split_audio:
     data["wavscp"].append((recording_id, audio_path))
 
-    for (sentence, metadata), (start, end) in zip(sentences_and_metadata, segments):
+    for (sentence, sentence_metadata), (start, end) in zip(sentences_and_metadata, segments):
         if end - start < args.utt_min_len:
             # Skip short utterances
-            print(yellow("dropped (too short): ") + sentence, file=sys.stderr)
+            print(yellow("Skipped (too short): ") + sentence, file=sys.stderr)
             continue
             
-        speaker_id = metadata["speaker"]
-
+        speaker_id = sentence_metadata["speaker"]
         if speaker_id == "unknown":
             speaker_id = unk_speaker_id
         else:
@@ -464,12 +480,17 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
         
         if speaker_id not in speakers_gender:
             # speakers_gender is a global variable
-            speakers_gender[speaker_id] = metadata["gender"]
+            speakers_gender[speaker_id] = sentence_metadata["gender"]
         
+        # This is where we filter the utterances
         cleaned_sentence = pre_process(sentence)
         tokens = list(tokenize(cleaned_sentence, autocorrect=True, norm_punct=False))
         sent = detokenize(normalize(tokens, norm_case=True), normalize=True, capitalize=False)
         
+        # oov_words = sent.count('*')
+        # if oov_words > 1:
+        #     print(sent)
+
         sent = sent.replace('\xa0', ' ') # Non-breakable spaces
         sent = sent.replace('-', ' ').replace('/', ' ')
         sent = filter_out_chars(sent, PUNCTUATION + '*')
@@ -487,7 +508,7 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
         sent_no_acronyms = sent_no_acronyms.replace('\xa0', ' ').replace('*', '')
         chars = set(sent_no_acronyms)
         if not chars.issubset(valid_chars):
-            print('\n' + yellow(f"dropped (foreign chars '{chars.difference(valid_chars)}'): ")
+            print('\n' + yellow(f"Skipped (foreign chars '{chars.difference(valid_chars)}'): ")
                 + Fore.RESET + sentence, end='', file=sys.stderr)
             continue
         
@@ -497,9 +518,9 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
 
 
         # Keeping track of gender representation
-        if metadata["gender"] == 'm':
+        if sentence_metadata["gender"] == 'm':
             data["audio_length"]['m'] += end - start
-        elif metadata["gender"] == 'f':
+        elif sentence_metadata["gender"] == 'f':
             data["audio_length"]['f'] += end - start
         else:
             data["audio_length"]['u'] += end - start
@@ -519,12 +540,18 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
 
         # Add sentence to language model corpus
         add_to_text_corpus = True
-        if "lm" in metadata:
-            add_to_text_corpus = metadata["lm"]
+        if "lm" in sentence_metadata:
+            add_to_text_corpus = sentence_metadata["lm"]
         
         if add_to_text_corpus and not args.no_lm:
             for sub in split_sentences(cleaned_sentence):
-                sent = normalize_sentence(sub, autocorrect=True, norm_case=True)
+                # Remove stutters from corpus sentences
+                tokens = list(tokenize(sub, autocorrect=True))
+                sent = detokenize(
+                        normalize(filter(lambda t: Flag.STUTTER not in t.flags, tokens), norm_case=True),
+                        normalize=True
+                    )
+                sent = normalize_sentence(sent, autocorrect=True, norm_case=True)
                 sent = sent.replace('-', ' ').replace('/', ' ')
                 sent = sent.replace('\xa0', ' ')
                 sent = filter_out_chars(sent, PUNCTUATION)
@@ -536,20 +563,20 @@ def parse_data_file(filepath, exclude, args) -> Optional[dict]:
                 # Ignore if to many black-listed words in sentence
                 if n_stared / len(tokens) > 0.2:
                     if args.verbose:
-                        print(yellow("LM exclude:"), sent, end='')
+                        print(yellow("LM exclude:"), sent)
                     continue
                 # Remove starred words
                 tokens = [tok for tok in tokens if not tok.startswith('*')]
                 # Ignore if sentence is too short
                 if len(tokens) < args.lm_min_token:
                     if args.verbose:
-                        print(yellow("LM exclude:"), sent, end='')
+                        print(yellow("LM exclude:"), sent)
                     continue
                 data["corpus"].add(' '.join(tokens))
      
     # status = Fore.GREEN + f" * {filepath[:-6]}" + Fore.RESET
     if data["audio_length"]['u'] > 0:
-        print(' ' + yellow("unknown speaker(s)"), end='')
+        print(yellow("Unknown speaker(s)"), end='')
     print()
     return data
 
@@ -841,7 +868,7 @@ class MetadataParser():
     VALID_PARAMS = {
         "start", "end",
 
-        "audio-path",
+        "audio-path", "media-path",
         "source",
         "source-audio", "audio-source",
         "author", "authors",
@@ -854,10 +881,10 @@ class MetadataParser():
         "gender",
         "lang",
         "accent",
-        # "parser",
         "train",
         "lm",
         "subtitles",
+        "status",
     }
 
     def __init__(self, init: Optional[dict]=None):
@@ -887,9 +914,11 @@ class MetadataParser():
         self.filter_out.clear()
 
     def set_filter_in(self, filter: dict):
+        """ Add a 'allow only' filter to this parser """
         self.filter_in = filter
     
     def set_filter_out(self, filter: dict):
+        """ Add a 'don't allow' filter to this parser """
         self.filter_out = filter
     
     def filtered(self, metadata: dict) -> bool:
@@ -904,8 +933,13 @@ class MetadataParser():
 
     def parse_sentence(self, sentence: str) -> Tuple[List[dict], Optional[Tuple]]:
         """
+        Args:
+            sentence (str): sentence to be parsed
+        
         Returns:
-            List of (data, segment) tuples
+            Tuple of :
+                List of (data, segment) tuples
+                Segment (tuple)
         """
         regions = []
         region_start = 0
@@ -923,7 +957,7 @@ class MetadataParser():
             if content == '?':
                 continue
             
-            metadata = self.current_metadata.copy()
+            metadata = self.current_metadata.copy() # Keep a copy of the previous metadata state
             start, end = match.span()
             text = sentence[region_start:start]
             region_start = end
@@ -1010,7 +1044,7 @@ class MetadataParser():
                 metadata["text"] = text
                 regions.append(metadata)
         
-        # Parse remaining of text
+        # Parse remaining of text (after the last metadata)
         if region_start < len(sentence):
             text = sentence[region_start:].strip()
             if text and not self.filtered(self.current_metadata):
@@ -1019,10 +1053,11 @@ class MetadataParser():
                 regions.append(metadata)
         
         # If there are no text regions, return the updated metadata
-        if not regions:
+        if len(regions) == 0:
             regions.append( self.current_metadata.copy() )
 
         return (regions, segment)
+
 
     def get_short_name(self, name: str):
         name = name.lower().replace('-', ' ')

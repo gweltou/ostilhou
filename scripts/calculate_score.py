@@ -1,17 +1,16 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Summerize and sort by WER score a list of utterances from a score file
+created by `score_ali_files.py`
+"""
+
 import sys
 import os.path
 import argparse
 
 from jiwer import wer, cer
-
-
-"""
-    Summerize and sort by WER score a list of utterances from a score file
-    created by `score_ali_files.py`
-"""
 
 
 if __name__ == "__main__":

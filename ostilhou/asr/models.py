@@ -157,6 +157,9 @@ def load_model(model_name: str = None) -> Model:
     return _loaded_model
 
 
+def get_loaded_model_name() -> str:
+    return _loaded_model_name
+
 
 def _download(model_name: str, root: str) -> str:
     """

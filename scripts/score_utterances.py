@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-    Score every utterance of every data item in a given folder
+Score every utterance of every data item in a given folder
+
+DEPRECATED
 """
 
 

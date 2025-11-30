@@ -150,3 +150,6 @@ def test_filter():
 def test_stutter():
     s = "Euh neuze vije tapet euh ar-... ar bod drez... euh pezh oa hir ha- ha peus- prop kwa feñ hep- euh, hep re a brankennoù."
     assert s == detokenize(tokenize(s))
+
+    s = "peotramant d'ober keuneud, euh, s-, surtout."
+    assert s == detokenize(tokenize(s))

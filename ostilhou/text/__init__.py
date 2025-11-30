@@ -1,7 +1,9 @@
 from typing import Iterator, Any
 
+import re
+
 from .tokenizer import (
-    Token, TokenType,
+    Token, TokenType, Flag,
     tokenize, detokenize,
     split_sentences, split_sentences_old
 )
@@ -109,20 +111,26 @@ def count_words(sentence: str) -> int:
     """Return number of regular words in sentence"""
     n = 0
     for t in tokenize(sentence, norm_punct=True, autocorrect=True):
-        if t.type == Token.WORD:
+        if t.type == TokenType.WORD:
             n += 1
     return n
 
 
+def _simplify_sentence(sentence: str) -> str:
+    simplified = filter_out_chars(sentence, "\"«»'’()").strip()
+    simplified = re.sub(r"^(-|–|—)\s+", '', simplified)
+    return simplified
+
+
 def is_full_sentence(sentence: str) -> bool:
     """Check if sentence is a complete sentence, punctuation-wise"""
-    simplified = filter_out_chars(sentence, "\"«»'’()").strip()
+    simplified = _simplify_sentence(sentence)
     return simplified[0].isupper() and simplified[-1] in ".!?…;:"
 
 
 def is_sentence_start_open(sentence: str) -> bool:
     """Returns True if the sentence starts irregularly"""
-    simplified = filter_out_chars(sentence, "\"«»'’()").strip()
+    simplified = _simplify_sentence(sentence)
     return (
         simplified[0].islower()
         or (simplified[0].isupper() and (simplified[1].isupper() or simplified[1].isdigit()))  # Acronym
@@ -132,12 +140,12 @@ def is_sentence_start_open(sentence: str) -> bool:
 
 def is_sentence_end_open(sentence: str) -> bool:
     """Returns True if the sentence ends abruptly"""
-    simplified = filter_out_chars(sentence, "\"«»'’()").strip()
+    simplified = _simplify_sentence(sentence)
     return (
         simplified[-1].islower()
-        #or sentence[-1] in "…'’,»\":"
-        or simplified[-1] in "…,"
         or simplified[-1].isdigit()
+        #or sentence[-1] in "…'’,»\":"
+        or simplified[-1] in "-…,"
     )
 
 

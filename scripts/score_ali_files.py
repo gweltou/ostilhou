@@ -2,20 +2,24 @@
 # -*- coding: utf-8 -*-
 
 """
-    Score every utterance of every data item in a given folder
-    Creates a TSV file with the following columns :
-    filepath, audio ext, seg start, seg end, reference, hypothesis, WER, CER
-    
-    usage:
-        python3 score_ali_files.py data_folder/
-        python3 score_ali_files.py data.ali
-        python3 score_ali_files.py list_of_files.txt
+Score every utterance of every data item in a given folder
+Creates a TSV file with the following columns :
+filepath, audio ext, seg start, seg end, reference, hypothesis, WER, CER
+
+If using `output` argument, will skip already checked files.
+
+usage:
+    python3 score_ali_files.py data_folder/
+    python3 score_ali_files.py data.ali
+    python3 score_ali_files.py list_of_files.txt -o result.txt
 """
 
 
 import sys
 import argparse
 import os
+import time
+
 from jiwer import wer, cer
 from tempfile import mkstemp
 
@@ -30,7 +34,7 @@ from ostilhou.text import (
     PUNCTUATION,
 )
 from ostilhou.asr import load_ali_file
-from ostilhou.asr.models import load_model
+from ostilhou.asr.models import load_model, get_loaded_model_name
 from ostilhou.asr.recognizer import transcribe_segment
 from ostilhou.asr.dataset import format_timecode
 from ostilhou.audio import load_audiofile, get_audio_segment, add_whitenoise
@@ -74,15 +78,22 @@ if __name__ == "__main__":
         for filepath in seen_files:
             print(f"* Skipping {os.path.split(filepath)[1]}", file=sys.stderr)
         ali_files.difference_update(seen_files)
-            
+
+
+    cumul_time = 0.0    # CPU time
+    cumul_duration = 0.0    # Total segments time
+
     wer_sum = 0.0
     cer_sum = 0.0
     words_sum = 0
     letters_sum = 0
+    file_idx = 0
+    num_files = len(ali_files)
     for filepath in sorted(ali_files):
+        file_idx += 1
         _, basename = os.path.split(filepath)
         basename, _ = os.path.splitext(basename)
-        print(f"==== {basename} ====", file=sys.stderr)
+        print(f"==== {basename} ({file_idx}/{num_files}) ====", file=sys.stderr)
 
         ali_data = load_ali_file(filepath)
         audio_path = ali_data["audio_path"]
@@ -111,6 +122,9 @@ if __name__ == "__main__":
         hypothesis = []
         rows = []
 
+        current_start_time = time.perf_counter()
+        current_total_duration = 0.0
+
         for i in range(len(segments)):
             sentence = filter_out_chars(text[i], PUNCTUATION + '*')
             sentence = normalize_sentence(sentence, autocorrect=True)
@@ -135,11 +149,21 @@ if __name__ == "__main__":
             hypothesis.append(transcription)
             datapoint = (filepath, audio_ext, start, end, sentence, transcription, str(score_wer), str(score_cer))
 
+            duration = segments[i][1] - segments[i][0]
+            current_total_duration += duration
+            if duration > 15:
+                print(yellow(f"({round(duration)}s)"), end='', file=sys.stderr, flush=True)
+
             if not args.output:
                 print('\t'.join(datapoint))
             else:
-                print('.', end='', flush=True)
+                print('.', end='', file=sys.stderr, flush=True)
                 rows.append('\t'.join(datapoint))
+
+        cpu_time = time.perf_counter() - current_start_time
+        print(yellow(f"\nRTF: {current_total_duration / cpu_time}"), file=sys.stderr)
+        cumul_time += cpu_time
+        cumul_duration += current_total_duration
         
         if args.output:
             print()
@@ -154,7 +178,13 @@ if __name__ == "__main__":
         print("  => WER:", round(wer(references, hypothesis), 3), file=sys.stderr)
         print("  => CER:", round(cer(references, hypothesis), 3), file=sys.stderr)
 
-    print(f"\n======== TOTAL ({os.path.split(args.model)[1]}) ========", file=sys.stderr)
-    print(f"WER: {round(wer_sum / words_sum, 3)}", file=sys.stderr)
-    print(f"CER: {round(cer_sum / letters_sum, 3)}", file=sys.stderr)
+    print(f"\n======== TOTAL ({get_loaded_model_name()}) ========", file=sys.stderr)
+    if words_sum > 0:
+        print(f"WER: {round(wer_sum / words_sum, 3)}", file=sys.stderr)
+    if letters_sum > 0:
+        print(f"CER: {round(cer_sum / letters_sum, 3)}", file=sys.stderr)
     print("\n", file=sys.stderr)
+    print(yellow(f"TOTAL SEGMENTS DURATION: {format_timecode(cumul_duration)}"))
+    if cumul_time > 0.0:
+        print(yellow(f"TOTAL CPU TIME: {format_timecode(cumul_time)}"))
+        print(yellow(f"TOTAL RTF: {cumul_duration / cumul_time}"), file=sys.stderr)

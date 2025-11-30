@@ -30,6 +30,7 @@ w2f = {
     'ê'     :   'E',        # gÊr
     'é'     :   'E',        # (galleg)
     'è'     :   'EH',       # (galleg/gwennedeg)
+    'ë'     :   'E',        # Nevenoë, enoëus
     "ec'h"  :   'EH X',     # nec'h
     'ei'    :   'EY',       # kEIn      # could replace with (EH I) maybe ?
     'eiñ'   :   'EY',       # savetEIÑ
@@ -53,6 +54,7 @@ w2f = {
     'hag.'  :   'A G',
     'i'     :   'I',
     'ï'     :   'I',
+    'î'     :   'I',
     'iñ'    :   'I N',      # bIÑs
     'iñv'   :   'I V',      # fIÑV {gwiñver ?}
     'iñ.'   :   'I',        # debrIÑ

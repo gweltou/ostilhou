@@ -311,8 +311,7 @@ def normalize_sentence(
     Normalize a single sentence.
     return: list of all possible normalization for the sentence
 
-    Parameters
-    ----------
+    Args:
         autocorrect: bool
             Substitutes words according to `corrected_tokens.tsv` dictionary
         

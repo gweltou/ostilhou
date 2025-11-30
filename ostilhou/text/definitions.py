@@ -6,7 +6,7 @@ from ..dicts import (
 )
 
 
-LETTERS = "aâàbcçdeêéèëfghiïjklmnñoôpqrstuüùûvwxyzœ"
+LETTERS = "aâàbcçdeêéèëfghiïîjklmnñoôpqrstuüùûvwxyzœ"
 PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—•'
 OPENING_QUOTES = "«“"
 CLOSING_QUOTES = "»”"

@@ -259,6 +259,8 @@ logaritm
 loupet
 maesa
 maesaet
+magourez	# galleg "nourricière"
+magour	# galleg "nourricier"
 martolodez
 mediaioù
 melodienn

@@ -100,6 +100,7 @@ def pre_process(text: str) -> str:
     text = text.replace('ã', 'a')
     text = text.replace('ö', 'o')
     text = text.replace('á', 'a')
+    text = text.replace('Í', 'I')
     return text
 
 
