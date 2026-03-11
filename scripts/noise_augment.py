@@ -10,6 +10,7 @@ import argparse
 
 from ostilhou.audio import add_whitenoise, add_random_amb_noise
 from ostilhou.asr import load_text_data, load_ali_file, create_ali_file
+from ostilhou.asr.dataset import parse_ali_file
 
 
 """
@@ -17,7 +18,6 @@ Data Augmentation by adding noise to audiofiles
 
 Usage:
     python3 noise_augment.py file_list.txt [-o output_dir]
-
 """
 
 
@@ -27,7 +27,8 @@ EXCLUDE_FROM_LM = True
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filelist", help="List of files to be augmented, in text format")
-    parser.add_argument("--amb-noise", action="store_true", help="Augment by adding ambiance noise")
+    parser.add_argument("--amb-noise", action="store_true",
+                        help="Augment by adding ambient noise, in addition to white noise")
     parser.add_argument("-o", "--output", help="Path where to write the augmented files",
                         default=os.path.join(os.getcwd(), "augmented_noise"))
     args = parser.parse_args()
@@ -41,9 +42,10 @@ if __name__ == "__main__":
     for filepath in files:
         filename = os.path.split(filepath)[1]
         file_ext = os.path.splitext(filename)[1]
-
+        
         if file_ext.lower() == ".ali":
-            ali_data = load_ali_file(filepath)
+            # ali_data = load_ali_file(filepath)
+            ali_data = parse_ali_file(filepath)
             soundfile = ali_data["audio_path"]
         else:
             # Old formats

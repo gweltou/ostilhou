@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-File: verify_text_files.py
+File: verify_text_file.py
 
-Check spelling in every ALI file in folder and subfolders
-###Prompt for new found acronyms
+Check spelling for each line in a text file
 
-Usage: ./verify_text_files.py DIRECTORY
+Usage: ./verify_text_file.py filename.txt
 
 Author: Gweltaz Duval-Guennoc
 """
@@ -30,46 +29,28 @@ from ostilhou.text import (
     VALID_CHARS
 )
 
-    
-
 
 if __name__ == "__main__":
-    ali_files = list_files_with_extension("ali", sys.argv[1])
-    
-    num_errors = 0
-    for file in ali_files:
-        if not os.path.exists(file):
-            continue
+    with open(sys.argv[1], 'r') as _fin:    
+        total_errors = 0
+        all_errors = {}
 
-        utterances = parse_ali_file(
-            file,
-            init={"lang": "br"},
-            filter={"lang": "br", "parser": True}
-        )
-
-        print(green('* ' + file))
-
-        for i, (regions, segment) in enumerate(utterances):
-            text = ''.join([ r["text"] for r in regions ])
-            text = text.replace('<br>', ' ')
-            text = re.sub(r"\</?[ib]\>", '', text).strip()
-            text = text.replace('{?}', '')
-
-            text = pre_process(text)
-
-            correction, errors = get_hspell_mistakes(text)
-            num_errors += errors
+        for i, line in enumerate(_fin.readlines()):
+            correction, num_errors, errors = get_hspell_mistakes(line)
+            total_errors += num_errors
             if errors:
                 # print(f"{Style.DIM}[{text.strip()}]{Style.RESET_ALL}")
                 print(f"[{i}] {correction}")
+                for err in errors:
+                    err = err.lower()
+                    if err in all_errors:
+                        all_errors[err] += 1
+                    else:
+                        all_errors[err] = 1
         
-            # extract acronyms
-            # extracted_acronyms = libMySTT.extract_acronyms_from_file(file)
-            # if extracted_acronyms:
-            #     with open(libMySTT.ACRONYM_PATH, 'a', encoding='utf-8') as f:
-            #         for acr in extracted_acronyms:
-            #             f.write(f"{acr} {extracted_acronyms[acr]}\n")
-            #             libMySTT.acronyms[acr] = extracted_acronyms[acr]
-            #             num_errors -= 1
-    
-    print(f"{num_errors} spelling mistakes")
+    print(f"{total_errors} spelling mistakes")
+
+    top_errors = list(all_errors.items())
+    top_errors.sort(key=lambda i: i[1], reverse=True)
+    for k, v in top_errors[:50]:
+        print(f"{k}\t{v}")

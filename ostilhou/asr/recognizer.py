@@ -14,8 +14,8 @@ from ..audio import get_audiofile_length
 
 
 
-def transcribe_segment(segment: AudioSegment) -> str:
-    """ Transcribe a short AudioSegment """
+def transcribe_segment(segment: AudioSegment) -> List[str]:
+    """Transcribe a short AudioSegment"""
     assert segment.frame_rate == 16000, f"Wrong sample rate {segment.frame_rate=}"
     assert segment.sample_width == 2, f"Wrong sample width {segment.sample_width=}"
     assert segment.channels == 1, f"Wrong number of channels {segment.channels=}"

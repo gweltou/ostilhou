@@ -11,17 +11,22 @@ Usage:
 
 import sys
 import re
-from ostilhou.asr.dataset import load_ali_file
+from ostilhou.asr.dataset import parse_ali_file
+from ostilhou.asr.dataset import MetadataParser
+
 
 
 if __name__ == "__main__":
-    ali_data = load_ali_file(sys.argv[1])
+    ali_data = parse_ali_file(sys.argv[1], filter_out={"subtitles": False})
 
-    for line in ali_data["sentences"]:
+    for regions, _ in ali_data:
+        line = ''.join([region["text"] for region in regions if "text" in region])
+        
         #line = re.sub(r"<br>", '\u2028', line, flags=re.IGNORECASE)
         line = re.sub(r"<br>", ' ', line, flags=re.IGNORECASE)
         line = re.sub('\u2028', ' ', line, flags=re.IGNORECASE)
         #line = re.sub(r"</?([a-zA-Z']+)>", '', line)
+
         for match in re.findall(r"<[a-zA-Z']+>", line, flags=re.IGNORECASE):
             if match.lower() not in ("<i>", "<b>"):
                 print(match, file=sys.stderr)
@@ -29,4 +34,5 @@ if __name__ == "__main__":
         
         if '<i>' in line.lower() or '</i>' in line.lower():
             assert line.count("<i>") == line.count("</i>"), line
+        
         print(line)

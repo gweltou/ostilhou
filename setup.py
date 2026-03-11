@@ -3,7 +3,7 @@ from os import path
 
 
 NAME = "ostilhou"
-VERSION = "0.2.9"
+VERSION = "0.2.11"
 DESCRIPTION = "Breton language speech to text tools"
 URL = "https://github.com/gweltou/ostilhou/"
 AUTHOR = "Gweltaz Duval-Guennoc"
@@ -41,7 +41,7 @@ setup(
 		"Operating System :: OS Independent"
 	],
     packages=find_packages(),
-    package_data={"ostilhou": ["asr/*", "dicts/*", "hspell/*", "hspell/hunspell-dictionary/*"]},
+    package_data={"ostilhou": ["asr/*", "dicts/*", "hspell/*", "hspell/hunspell-dictionary/*", "text/moses_br.txt"]},
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
 	test_suite="tests",

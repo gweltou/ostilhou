@@ -1,3 +1,5 @@
+kadarnao	# kadarnaat, amzer da-zont U3
+gadarnao	# kadarnaat, amzer da-zont U3
 adgraet
 adkanañ
 adlec'hiañ
@@ -84,7 +86,10 @@ c'hoñferañsoù
 c'hopradez
 c'horonavirus
 c'hovid
+dabod	# galleg "tout à l'heure"
+damalliñ	# tamalliñ
 de'i
+deiz
 denien
 deusoute
 deusouto
@@ -126,6 +131,9 @@ elektrik
 embregiñ
 emoji
 emojioù
+dukez
+pseudo
+soavoñs
 emzesk
 emzeskiñ
 endalc'hoù
@@ -137,14 +145,19 @@ epidemiezhioù
 espres
 espres-kaer
 etanol
+yec'hedel
+rektordi	# galleg "rectorat"
+wezhoù	# sinonim "wechoù"
 fablab
 falc'hañ
 fartienn
+lakao	# displegadur dazont "lakaat"
 fekañ	# galleg "fouiner" (Devri)
 feneant
 fenomen
 fenotip
 feulsterioù
+alaniñ	# sinonim "analañ"
 figez
 fiksion
 fitamdoue
@@ -214,6 +227,7 @@ kardio
 kartografiezh
 katana
 kayak
+keiel	# pistolet
 kenasantiñ
 kenfinañ
 kenfinet
@@ -371,11 +385,12 @@ stadunanat
 stasioñ
 statistikel
 stereotip
-strikt
+strikt	# D.s. "N'eo ket strikt"
 stummadurezh
 surtoud
 tabletennoù
 taksoù
+tamalliñ
 tañvet
 tatouet
 telennerez

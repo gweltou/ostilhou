@@ -14,11 +14,12 @@ usage:
     python3 score_ali_files.py list_of_files.txt -o result.txt
 """
 
-
+from typing import Optional
 import sys
 import argparse
 import os
 import time
+import re
 
 from jiwer import wer, cer
 from tempfile import mkstemp
@@ -33,11 +34,69 @@ from ostilhou.text import (
     sentence_stats,
     PUNCTUATION,
 )
-from ostilhou.asr import load_ali_file
+from ostilhou.asr import parse_ali_file
 from ostilhou.asr.models import load_model, get_loaded_model_name
 from ostilhou.asr.recognizer import transcribe_segment
 from ostilhou.asr.dataset import format_timecode
-from ostilhou.audio import load_audiofile, get_audio_segment, add_whitenoise
+from ostilhou.audio import (
+    load_audiofile, get_audio_segment,
+    find_associated_audiofile,
+    add_whitenoise,
+)
+
+
+def read_ali_file(filepath: str) -> dict:
+    def squeeze_regions(regions: list) -> Optional[str]:
+        # Squeeze regions and metadatas into a single sentence and metadata dictionary
+        text_segments = []
+        for data in regions:
+            if "text" in data:
+                text_segments.append(data.pop("text"))
+        
+        sentence_text = ''.join(text_segments).strip()
+        if not sentence_text:
+            return None
+        return sentence_text
+    
+    utterances = parse_ali_file(
+        filepath,
+        init={"lang": "br"},
+        filter_in={"lang": "br"},
+        filter_out={"train": False}
+    )
+
+    audio_path = None
+    first_utt_metadata = utterances[0][0][0]
+    if "media-path" in first_utt_metadata:
+        dir = os.path.split(filepath)[0]
+        audio_path = os.path.join(dir, first_utt_metadata["media-path"])
+        audio_path = os.path.abspath(audio_path)
+    elif "audio-path" in first_utt_metadata:
+        dir = os.path.split(filepath)[0]
+        audio_path = os.path.join(dir, first_utt_metadata["audio-path"])
+        audio_path = os.path.abspath(audio_path)
+    
+    if audio_path is None:
+        audio_path = find_associated_audiofile(filepath, silent=True)
+
+    segments = []
+    sentences = []
+    for regions, segment in utterances:
+        ret = squeeze_regions(regions)
+        if ret is None:
+            continue
+        sentence_text = ret
+
+        # Remove html formatting elements
+        sentence_text = re.sub(r"\<br\>", ' ', sentence_text, flags=re.IGNORECASE)
+        sentence_text = re.sub(r"\</?[ib]\>", '', sentence_text, flags=re.IGNORECASE).strip()
+        sentence_text = sentence_text.replace('{?}', '')
+
+        sentences.append(sentence_text)
+        segments.append(segment)
+    
+    return {"sentences": sentences, "segments": segments, "audio_path": audio_path}
+
 
 
 if __name__ == "__main__":
@@ -95,7 +154,7 @@ if __name__ == "__main__":
         basename, _ = os.path.splitext(basename)
         print(f"==== {basename} ({file_idx}/{num_files}) ====", file=sys.stderr)
 
-        ali_data = load_ali_file(filepath)
+        ali_data = read_ali_file(filepath)
         audio_path = ali_data["audio_path"]
         if not audio_path:
             print(red("Couldn't fine associated audiofile"), file=sys.stderr)
@@ -129,6 +188,7 @@ if __name__ == "__main__":
             sentence = filter_out_chars(text[i], PUNCTUATION + '*')
             sentence = normalize_sentence(sentence, autocorrect=True)
             sentence = pre_process(sentence).replace('-', ' ').lower()
+            sentence = ' '.join(sentence.split())
             audio_segment = get_audio_segment(i, audio, segments)
             transcription = transcribe_segment(audio_segment)
             transcription = ' '.join(transcription)
@@ -175,14 +235,14 @@ if __name__ == "__main__":
             # Remove temporary noisy audio
             os.remove(noisy_audio_path)
 
-        print("  => WER:", round(wer(references, hypothesis), 3), file=sys.stderr)
-        print("  => CER:", round(cer(references, hypothesis), 3), file=sys.stderr)
+        print(f"  => WER: {wer(references, hypothesis):.2%}", file=sys.stderr)
+        print(f"  => CER: {cer(references, hypothesis):.2%}", file=sys.stderr)
 
     print(f"\n======== TOTAL ({get_loaded_model_name()}) ========", file=sys.stderr)
     if words_sum > 0:
-        print(f"WER: {round(wer_sum / words_sum, 3)}", file=sys.stderr)
+        print(f"WER: {wer_sum / words_sum:.2%}", file=sys.stderr)
     if letters_sum > 0:
-        print(f"CER: {round(cer_sum / letters_sum, 3)}", file=sys.stderr)
+        print(f"CER: {cer_sum / letters_sum:.2%}", file=sys.stderr)
     print("\n", file=sys.stderr)
     print(yellow(f"TOTAL SEGMENTS DURATION: {format_timecode(cumul_duration)}"))
     if cumul_time > 0.0:

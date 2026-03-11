@@ -17,10 +17,8 @@ import sys
 import os
 import shutil
 import tarfile
-from math import floor, ceil
 from pydub import AudioSegment
 
-from ostilhou.asr import load_segments_data
 from ostilhou.asr.dataset import create_ali_file, load_ali_file
 from ostilhou.audio import play_audio_segment, convert_to_wav, get_audiofile_length, concatenate_audiofiles
 
@@ -42,16 +40,18 @@ if __name__ == "__main__":
         print(f"usage: {sys.argv[0]} data_file.tsv [data_file2.tsv...] SAVE_FOLDER")
         sys.exit(1)
     
+    data_folder = os.path.split(sys.argv[1])[0]
     # Extract archive
-    tar_file = [f for f in os.listdir() if f.endswith(".tar.gz")][0]
-    with tarfile.open(tar_file, 'r') as tar:
-        f = next(filter(lambda x: x.endswith(".tsv"), tar.getnames()))
-        data_folder = os.path.split(f)[0]
-        if not os.path.exists(data_folder):
-            # Untar archive
-            tar.extractall()
-            #os.system("tar xvf cv-corpus-*-br.tar.gz")
-    print(data_folder)
+    tar_files = [f for f in os.listdir() if f.endswith(".tar.gz")]
+    if tar_files:
+        with tarfile.open(tar_files[0], 'r') as tar:
+            f = next(filter(lambda x: x.endswith(".tsv"), tar.getnames()))
+            data_folder = os.path.split(f)[0]
+            if not os.path.exists(data_folder):
+                # Untar archive
+                tar.extractall()
+                #os.system("tar xvf cv-corpus-*-br.tar.gz")
+        print(data_folder)
     
     # Genders
     speakers_gender = dict()

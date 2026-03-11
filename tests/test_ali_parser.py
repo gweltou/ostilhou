@@ -34,7 +34,7 @@ def test_ali_parser():
     assert data[0]["gender"] == "m"
 
     data, _ = parser.parse_sentence(lines[2])
-    assert len(data) == 2
+    assert len(data) == 3
     assert data[0]["speaker"] == "yann-bêr_duval"
     assert data[0]["gender"] == "m"
     assert data[1]["lang"] == "fr"

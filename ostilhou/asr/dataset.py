@@ -49,6 +49,7 @@ special_tokens = {
     "<LENVAN>": "SPN",
     "<TOC>": "NSN",
     "<CLAP>": "NSN",
+    "<POK>": "NSN",
 }
 
 
@@ -56,8 +57,11 @@ special_tokens = {
 Segment = Tuple[int, int]
 
 def load_segments_data(segfile: str) -> List[Segment]:
-    """ Load audio segments delimiters from a `.seg` file
-        Return a list of segments
+    """
+    **Deprecated**
+    
+    Load audio segments delimiters from a `.seg` file
+    Return a list of segments
     """
 
     segments = []
@@ -82,8 +86,7 @@ def load_text_data(filename) -> List[Tuple[str, Dict]]:
     Return list of sentences with metadata.
     Metadata dictionaries will always have, at least, the "speaker" and "gender" keys.
 
-    Return
-    ------
+    Returns:
         list of tuple (text sentences, metadata)
     """
     utterances = []
@@ -183,7 +186,7 @@ def create_ali_file(sentences, segments, **kwargs) -> str:
 
 def load_ali_file(filepath) -> Dict:
     """
-    **Deprecated**
+    **Deprecated** use `parse_ali_file` instead.
 
     Parse an ALI file
 
@@ -225,13 +228,6 @@ def load_ali_file(filepath) -> Dict:
             else:
                 metadata["gender"] = current_gender
             
-            # if "parser" in metadata:
-            #     if "no-lm" in metadata["parser"]: no_lm = True
-            #     elif "add-lm" in metadata["parser"]: no_lm = False
-            # else:
-            #     if no_lm:
-            #         metadata["parser"] = ["no-lm"]
-
             # match = re.search(r"{\s*start\s*:\s*([0-9\.]+)\s*;\s*end\s*:\s*([0-9\.]+)\s*}", line)
             # if match:
             if "start" in metadata and "end" in metadata:
@@ -266,7 +262,7 @@ def load_ali_file(filepath) -> Dict:
 
 
 def parse_ali_file(
-        filepath,
+        filepath: str,
         init: Optional[dict]=None,
         filter_in: Optional[dict]=None,
         filter_out: Optional[dict]=None
@@ -373,8 +369,8 @@ speakers_gender = {"unknown": 'u'}
 
 def parse_data_file(filepath, exclude_files, args) -> Optional[dict]:
 
-    def squeeze_regions(regions: list) -> Optional[tuple]:
-        # Squeeze regions and metadatas into a single sentence and metadata dictionary
+    def squeeze_regions(regions: list) -> Optional[Tuple[str, dict]]:
+        """Squeeze regions and metadatas into a single sentence and metadata dictionary"""
         text_segments = []
         sentence_metadata = {}
         for data in regions:
@@ -396,7 +392,7 @@ def parse_data_file(filepath, exclude_files, args) -> Optional[dict]:
         return None
     
     seg_ext = os.path.splitext(filepath)[1] # Could be '.split' or '.seg'
-    audio_path = ""
+    audio_path = None
 
     if seg_ext == ".ali":
         utterances = parse_ali_file(
@@ -406,7 +402,11 @@ def parse_data_file(filepath, exclude_files, args) -> Optional[dict]:
             filter_out={"train": False}
         )
         first_utt_metadata = utterances[0][0][0]
-        if "audio-path" in first_utt_metadata:
+        if "media-path" in first_utt_metadata:
+            dir = os.path.split(filepath)[0]
+            audio_path = os.path.join(dir, first_utt_metadata["media-path"])
+            audio_path = os.path.abspath(audio_path)
+        elif "audio-path" in first_utt_metadata:
             dir = os.path.split(filepath)[0]
             audio_path = os.path.join(dir, first_utt_metadata["audio-path"])
             audio_path = os.path.abspath(audio_path)
@@ -437,9 +437,9 @@ def parse_data_file(filepath, exclude_files, args) -> Optional[dict]:
 
     
     # Look for accompanying audio file
-    if not audio_path:
+    if audio_path is None:
         audio_path = find_associated_audiofile(filepath, silent=True)
-    assert os.path.exists(audio_path), f"ERROR: no audio file found for {filepath}"
+    assert (audio_path is not None) and os.path.exists(audio_path), f"ERROR: no audio file found for {filepath}"
     
     recording_id = md5(audio_path.encode("utf8")).hexdigest()
 
@@ -496,9 +496,10 @@ def parse_data_file(filepath, exclude_files, args) -> Optional[dict]:
         sent = filter_out_chars(sent, PUNCTUATION + '*')
         if not sent:
             continue
-        sent = ' '.join(sent.split())
+        sent = ' '.join(sent.split()) # Prevent multi-spaces
         
-        # Filter out utterances with numbers or foreign chars (not counting acronyms)
+        # Filter out utterances with numbers or foreign chars
+        # (exculding acronyms, which could contain numbers)
         sent_no_acronyms = detokenize(
             normalize(
                 filter(lambda t: t.type != TokenType.ACRONYM, tokens),
@@ -524,7 +525,6 @@ def parse_data_file(filepath, exclude_files, args) -> Optional[dict]:
             data["audio_length"]['f'] += end - start
         else:
             data["audio_length"]['u'] += end - start
-
 
         # Add words to lexicon
         for word in sent.split():
@@ -787,6 +787,8 @@ _VALID_PARAMS = {
 
 def extract_metadata(sentence: str) -> Tuple[str, dict]:
     """
+    **Deprecated**
+    
     Returns the sentence stripped of its metadata (if any)
     and a dictionary of metadata
     Keeps unknown word markers '{?}'
@@ -825,12 +827,12 @@ def extract_metadata(sentence: str) -> Tuple[str, dict]:
                     else:
                         speaker_name_depr = SPEAKER_ID_PATTERN_DEPR.fullmatch(unit)
                         if speaker_name_depr:
-                            print(red(f"Deprecated metadata: {unit}"))
+                            print(red(f"Deprecated metadata: {unit}"), file=sys.stderr)
                             #metadata["speaker"] = speaker_name_depr.group(1)
                             #if speaker_name_depr.group(2) in 'fm':
                             #    metadata["gender"] = speaker_name_depr.group(2)
                         else:
-                            print(red(f"Unknown metadata: {unit}"))
+                            print(red(f"Unknown metadata: {unit}"), file=sys.stderr)
                             metadata[key] = val
                 else:
                     # A simplified speaker name
@@ -867,7 +869,6 @@ class MetadataParser():
 
     VALID_PARAMS = {
         "start", "end",
-
         "audio-path", "media-path",
         "source",
         "source-audio", "audio-source",
@@ -883,7 +884,7 @@ class MetadataParser():
         "accent",
         "train",
         "lm",
-        "subtitles",
+        "subtitles", "st",
         "status",
     }
 
@@ -892,6 +893,7 @@ class MetadataParser():
         self.short_names = dict()
         self.filter_in = dict()
         self.filter_out = dict()
+        self.valid_params = set(self.VALID_PARAMS)
         self.reset(init)
     
     def reset(self, init: Optional[dict]=None):
@@ -913,11 +915,16 @@ class MetadataParser():
         self.filter_in.clear()
         self.filter_out.clear()
 
-    def set_filter_in(self, filter: dict):
+
+    def add_param(self, param_name: str) -> None:
+        self.valid_params.add(param_name)
+
+
+    def set_filter_in(self, filter: dict) -> None:
         """ Add a 'allow only' filter to this parser """
         self.filter_in = filter
     
-    def set_filter_out(self, filter: dict):
+    def set_filter_out(self, filter: dict) -> None:
         """ Add a 'don't allow' filter to this parser """
         self.filter_out = filter
     
@@ -930,6 +937,7 @@ class MetadataParser():
             if k in metadata and metadata[k] == v:
                 return True
         return False
+
 
     def parse_sentence(self, sentence: str) -> Tuple[List[dict], Optional[Tuple]]:
         """
@@ -949,7 +957,7 @@ class MetadataParser():
         match = self.SEGMENT_METADATA.search(sentence)
         if match:
             segment = (float(match[1]), float(match[2]))
-            sentence = sentence[:match.start()] + sentence[match.end():]
+            sentence = (sentence[:match.start()] + sentence[match.end():]).strip()
         
         for match in self.METADATA_PATTERN.finditer(sentence):
             # Shouldn't match with '{?}'
@@ -960,6 +968,7 @@ class MetadataParser():
             metadata = self.current_metadata.copy() # Keep a copy of the previous metadata state
             start, end = match.span()
             text = sentence[region_start:start]
+            print(f"{start=} {end=} {text}")
             region_start = end
 
             metadata_units = content.split(';')
@@ -971,7 +980,7 @@ class MetadataParser():
                     key = key.strip()
                     val = val.strip()
 
-                    if not key in self.VALID_PARAMS:
+                    if not key in self.valid_params:
                         speaker_name_depr = self.SPEAKER_ID_PATTERN_DEPR.fullmatch(unit)
                         if speaker_name_depr:
                             print(red(f"Deprecated metadata: {unit}"))
@@ -1010,16 +1019,16 @@ class MetadataParser():
                         self.current_metadata["speaker"] = name
                         continue
                     elif key == "gender":
-                        name = self.current_metadata["speaker"]
+                        name = self.current_metadata.get("speaker", "unknown")
                         if name != "unknown" and name in self.names:
                             self.names[name][0] = val[0].lower()
                     elif key == "accent":
-                        name = self.current_metadata["speaker"]
+                        name = self.current_metadata.get("speaker", "unknown")
                         if name != "unknown" and name in self.names:
                             self.names[name][1] = val.lower()
                     elif key in ("tags", "author", "accent"):
                         val = [v.strip().replace(' ', '_') for v in val.split(',') if v.strip()]
-                    elif key in ("train", "lm", "subtitles"):
+                    elif key in ("train", "lm", "subtitles", "st"):
                         # A boolean
                         val = False if val.lower() == "false" else True
                     self.current_metadata[key] = val                        
@@ -1040,13 +1049,13 @@ class MetadataParser():
                     
                     self.current_metadata["speaker"] = name
             
-            if text.strip() and not self.filtered(metadata):
+            if text and not self.filtered(metadata):
                 metadata["text"] = text
                 regions.append(metadata)
         
         # Parse remaining of text (after the last metadata)
         if region_start < len(sentence):
-            text = sentence[region_start:].strip()
+            text = sentence[region_start:]
             if text and not self.filtered(self.current_metadata):
                 metadata = self.current_metadata.copy()
                 metadata["text"] = text

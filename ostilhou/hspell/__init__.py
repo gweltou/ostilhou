@@ -58,7 +58,7 @@ def get_hunspell_spylls():
 
 
 
-def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
+def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int, set]:
     """
     Return a string which is a colored correction of the sentence
     and the number of spelling mistakes in the sentence.
@@ -71,14 +71,16 @@ def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
 
     hs = get_hunspell_dict()
 
+    mistakes = set()
     n_mistakes = 0
     colored_tokens = []
 
-    for tok in tokenize(sentence, autocorrect=True):
+    for tok in tokenize(sentence, autocorrect=autocorrected):
         if tok.type == TokenType.WORD:
             if Flag.INCLUSIVE in tok.flags:
                 head, *_ = tok.data.split('·')
                 if not hs.spell(head):
+                    mistakes.add(head)
                     n_mistakes += 1
                     tok.data = Fore.RED + tok.data + Fore.RESET
             elif Flag.CORRECTED in tok.flags:
@@ -86,6 +88,7 @@ def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
             elif tok.data.lower() in lexicon_sub:
                 tok.data = Fore.YELLOW + tok.data + Fore.RESET
             elif not hs.spell(tok.data):
+                mistakes.add(tok.data)
                 n_mistakes += 1
                 tok.data = Fore.RED + tok.data + Fore.RESET
         elif tok.type in (TokenType.PROPER_NOUN, TokenType.COUNTRY, TokenType.FIRST_NAME, TokenType.LAST_NAME):
@@ -104,7 +107,8 @@ def get_hspell_mistakes(sentence: str, autocorrected=True) -> Tuple[str, int]:
             tok.data = Fore.BLUE + tok.data + Fore.RESET
         elif tok.type == TokenType.RAW:
             tok.data = Fore.RED + tok.data + Fore.RESET
+            mistakes.add(tok.data)
             n_mistakes += 1
         colored_tokens.append(tok)
     
-    return detokenize(colored_tokens), n_mistakes
+    return detokenize(colored_tokens), n_mistakes, mistakes

@@ -224,8 +224,8 @@ def detokenize(token_stream: Iterator[Token], **options: Any) -> str:
         normalize: boolean
             Normalize sentence
         
-        filter_out: Set[TokenType]
-            Set of token types of flags to filter out
+        filter_out: Set[TokenType | Flag]
+            Set of token types or flags to filter out
     """
     
     # Parse options

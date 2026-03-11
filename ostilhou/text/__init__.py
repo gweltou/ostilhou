@@ -164,7 +164,7 @@ def score_sentence(sentence: str):
     TODO
     """
     n_word = count_words(sentence)
-    highlighted_str, n_hspell_mistakes = get_hspell_mistakes(sentence, autocorrected=False)
+    highlighted_str, n_hspell_mistakes, _ = get_hspell_mistakes(sentence, autocorrected=False)
     print(highlighted_str)
 
     n_mistakes = 0

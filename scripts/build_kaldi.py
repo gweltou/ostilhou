@@ -135,13 +135,13 @@ if __name__ == "__main__":
                     cleaned = normalize_sentence(cleaned.strip(), autocorrect=True, norm_case=True)
                     cleaned = cleaned.replace('-', ' ').replace('/', ' ')
                     cleaned = cleaned.replace('\xa0', ' ')
-                    cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}*')
+                    cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}*°$€')
                     for word in cleaned.split():
-                        if word in corpora["train"]["lexicon"]:
-                            pass
-                        elif word == "'":
+                        if word == "'":
                             pass
                         elif '·' in word: # Don't add inclusive words for now
+                            pass
+                        elif word in corpora["train"]["lexicon"]:
                             pass
                         else:
                             corpora["train"]["lexicon"].add(word)

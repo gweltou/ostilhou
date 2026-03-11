@@ -7,7 +7,7 @@ from ..dicts import (
 
 
 LETTERS = "aâàbcçdeêéèëfghiïîjklmnñoôpqrstuüùûvwxyzœ"
-PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—•'
+PUNCTUATION = '.?!,‚;:«»“”"()[]/…–—•~'
 OPENING_QUOTES = "«“"
 CLOSING_QUOTES = "»”"
 # CLOSING_PUNCT = {'»': '«', '”': '“', ')': '('}
@@ -189,7 +189,13 @@ ORDINALS = {
     "4e"   : "pevare",
     "4re"  : "pevare",
     "4vet" : "pedervet",
-    "9vet" : "navet"
+    "5vet" : "pempvet",
+    "6ed"  : "c'hwec'hvet",
+    "6vet" : "c'hwec'hvet",
+    "8et"  : "eizhvet",
+    "9vet" : "navet",
+    "15vet": "pempzekvet",
+    "19vet": "naontekvet"
 }
 
 re_ordinal = re.compile(r"(\d+)vet")

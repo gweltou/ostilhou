@@ -5,6 +5,7 @@ ac'hanomp	N ON M
 ac'hanon	N ON N
 ac'hanout	E X AN V T
 ac'hanta	X AN N T A
+aes	E A S
 aet	E D
 all	EH L
 amann	A M AN N EH N
@@ -33,6 +34,7 @@ aze A H E
 azezet	A J E E T
 baby	B EY B I
 barradoù	B A R A J OU
+batterie	B A T R I
 bemdez	B AN M D E
 bemdez B EH M D E
 bennak B OE N A K E T
@@ -56,6 +58,7 @@ bezit	B E I T
 bihan B I N
 bleuñv B L EU N
 blij	B L I J A
+bloavezhioù B L A V E CH OU
 bloavezhioù B L O A V E CH OU
 bravoc'h B R A W OH X
 bremañ	B R O M A N
@@ -69,6 +72,7 @@ c'hoadoù	X O A J OU
 c'hoazh	X O A
 chom	J O M
 chomont CH O M A I N T
+c'houde	H OU D E
 c'houlenn X OU L
 c'hounez	X O N E A
 c'houzout	X OU T
@@ -146,15 +150,17 @@ eurediñ	EU R EU J I
 evel	EH R
 evel	V EH L
 evidoc'h V I D OH X
-evidon V I D ON N
+evidon	V I D ON N
 evidon	W I D I M
-evit E W I T
-evito V I T E
-evito V I T O
-evit V I T
-ezhomm E M
-ezhomm H E M
-ezhomm I M
+evit	E V I D
+evit	E W I T
+evit	E W I D
+evito	V I T E
+evito	V I T O
+evit	V I T
+ezhomm	E M
+ezhomm	H E M
+ezhomm	I M
 ez	I
 faktour	F A K T EU R
 gallout G A L
@@ -180,6 +186,7 @@ gwelet G W EH L
 gwenodennoù G W E N O J EH N OU
 gwin V I N
 gwirionez	G W I R I ON N E
+gwreg	G R E G
 gwrizienn G R I EH N
 gwrizioù G R I OU
 hanter AN N T EH R
@@ -217,12 +224,14 @@ kaoz	K O Z
 karantez	K A R AN N T E
 kavas	K A V EH S
 kavout	K A D
+kazimant	K A CH I M AN N
 kement	K E M EH N
 kleñvedoù	K L EN V E J OU
 koadoù	K O A J OU
 koubladoù	K OU B L A J OU
 kouezho	K OU EY O
 krampouezhenn	K R AN M P OU EH N
+lakao	L A K O
 krampouezh K R AN M P OU Z
 kreñv K R EN ON
 kresket	K R E CH K E T
@@ -253,6 +262,7 @@ mais	M EH
 ma M EU
 marteze M A R S EH
 marteze M A R S OE N
+marteze M A T E H E
 marteze M A T R EH X
 marteze M A T R EN
 marteze M A T R OE N
@@ -306,6 +316,7 @@ penaos	P E N O Z
 peoc'h	P OE X
 peogwir P E G W I R
 peogwir	P U G U R
+peotramant	P E T A M AN N
 petra	P E R
 petra	P E R A
 petra	P E T A

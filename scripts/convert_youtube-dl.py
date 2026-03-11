@@ -163,7 +163,7 @@ def stage2():
 					sentence = corrected_sentence
 			norm_sentence = normalize_sentence(sentence, autocorrect=True, norm_punct=True)
 			norm_sentence = norm_sentence.replace('-', ' ')
-			corr, n_mistake = get_hspell_mistakes(norm_sentence, autocorrected=True)
+			corr, n_mistake, _ = get_hspell_mistakes(norm_sentence, autocorrected=True)
 			n_words = len(filter_out_chars(norm_sentence, PUNCTUATION).split())
 			if n_mistake <= n_words // 7: # Only sentences with less than 15% errors are kept
 				kept_text.append(norm_sentence)

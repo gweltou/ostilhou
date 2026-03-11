@@ -138,7 +138,7 @@ def test_clean_ya():
 
                     sentence = detokenize(tokenize(sentence, autocorrect=True))
 
-                    colored, n_mistakes = get_hspell_mistakes(sentence)
+                    colored, n_mistakes, _ = get_hspell_mistakes(sentence)
                     if n_mistakes >= 1:
                         print(colored)
                     elif n_mistakes == 0:

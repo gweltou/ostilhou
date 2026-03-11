@@ -1,16 +1,18 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 """
 Find most common ngrams in a text corpus
 Print list of ngrams to stdout in reverse order of number of occurence
+
+Usage:
+    python3 find_ngrams.py
 """
 
 import sys
 import argparse
 from ostilhou.text import (
-    strip_punct, PUNCTUATION, 
+    strip_punct, PUNCTUATION, pre_process
 )
 
 
@@ -23,10 +25,11 @@ def tokenize(word: str) -> str:
     return word
 
 
-def get_tokens(sentence: str) -> str:
+def get_tokens(sentence: str) -> list:
     words = sentence.split()
     words = [w for w in map(strip_punct, words) if w]
     words = list(map(tokenize, words))
+
     return words
 
 
@@ -34,6 +37,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="Find common n-grams in text corpus")
     parser.add_argument("filename", help="Text corpus", metavar="FILE")
     parser.add_argument("-n", "--gram", type=int, default=2, metavar="N", help="Size of N-gram")
+    parser.add_argument("--normalize", action="store_true", help="Normalize words")
     parser.add_argument("-l", "--lower", action="store_true", help="Case insensitive")
     parser.add_argument("--head", action="store_true", help="Check only the first n-gram of each line")
     parser.add_argument("-m", "--min", type=int, default=1, metavar="N", help="Should have at least N occurences")
@@ -48,15 +52,31 @@ if __name__ == "__main__":
         lines = _fin.readlines()
 
     ngrams = dict()
+    letters = dict()
 
     for line in lines:
+        if args.lower:
+            line = line.lower()
+
         tokens = get_tokens(line)
+
+        if args.normalize:
+            words = [ pre_process(w) for w in tokens ]
+        
+        if args.gram == 0:
+            # Count letters only
+            for word in words:
+                word = word.replace("c'h", "X")
+                for letter in word:
+                    if letter in letters:
+                        letters[letter] += 1
+                    else:
+                        letters[letter] = 0
+            continue
         
         if len(tokens) < args.gram:
             continue
-        if args.lower:
-            tokens = [t.lower() for t in tokens]
-        
+
         for i in range(0, len(tokens)-args.gram):
             tg = tuple(tokens[i:i+args.gram])
             
@@ -67,6 +87,11 @@ if __name__ == "__main__":
             
             if args.head:
                 break
+    
+    if args.gram == 0:
+        for l in sorted(letters.items(), key=lambda x: x[1]):
+            print(l)
+        sys.exit()
 
     for tg in sorted(ngrams, key=lambda k: ngrams[k]):
         if ngrams[tg] < args.min:

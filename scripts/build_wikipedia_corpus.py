@@ -104,7 +104,7 @@ if __name__ == "__main__":
                 sentence = correct_sentence(sentence)
                 sentence = sentence.replace("J. -K.", "J.-K.")
 
-                colored, num_errors = get_hspell_mistakes(sentence, autocorrected=True)
+                colored, num_errors, _ = get_hspell_mistakes(sentence, autocorrected=True)
                 if num_errors == 0:
                     keepers.append(sentence)
                 elif num_errors == 1:
