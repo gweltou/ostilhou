@@ -1,21 +1,21 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 """
-    File: build_tsv.py
+File: build_tsv.py
 
-    Build a tsv file from a folder hierarchy or a single alignment file.
-    Split audio files in as many utterances.
+Build a tsv file from a folder hierarchy or a single alignment file.
+Split audio files in as many utterances.
 
-    Usage : python3 build_dataset.py --train file.seg -o output_dir
+Usage: python3 build_dataset.py --train file.seg -o output_dir
 
-    Author:  Gweltaz Duval-Guennoc (2023)
+Author:  Gweltaz Duval-Guennoc (2023)
 """
 
 
 import sys
 import os
+from pathlib import Path
 import argparse
 import json
 from hashlib import md5
@@ -33,7 +33,7 @@ from ostilhou.text import (
 from ostilhou.asr import (
     load_segments_data,
     load_text_data,
-    load_ali_file,
+    read_ali_file,
 )
 from ostilhou.audio import load_audiofile
 from ostilhou.utils import sec2hms, green, yellow, red
@@ -92,9 +92,9 @@ def parse_data_file(filepath):
     audio_path = ""
 
     if seg_ext == ".ali":
-        ali_data = load_ali_file(filepath)
+        ali_data = read_ali_file(filepath)
         segments = ali_data["segments"]
-        text_data = list(zip(ali_data["sentences"], ali_data["metadata"]))
+        text_data = list(zip(ali_data["sentences"], ali_data["metadatas"]))
         audio_path = ali_data["audio_path"]
     else: # .seg, .split
         text_filename = filepath.replace(seg_ext, '.txt')
@@ -118,9 +118,9 @@ def parse_data_file(filepath):
             len(text_data), len(segments)
         )
     
-    for i, (start, stop) in enumerate(segments):
+    for i, (start, end) in enumerate(segments):
         sentence, metadata = text_data[i]
-        if stop - start < args.utt_min_len:
+        if end - start < args.utt_min_len:
             # Skip short utterances
             print(yellow("dropped (too short): ") + sentence, file=sys.stderr)
             n_dropped += 1
@@ -176,18 +176,16 @@ def parse_data_file(filepath):
             speaker_gender = 'u'
         
         if speaker_gender == 'm':
-            data["audio_length"]['m'] += stop - start
+            data["audio_length"]['m'] += end - start
         elif speaker_gender == 'f':
-            data["audio_length"]['f'] += stop - start
+            data["audio_length"]['f'] += end - start
         else:
-            data["audio_length"]['u'] += stop - start
+            data["audio_length"]['u'] += end - start
 
-        accent = ""
-        if "accent" in metadata:
-            accent = metadata["accent"]
+        accent = metadata.get("accent", "")
         
         data["utterances"].append(
-            [sentence, speaker_id, speaker_gender, accent, audio_path, start, stop]
+            [sentence, speaker_id, speaker_gender, accent, audio_path, start, end]
         )
     
     status = green(f" * {filepath[:-len(seg_ext)]}")
@@ -204,7 +202,7 @@ if __name__ == "__main__":
 
     desc = f"Generate a CSV file from a dataset"
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument("--train", help="Train dataset directory", required=True)
+    parser.add_argument("--train", help="Train dataset directory")
     parser.add_argument("--test", help="Test dataset directory")
     parser.add_argument("-o", "--output", help="Output folder for generated files", default="data_hf")
     parser.add_argument("--utt-min-len", help="Minimum length of an utterance", type=float, default=0.2)
@@ -218,36 +216,35 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dataset = dict()
-    dataset["train"] = parse_dataset(args.train)
-    print("{} utterances dropped".format(n_dropped), file=sys.stderr)
+    if args.train:
+        n_dropped = 0
+        dataset["train"] = parse_dataset(args.train)
+        print("{} utterances dropped".format(n_dropped), file=sys.stderr)
 
     if args.test:
         n_dropped = 0
         dataset["test"] = parse_dataset(args.test)
         print("{} utterances dropped".format(n_dropped), file=sys.stderr)
     
-    if not os.path.exists(args.output):
-        os.mkdir(args.output)
-
-    if args.format == "tsv":
-        metadata_file = open(os.path.join(args.output, "metadata.tsv"), 'w', encoding='utf-8')
-        # Write header
-        metadata_file.write('\t'.join(["file_name", "text"]) + '\n')
-    elif args.format == "jsonl":
-        metadata_file = open(os.path.join(args.output, "metadata.jsonl"), 'w', encoding='utf-8')
-
-    data_folder = os.path.join(args.output, "data")
-    if not args.dry_run and not os.path.exists(data_folder):
-        os.mkdir(data_folder)
+    output_dir = Path(args.output)
+    output_dir.mkdir(exist_ok=True)
+    data_dir = output_dir / "data"
+    data_dir.mkdir(exist_ok=True)
 
     last_recording_id = None
 
     for corpus_name, data in dataset.items(): # train / test
         n_segments = 0
 
-        corpus_folder = os.path.join(data_folder, corpus_name)
-        if not args.dry_run and not os.path.exists(corpus_folder):
-            os.mkdir(corpus_folder)
+        corpus_dir = data_dir / str(corpus_name)
+        corpus_dir.mkdir(exist_ok=True)
+
+        if args.format == "tsv":
+            metadata_file = (corpus_dir / "metadata.tsv").open('w', encoding='utf-8')
+            # Write header
+            metadata_file.write('\t'.join(["file_name", "text"]) + '\n')
+        elif args.format == "jsonl":
+            metadata_file = (corpus_dir / "metadata.jsonl").open('w', encoding='utf-8')
 
         # Splitting audio files
         for utterance in data["utterances"]:
@@ -256,13 +253,12 @@ if __name__ == "__main__":
 
             recording_id = md5(utterance[4].encode("utf8")).hexdigest()
             seg_audio_filename = f"{recording_id}_{int(start):0>7}_{int(end):0>7}.{args.audio_format}"
-            seg_audio_path = os.path.join("data", corpus_name, seg_audio_filename)
             
             if args.format == "tsv":
-                metadata_file.write('\t'.join([seg_audio_path, sentence]) + '\n')
+                metadata_file.write('\t'.join([seg_audio_filename, sentence]) + '\n')
             elif args.format == "jsonl":
                 sentence = sentence.replace('"', '\\"')
-                metadata_file.write(f'{{"file_name": "{seg_audio_path}", "transcript": "{sentence}"}}\n')
+                metadata_file.write(f'{{"file_name": "{seg_audio_filename}", "transcript": "{sentence}"}}\n')
 
             if not args.dry_run:
                 if recording_id != last_recording_id:
@@ -270,10 +266,10 @@ if __name__ == "__main__":
                     audio = load_audiofile(audio_file)
                     last_recording_id = recording_id
                 
-                segment = audio[start:end]
-                output_file = os.path.join(corpus_folder, seg_audio_filename)
+                audio_segment = audio[start*1000:end*1000]
+                output_file = os.path.join(corpus_dir, seg_audio_filename)
                 if not os.path.exists(output_file):
-                    segment.export(output_file, format=args.audio_format)
+                    audio_segment.export(output_file, format=args.audio_format)
                 n_segments += 1
         
 
@@ -292,7 +288,7 @@ if __name__ == "__main__":
         if audio_length_u > 0:
             print(f"- Unknown speakers:\t{sec2hms(audio_length_u)}\t{audio_length_u/total_audio_length:.1%}")
 
-    print(f"Files saved in {data_folder}")
+    print(f"Files saved in {data_dir}")
 
 
 

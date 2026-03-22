@@ -34,68 +34,13 @@ from ostilhou.text import (
     sentence_stats,
     PUNCTUATION,
 )
-from ostilhou.asr import parse_ali_file
 from ostilhou.asr.models import load_model, get_loaded_model_name
 from ostilhou.asr.recognizer import transcribe_segment
-from ostilhou.asr.dataset import format_timecode
+from ostilhou.asr.dataset import format_timecode, read_ali_file
 from ostilhou.audio import (
     load_audiofile, get_audio_segment,
-    find_associated_audiofile,
     add_whitenoise,
 )
-
-
-def read_ali_file(filepath: str) -> dict:
-    def squeeze_regions(regions: list) -> Optional[str]:
-        # Squeeze regions and metadatas into a single sentence and metadata dictionary
-        text_segments = []
-        for data in regions:
-            if "text" in data:
-                text_segments.append(data.pop("text"))
-        
-        sentence_text = ''.join(text_segments).strip()
-        if not sentence_text:
-            return None
-        return sentence_text
-    
-    utterances = parse_ali_file(
-        filepath,
-        init={"lang": "br"},
-        filter_in={"lang": "br"},
-        filter_out={"train": False}
-    )
-
-    audio_path = None
-    first_utt_metadata = utterances[0][0][0]
-    if "media-path" in first_utt_metadata:
-        dir = os.path.split(filepath)[0]
-        audio_path = os.path.join(dir, first_utt_metadata["media-path"])
-        audio_path = os.path.abspath(audio_path)
-    elif "audio-path" in first_utt_metadata:
-        dir = os.path.split(filepath)[0]
-        audio_path = os.path.join(dir, first_utt_metadata["audio-path"])
-        audio_path = os.path.abspath(audio_path)
-    
-    if audio_path is None:
-        audio_path = find_associated_audiofile(filepath, silent=True)
-
-    segments = []
-    sentences = []
-    for regions, segment in utterances:
-        ret = squeeze_regions(regions)
-        if ret is None:
-            continue
-        sentence_text = ret
-
-        # Remove html formatting elements
-        sentence_text = re.sub(r"\<br\>", ' ', sentence_text, flags=re.IGNORECASE)
-        sentence_text = re.sub(r"\</?[ib]\>", '', sentence_text, flags=re.IGNORECASE).strip()
-        sentence_text = sentence_text.replace('{?}', '')
-
-        sentences.append(sentence_text)
-        segments.append(segment)
-    
-    return {"sentences": sentences, "segments": segments, "audio_path": audio_path}
 
 
 

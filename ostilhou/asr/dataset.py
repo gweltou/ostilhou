@@ -261,6 +261,73 @@ def load_ali_file(filepath) -> Dict:
 
 
 
+def read_ali_file(filepath: str) -> dict:
+    """
+    Returns:
+        A dictionary with "sentences", "segments" and "audio_path"
+    """
+    def squeeze_regions(regions: list) -> Tuple[str, dict] | None:
+        # Squeeze regions and metadatas into a single sentence and metadata dictionary
+        text_segments = []
+        metadata = dict()
+        for data in regions:
+            if "text" in data:
+                text_segments.append(data.pop("text"))
+            metadata.update(data) 
+        
+        sentence_text = ''.join(text_segments).strip()
+        if not sentence_text:
+            return None
+        return sentence_text, metadata
+    
+    utterances = parse_ali_file(
+        filepath,
+        init={"lang": "br"},
+        filter_in={"lang": "br"},
+        filter_out={"train": False}
+    )
+
+    audio_path = None
+    first_utt_metadata = utterances[0][0][0]
+    if "media-path" in first_utt_metadata:
+        dir = os.path.split(filepath)[0]
+        audio_path = os.path.join(dir, first_utt_metadata["media-path"])
+        audio_path = os.path.abspath(audio_path)
+    elif "audio-path" in first_utt_metadata:
+        dir = os.path.split(filepath)[0]
+        audio_path = os.path.join(dir, first_utt_metadata["audio-path"])
+        audio_path = os.path.abspath(audio_path)
+    
+    if audio_path is None:
+        audio_path = find_associated_audiofile(filepath, silent=True)
+
+    segments = []
+    sentences = []
+    metadatas = []
+    for regions, segment in utterances:
+        ret = squeeze_regions(regions)
+        if ret is None:
+            continue
+        sentence_text, metadata = ret
+
+        # Remove html formatting elements
+        sentence_text = re.sub(r"\<br\>", ' ', sentence_text, flags=re.IGNORECASE)
+        sentence_text = re.sub(r"\</?[ib]\>", '', sentence_text, flags=re.IGNORECASE).strip()
+        sentence_text = sentence_text.replace('{?}', '')
+
+        sentences.append(sentence_text)
+        segments.append(segment)
+        metadatas.append(metadata)
+    
+    return {
+        "sentences": sentences,
+        "segments": segments,
+        "audio_path": audio_path,
+        "metadatas": metadatas
+    }
+
+
+
 def parse_ali_file(
         filepath: str,
         init: Optional[dict]=None,
@@ -282,7 +349,7 @@ def parse_ali_file(
     
     Returns:
         utterances (list):
-            List of utterances, where each utterance is a (region, segment)
+            List of utterances, where each utterance is a (regions, segment)
     """
 
     utterances = []
@@ -945,8 +1012,8 @@ class MetadataParser():
             sentence (str): sentence to be parsed
         
         Returns:
-            Tuple of :
-                List of (data, segment) tuples
+            Tuple of:
+                List of dicts
                 Segment (tuple)
         """
         regions = []
@@ -968,7 +1035,6 @@ class MetadataParser():
             metadata = self.current_metadata.copy() # Keep a copy of the previous metadata state
             start, end = match.span()
             text = sentence[region_start:start]
-            print(f"{start=} {end=} {text}")
             region_start = end
 
             metadata_units = content.split(';')
