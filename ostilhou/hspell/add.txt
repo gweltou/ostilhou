@@ -1,5 +1,3 @@
-kadarnao	# kadarnaat, amzer da-zont U3
-gadarnao	# kadarnaat, amzer da-zont U3
 adgraet
 adkanañ
 adlec'hiañ
@@ -11,6 +9,7 @@ agro
 a'i
 aktourez
 alambig
+alaniñ	# sinonim "analañ"
 alemañ
 algo	# Berradur algoritm
 algoritm
@@ -74,7 +73,6 @@ buhezourien
 c'hameraioù
 c'hamping
 c'hatana
-pignadenn	# une montée
 c'henasantiñ
 c'henfinañ
 c'henitervez
@@ -121,6 +119,7 @@ doktorez
 doneier
 dreistnaturel
 drouizez
+dukez
 duplex
 egorlestr
 eilveidi
@@ -132,9 +131,6 @@ elektrik
 embregiñ
 emoji
 emojioù
-dukez
-pseudo
-soavoñs
 emzesk
 emzeskiñ
 endalc'hoù
@@ -146,19 +142,14 @@ epidemiezhioù
 espres
 espres-kaer
 etanol
-yec'hedel
-rektordi	# galleg "rectorat"
-wezhoù	# sinonim "wechoù"
 fablab
 falc'hañ
 fartienn
-lakao	# displegadur dazont "lakaat"
 fekañ	# galleg "fouiner" (Devri)
 feneant
 fenomen
 fenotip
 feulsterioù
-alaniñ	# sinonim "analañ"
 figez
 fiksion
 fitamdoue
@@ -171,6 +162,7 @@ foutr
 fouzañ
 freied
 frigo
+gadarnao	# kadarnaat, amzer da-zont U3
 gall'
 gapitalouriezh
 g'ar
@@ -218,6 +210,7 @@ isspesad
 isspesadoù
 itrikerezh
 justamant
+kadarnao	# kadarnaat, amzer da-zont U3
 kakaouetez
 kaki
 kamping
@@ -259,6 +252,7 @@ kultivañ
 kurry
 labo
 lagout
+lakao	# displegadur dazont "lakaat"
 langour	# galleg "paresseux"
 lâr'
 laskar
@@ -324,6 +318,7 @@ pesketouriezh
 pesto
 peupre
 peurreizh
+pignadenn	# une montée
 pleustroù
 plik
 plouk
@@ -341,12 +336,14 @@ pretierezh
 probablentez
 program
 propr
+pseudo
 psi
 rapet
 rapour
 red'
 referañs
 reform
+rektordi	# galleg "rectorat"
 relativel
 reskont	# Sinonim respont
 restaorant	# preti
@@ -381,6 +378,7 @@ skolpoù
 skript
 skriptoù
 skuizhaat
+soavoñs
 sokiologel
 stadunanat
 stasioñ
@@ -439,7 +437,9 @@ vuhezourez
 vuhezourien
 wakame
 wel'
+wezhoù	# sinonim "wechoù"
 whisky
+yec'hedel
 youc'hou	# Interj.
 zazen		# Bouddaelezh
 zenien

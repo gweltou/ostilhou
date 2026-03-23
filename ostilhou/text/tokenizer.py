@@ -326,7 +326,7 @@ def generate_raw_tokens(text_or_gen: Union[str, Iterable[str]]) -> Iterator[Toke
     """
     def split_and_tokenize(s: str):
         for t in s.split():
-            if re.fullmatch(r"<[A-Z']+>", s):
+            if re.fullmatch(r"<[A-Z']+>", t):
                 yield Token(t, TokenType.SPECIAL_TOKEN)
             else:
                 yield Token(t, TokenType.RAW)
