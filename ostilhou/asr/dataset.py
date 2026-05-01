@@ -149,7 +149,7 @@ def create_ali_file(sentences, segments, **kwargs) -> str:
         **kwargs: other parameters to the ALI file (see 'common header metadata' below)
 
     Common header metadata:
-        audio-path      path to local audio file
+        media-path/audio-path      path to local audio file
         source          URL of hosting website
         audio-source    URL to original audio file
         author:         name(s) of transcriber(s)
@@ -161,10 +161,16 @@ def create_ali_file(sentences, segments, **kwargs) -> str:
     """
     data = []
 
+    # Add media-path first
+    if value := kwargs.pop("media-path", None):
+        data.append(f"{{media-path: {value}}}")
+    if value := kwargs.pop("media_path", None):
+        data.append(f"{{media-path: {value}}}")
     if value := kwargs.pop("audio-path", None):
-        data.append(f"{{audio-path: {value}}}")
+        data.append(f"{{media-path: {value}}}")
     if value := kwargs.pop("audio_path", None):
-        data.append(f"{{audio-path: {value}}}")
+        data.append(f"{{media-path: {value}}}")
+
     if value := kwargs.pop("tags", None):
         if isinstance(value, list):
             data.append(f"{{tags: {', '.join(value)}}}")
