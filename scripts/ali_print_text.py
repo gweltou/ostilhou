@@ -22,13 +22,13 @@ if __name__ == "__main__":
     for regions, _ in ali_data:
         line = ''.join([region["text"] for region in regions if "text" in region])
         
-        #line = re.sub(r"<br>", '\u2028', line, flags=re.IGNORECASE)
-        line = re.sub(r"<br>", ' ', line, flags=re.IGNORECASE)
-        line = re.sub('\u2028', ' ', line, flags=re.IGNORECASE)
-        #line = re.sub(r"</?([a-zA-Z']+)>", '', line)
+        # line = re.sub(r"<br>", ' ', line, flags=re.IGNORECASE)
+        # line = re.sub('\u2028', ' ', line, flags=re.IGNORECASE)
+        line = re.sub('\u2028', '<BR>', line, flags=re.IGNORECASE)
+        #line = re.sub(r"</?([a-zA-Z']+)>", '', line) # Remove special tokens
 
         for match in re.findall(r"<[a-zA-Z']+>", line, flags=re.IGNORECASE):
-            if match.lower() not in ("<i>", "<b>"):
+            if match.lower() not in ("<i>", "<b>", "<br>"):
                 print(match, file=sys.stderr)
                 line = line.replace(match, '')
         

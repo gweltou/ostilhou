@@ -4,6 +4,9 @@
 """
 Summerize and sort by WER score a list of utterances from a score file
 created by `score_ali_files.py`
+
+score file structure:
+    filepath, audio extension, start , end, sentence, transcription, score_wer, score_cer
 """
 
 import sys
@@ -43,7 +46,8 @@ if __name__ == "__main__":
 
     else:
         for row in rows:
-            path, audio_ext, _, _, ref, hyp, _, _ = row.split('\t')
+            row_fields = row.split('\t')
+            path, audio_ext, _, _, ref, hyp, *_ = row_fields
             if path != last_path and len(references) > 0:
                 document_wer = wer(references, hypothesis)
                 document_cer = cer(references, hypothesis)
