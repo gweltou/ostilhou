@@ -26,6 +26,7 @@ apeupre
 arc'hweloù
 arkitektour
 artifisiel
+arzhel
 astrologiezh	# steredouriezh
 astronomek
 a'ta
@@ -121,6 +122,7 @@ dreistnaturel
 drouizez
 dukez
 duplex
+egorenn
 egorlestr
 eilveidi
 ejiptologourez
@@ -328,6 +330,7 @@ poellgomzer
 poellgomzerioù
 poellgomzoù
 poltriji
+posubl # Implijet kement ha "posupl"
 potiron
 pratikourezed
 prepa
@@ -402,6 +405,7 @@ teuzar
 tierigoù
 tipioù
 tofou
+tourmant
 tradi
 trakteur
 trañkil

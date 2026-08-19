@@ -1,50 +1,146 @@
 #! /usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 
 """
-Build necessary files to train a model with the Kaldi toolkit
-All generated files are written in the `data` directory
+build_kaldi.py
 
-Usage: ./build_kaldi.py -h
+Build the file structure and data files required to train a speech
+recognition model with the Kaldi toolkit, starting from an aligned
+speech corpus (audio + transcriptions).
 
-Author:  Gweltaz Duval-Guennoc
+All generated files are written under the `data` directory (or the
+directory given with -o/--output), following Kaldi's expected layout:
 
-Workflow details:
+    data/
+      local/
+        corpus.txt              language-model training sentences
+        dict_nosp/
+          lexicon.txt            word -> pronunciation(s)
+          silence_phones.txt
+          nonsilence_phones.txt
+          optional_silence.txt
+      converted/                 audio re-encoded to 16kHz s16le mono PCM
+      train/
+        text                     utt_id -> transcription
+        segments                 utt_id -> rec_id, start, end (seconds)
+        utt2spk                  utt_id -> speaker_id
+        spk2gender                speaker_id -> gender (m/f/u)
+        wav.scp                  rec_id -> audio file path
+      test/                      same structure as train/, if --test is given
+
+Main steps performed:
+  1. Parse the training (and optional test) dataset directory into an
+     in-memory corpus representation (text, lexicon, speakers, segments,
+     wav references).
+  2. Write training sentences to `local/corpus.txt`, optionally extending
+     the language-model corpus with external text files/directories
+     passed via --lm-corpus.
+  3. Build the pronunciation lexicon (`dict_nosp/lexicon.txt`) by
+     phonetizing every word collected from the corpus, along with the
+     associated phone-set files.
+  4. Convert audio files to Kaldi-friendly 16kHz s16le mono PCM as needed,
+     and optionally split them into per-utterance segments
+     (--split-audio).
+  5. Write the standard Kaldi data files (text, segments, utt2spk,
+     spk2gender, wav.scp) for each corpus (train/test).
+  6. Print summary statistics (utterance counts, audio duration per
+     gender, lexicon size) and optionally draw a pie chart showing how
+     the data is distributed across subdirectories (--draw-figure).
+
+Usage:
+    ./build_kaldi.py --train <train_dir> [--test <test_dir>]
+                      [--lm-corpus FILE_OR_DIR [FILE_OR_DIR ...]]
+                      [-n | --no-lm] [-d | --dry-run]
+                      [--draw-figure] [-v | --verbose]
+                      [-o OUTPUT_DIR] [--lm-min-token N]
+                      [--utt-min-len SECONDS] [--hash-id]
+                      [--exclude FILE] [--split-audio]
+
+    ./build_kaldi.py -h    for full option details
+
+Author: Gweltaz Duval-Guennoc
 
 """
 
-
-import sys
-import os
 import argparse
+import os
+from math import ceil, floor
+
 from colorama import Fore
-from math import floor, ceil
 
 from ostilhou import normalize_sentence
-from ostilhou.text import (
-    filter_out_chars, filter_in_chars,
-    pre_process,
-    PUNCTUATION, LETTERS
-)
 from ostilhou.asr import (
-    phonemes,
-    special_tokens,
-    phonetize_word,
     parse_dataset,
+    phonemes,
+    phonetize_word,
+    special_tokens,
 )
+from ostilhou.audio import convert_to_wav, export_segment, is_audiofile_valid_format
 from ostilhou.dicts import stopwords
-from ostilhou.utils import sec2hms, list_files_with_extension, read_file_drop_comments
-from ostilhou.audio import export_segment, convert_to_wav, is_audiofile_valid_format
-
+from ostilhou.text import (
+    LETTERS,
+    PUNCTUATION,
+    filter_in_chars,
+    filter_out_chars,
+    pre_process,
+)
+from ostilhou.utils import list_files_with_extension, read_file_drop_comments, sec2hms
 
 
 def clean_filename(filename: str) -> str:
-    """ Convert a regular filename to a Kaldi friendly filename """
-    filename = filename.replace(' ', '_')
+    """Convert a regular filename to a Kaldi friendly filename"""
+    filename = filename.replace(" ", "_")
     filename = filter_in_chars(filename, LETTERS + LETTERS.upper() + "0123456789_-")
     return filename
 
+
+def save_figure(corpora: dict):
+    import datetime
+
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=(8, 8))
+
+    total_audio_length = (
+        corpora["train"]["audio_length"]["f"]
+        + corpora["train"]["audio_length"]["m"]
+        + corpora["train"]["audio_length"]["u"]
+    )
+    keys, val = zip(*corpora["train"]["subdir_audiolen"].items())
+    keys = [
+        k.replace("_", " ").rstrip(".ali") if v / total_audio_length > 0.02 else ""
+        for k, v in corpora["train"]["subdir_audiolen"].items()
+    ]
+
+    def labelfn(pct):
+        if pct > 2:
+            return f"{sec2hms(total_audio_length * pct / 100)}"
+
+    plt.pie(val, labels=keys, normalize=True, autopct=labelfn)
+    plt.title(f"Dasparzh ar roadennoù, {sec2hms(total_audio_length)} en holl")
+    plt.savefig(
+        os.path.join(
+            args.output,
+            f"subset_division_{datetime.datetime.now().strftime('%Y-%m-%d')}.png",
+        )
+    )
+    print(f"\nFigure saved to '{os.path.abspath(args.output)}'")
+    # plt.show()
+
+
+def print_subsets_length(corpora: dict):
+    total_audio_length = (
+        corpora["train"]["audio_length"]["f"]
+        + corpora["train"]["audio_length"]["m"]
+        + corpora["train"]["audio_length"]["u"]
+    )
+
+    sorted_list = sorted(
+        [(v, k) for k, v in corpora["train"]["subdir_audiolen"].items()], reverse=True
+    )
+
+    for length, name in sorted_list:
+        print(f"{name}\t\t{sec2hms(length)}\t{(length / total_audio_length):.1%}")
 
 
 ##############################################################################
@@ -57,39 +153,81 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("--train", help="train dataset directory", required=True)
     parser.add_argument("--test", help="train dataset directory")
-    parser.add_argument("--lm-corpus", nargs='+', help="path to one or more text files to build the language model")
-    parser.add_argument("-n", "--no-lm", help="do not copy utterances to language model", action="store_true")
-    parser.add_argument("-d", "--dry-run", help="run script without actualy writting files to disk", action="store_true")
-    parser.add_argument("--draw-figure", help="draw a pie chart showing data repartition", action="store_true")
-    parser.add_argument("-v", "--verbose", help="display errors and warnings", action="store_true")
-    parser.add_argument("-o", "--output", help="Output folder for generated Kalid files", default="data")
-    parser.add_argument("--lm-min-token", help="Minimum number of tokens in sentence for adding it to LM corpus", type=int, default=2)
-    parser.add_argument("--utt-min-len", help="Minimum length of audio utterances", type=float, default=0.0)
+    parser.add_argument(
+        "--lm-corpus",
+        nargs="+",
+        help="path to one or more text files to build the language model",
+    )
+    parser.add_argument(
+        "-n",
+        "--no-lm",
+        help="do not copy utterances to language model",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-d",
+        "--dry-run",
+        help="run script without actualy writting files to disk",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--draw-figure",
+        help="draw a pie chart showing data repartition",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-v", "--verbose", help="display errors and warnings", action="store_true"
+    )
+    parser.add_argument(
+        "-o", "--output", help="Output folder for generated Kalid files", default="data"
+    )
+    parser.add_argument(
+        "--lm-min-token",
+        help="Minimum number of tokens in sentence for adding it to LM corpus",
+        type=int,
+        default=2,
+    )
+    parser.add_argument(
+        "--utt-min-len",
+        help="Minimum length of audio utterances",
+        type=float,
+        default=0.0,
+    )
     parser.add_argument("--hash-id", help="Hash speaker ids", action="store_true")
-    parser.add_argument("--exclude", help="filepath containing a list of data files to exclude from training", type=str)
-    parser.add_argument("--split-audio", help="Split audio files by segments", action="store_true")
+    parser.add_argument(
+        "--exclude",
+        help="filepath containing a list of data files to exclude from training",
+        type=str,
+    )
+    parser.add_argument(
+        "--split-audio", help="Split audio files by segments", action="store_true"
+    )
     args = parser.parse_args()
     print(args)
 
     if not os.path.isdir(args.train):
-        raise NotADirectoryError("`train` argument should be a directory containing aligned data")
+        raise NotADirectoryError(
+            "`train` argument should be a directory containing aligned data"
+        )
     if args.test and not os.path.isdir(args.test):
-        raise NotADirectoryError("`test` argument should be a directory containing aligned data")
-    
+        raise NotADirectoryError(
+            "`test` argument should be a directory containing aligned data"
+        )
+
     speakers_gender = {"unknown": "u"}
 
     # Exclude specific files from training data
     exclude = []
     if args.exclude:
-        with open(args.exclude, 'r', encoding='utf-8') as _f:
+        with open(args.exclude, "r", encoding="utf-8") as _f:
             exclude.extend([l.strip() for l in _f.readlines()])
-    
-    stopwords = { word.lower() for word in stopwords }
-        
-    print("\n==== PARSING DATA ITEMS ====")
-    corpora = { "train": parse_dataset(args.train, exclude, args) }
-    if args.test: corpora["test"] = parse_dataset(args.test, exclude, args)
 
+    stopwords = {word.lower() for word in stopwords}
+
+    print("\n==== PARSING DATA ITEMS ====")
+    corpora = {"train": parse_dataset(args.train, exclude, args)}
+    if args.test:
+        corpora["test"] = parse_dataset(args.test, exclude, args)
 
     if not os.path.exists(args.output):
         os.mkdir(args.output)
@@ -97,22 +235,23 @@ if __name__ == "__main__":
     dir_kaldi_local = os.path.join(args.output, "local")
     if not os.path.exists(dir_kaldi_local):
         os.mkdir(dir_kaldi_local)
-    
+
     audio_dir = os.path.abspath(os.path.join(args.output, "converted"))
     if not os.path.exists(audio_dir):
         os.mkdir(audio_dir)
-        
 
     print("\n==== BUILDING KALDI FILES ====")
     # Copy text from train utterances to language model corpus
-    print(f"building file \'{os.path.join(dir_kaldi_local, 'corpus.txt')}\'")
-    with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'w', encoding='utf-8') as fout:
+    print(f"building file '{os.path.join(dir_kaldi_local, 'corpus.txt')}'")
+    with open(
+        os.path.join(dir_kaldi_local, "corpus.txt"), "w", encoding="utf-8"
+    ) as fout:
         n = 0
         for l in corpora["train"]["corpus"]:
             fout.write(f"{l}\n")
             n += 1
         print(f" {n} sentences added")
-    
+
     # External text corpora will be added now
     if args.lm_corpus:
         print("parsing external corpora :")
@@ -120,11 +259,13 @@ if __name__ == "__main__":
         for file in args.lm_corpus:
             if os.path.isdir(file):
                 # Expand directory
-                corpus_files.extend(list_files_with_extension(['txt', 'cor'], file))
+                corpus_files.extend(list_files_with_extension(["txt", "cor"], file))
             else:
                 corpus_files.append(file)
-                    
-        with open(os.path.join(dir_kaldi_local, "corpus.txt"), 'a', encoding='utf-8') as fout:
+
+        with open(
+            os.path.join(dir_kaldi_local, "corpus.txt"), "a", encoding="utf-8"
+        ) as fout:
             # for text_file in list_files_with_extension(".txt", LM_TEXT_CORPUS_DIR):
             for file in corpus_files:
                 print(Fore.GREEN + f" * {file}" + Fore.RESET)
@@ -132,36 +273,37 @@ if __name__ == "__main__":
                 for line in read_file_drop_comments(file):
                     sentence = line
                     cleaned = pre_process(sentence)
-                    cleaned = normalize_sentence(cleaned.strip(), autocorrect=True, norm_case=True)
-                    cleaned = cleaned.replace('-', ' ').replace('/', ' ')
-                    cleaned = cleaned.replace('\xa0', ' ')
-                    cleaned = filter_out_chars(cleaned, PUNCTUATION+'{}*°$€')
+                    cleaned = normalize_sentence(
+                        cleaned.strip(), autocorrect=True, norm_case=True
+                    )
+                    cleaned = cleaned.replace("-", " ").replace("/", " ")
+                    cleaned = cleaned.replace("\xa0", " ")
+                    cleaned = filter_out_chars(cleaned, PUNCTUATION + "{}*°$€")
                     for word in cleaned.split():
                         if word == "'":
                             pass
-                        elif '·' in word: # Don't add inclusive words for now
+                        elif "·" in word:  # Don't add inclusive words for now
                             pass
                         elif word in corpora["train"]["lexicon"]:
                             pass
                         else:
                             corpora["train"]["lexicon"].add(word)
-                    fout.write(' '.join(cleaned.split()) + '\n') # Remove multi-spaces
+                    fout.write(" ".join(cleaned.split()) + "\n")  # Remove multi-spaces
                     n += 1
                 print(f" {n} sentences added")
-        
-    
-    dir_dict_nosp = os.path.join(dir_kaldi_local, 'dict_nosp')
+
+    dir_dict_nosp = os.path.join(dir_kaldi_local, "dict_nosp")
     if not os.path.exists(dir_dict_nosp):
         os.mkdir(dir_dict_nosp)
-    
+
     # Lexicon.txt
-    lexicon_path = os.path.join(dir_dict_nosp, 'lexicon.txt')
-    print(f"building file \'{lexicon_path}\'")
+    lexicon_path = os.path.join(dir_dict_nosp, "lexicon.txt")
+    print(f"building file '{lexicon_path}'")
 
     if "test" in corpora:
         corpora["train"]["lexicon"].update(corpora["test"]["lexicon"])
 
-    with open(lexicon_path, 'w', encoding='utf-8') as f_out:
+    with open(lexicon_path, "w", encoding="utf-8") as f_out:
         for key, val in special_tokens.items():
             f_out.write(f"{key} {val}\n")
         # f_out.write("<SPOKEN_NOISE> SPN\n"
@@ -181,26 +323,25 @@ if __name__ == "__main__":
                     print(Fore.RED + "ERROR empty pronunciation" + Fore.RESET, word)
                 elif errors == 0:
                     f_out.write(f"{word} {pron}\n")
-    
+
     # silence_phones.txt
-    silence_phones_path  = os.path.join(dir_dict_nosp, "silence_phones.txt")
-    print(f"building file \'{silence_phones_path}\'")
-    with open(silence_phones_path, 'w', encoding='utf-8') as f:
-        f.write(f'SIL\noov\nSPN\nLAU\nNSN\n')
-    
+    silence_phones_path = os.path.join(dir_dict_nosp, "silence_phones.txt")
+    print(f"building file '{silence_phones_path}'")
+    with open(silence_phones_path, "w", encoding="utf-8") as f:
+        f.write(f"SIL\noov\nSPN\nLAU\nNSN\n")
+
     # nonsilence_phones.txt
     nonsilence_phones_path = os.path.join(dir_dict_nosp, "nonsilence_phones.txt")
-    print(f"building file \'{nonsilence_phones_path}\'")
-    with open(nonsilence_phones_path, 'w', encoding='utf-8') as f:
+    print(f"building file '{nonsilence_phones_path}'")
+    with open(nonsilence_phones_path, "w", encoding="utf-8") as f:
         for p in sorted(phonemes):
-            f.write(f'{p}\n')
-    
-    # optional_silence.txt
-    optional_silence_path  = os.path.join(dir_dict_nosp, "optional_silence.txt")
-    print(f"building file \'{optional_silence_path}\'")
-    with open(optional_silence_path, 'w', encoding='utf-8') as f:
-        f.write('SIL\n')
+            f.write(f"{p}\n")
 
+    # optional_silence.txt
+    optional_silence_path = os.path.join(dir_dict_nosp, "optional_silence.txt")
+    print(f"building file '{optional_silence_path}'")
+    with open(optional_silence_path, "w", encoding="utf-8") as f:
+        f.write("SIL\n")
 
     for corpus_name in corpora:
         corpus = corpora[corpus_name]
@@ -210,13 +351,13 @@ if __name__ == "__main__":
         save_dir = os.path.join(args.output, corpus_name)
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
-        
+
         # Convert audio files in wavscp to 16KHz 16bit mono PCM format
         print("Converting audio files to 16KHz s16le PCM, if necessary...")
         new_wavscp = []
         for rec_id, audio_path in corpus["wavscp"]:
             _, filename = os.path.split(audio_path)
-            if not is_audiofile_valid_format(audio_path) or ' ' in filename:
+            if not is_audiofile_valid_format(audio_path) or " " in filename:
                 # Kaldi doesn't like whitespaces in file path
                 basename, audio_format = os.path.splitext(filename)
                 basename = clean_filename(basename)
@@ -238,7 +379,7 @@ if __name__ == "__main__":
                 for utt_id, seg_rec_id, start, end in corpus["segments"]:
                     # Find all segments corresponding to this rec_id
                     if seg_rec_id == rec_id:
-                        output_file = f"{rec_id}_{floor(start*100):0>7}-{ceil(end*100):0>7}.wav"
+                        output_file = f"{rec_id}_{floor(start * 100):0>7}-{ceil(end * 100):0>7}.wav"
                         output_file = os.path.join(audio_dir, output_file)
                         if not os.path.exists(output_file):
                             export_segment(audio_path, start, end, output_file)
@@ -249,85 +390,72 @@ if __name__ == "__main__":
             corpus["wavscp"] = new_wavscp
 
         # Build 'text' file
-        fname = os.path.join(save_dir, 'text')
-        print(f"Building file \'{fname}\'")
-        with open(fname, 'w', encoding='utf-8') as f:
+        fname = os.path.join(save_dir, "text")
+        print(f"Building file '{fname}'")
+        with open(fname, "w", encoding="utf-8") as f:
             for utt_id, sentence in corpus["text"]:
                 f.write(f"{utt_id}\t{sentence}\n")
-        
+
         # Build 'segments' file (optional)
         # start and end are measured in seconds
         if not args.split_audio:
-            fname = os.path.join(save_dir, 'segments')
-            print(f"Building file \'{fname}\'")
-            with open(fname, 'w', encoding='utf-8') as f:
+            fname = os.path.join(save_dir, "segments")
+            print(f"Building file '{fname}'")
+            with open(fname, "w", encoding="utf-8") as f:
                 for utt_id, rec_id, start, end in corpus["segments"]:
                     f.write(f"{utt_id}\t{rec_id}\t{start}\t{end}\n")
-        
+
         # Build 'utt2spk'
-        fname = os.path.join(save_dir, 'utt2spk')
-        print(f"Building file \'{fname}\'")
-        with open(fname, 'w', encoding='utf-8') as f:
+        fname = os.path.join(save_dir, "utt2spk")
+        print(f"Building file '{fname}'")
+        with open(fname, "w", encoding="utf-8") as f:
             for utt_id, speaker_id in sorted(corpus["utt2spk"]):
                 f.write(f"{utt_id}\t{speaker_id}\n")
-        
+
         # Build 'spk2gender'
-        fname = os.path.join(save_dir, 'spk2gender')
-        print(f"Building file \'{fname}\'")
-        with open(fname, 'w', encoding='utf-8') as f:
+        fname = os.path.join(save_dir, "spk2gender")
+        print(f"Building file '{fname}'")
+        with open(fname, "w", encoding="utf-8") as f:
             for speaker in sorted(corpus["speakers"]):
-                if speaker not in speakers_gender: continue
+                if speaker not in speakers_gender:
+                    continue
                 f.write(f"{speaker}\t{speakers_gender[speaker]}\n")
-        
+
         # Build 'wav.scp'
-        fname = os.path.join(save_dir, 'wav.scp')
-        print(f"Building file \'{fname}\'")
-        with open(fname, 'w', encoding='utf-8') as f:
+        fname = os.path.join(save_dir, "wav.scp")
+        print(f"Building file '{fname}'")
+        with open(fname, "w", encoding="utf-8") as f:
             for rec_id, audio_path in sorted(corpus["wavscp"]):
                 f.write(f"{rec_id}\t{audio_path}\n")
-        
-    
+
     print("\n==== STATS ====")
 
     for corpus_name in corpora:
         corpus = corpora[corpus_name]
         if not corpus:
             continue
-        
+
         print(f"== {corpus_name.capitalize()} ==")
         print(f"- {len(corpus['text'])} utterances")
-        audio_length_m = corpus["audio_length"]['m']
-        audio_length_f = corpus["audio_length"]['f']
-        audio_length_u = corpus["audio_length"]['u']
+        audio_length_m = corpus["audio_length"]["m"]
+        audio_length_f = corpus["audio_length"]["f"]
+        audio_length_u = corpus["audio_length"]["u"]
         total_audio_length = audio_length_f + audio_length_m + audio_length_u
         print(f"- Total audio length:\t{sec2hms(total_audio_length)}")
-        print(f"- Male speakers:\t{sec2hms(audio_length_m)}\t{audio_length_m/total_audio_length:.1%}")
-        print(f"- Female speakers:\t{sec2hms(audio_length_f)}\t{audio_length_f/total_audio_length:.1%}")
+        print(
+            f"- Male speakers:\t{sec2hms(audio_length_m)}\t{audio_length_m / total_audio_length:.1%}"
+        )
+        print(
+            f"- Female speakers:\t{sec2hms(audio_length_f)}\t{audio_length_f / total_audio_length:.1%}"
+        )
         if audio_length_u > 0:
-            print(f"- Unknown speakers:\t{sec2hms(audio_length_u)}\t{audio_length_u/total_audio_length:.1%}")
+            print(
+                f"- Unknown speakers:\t{sec2hms(audio_length_u)}\t{audio_length_u / total_audio_length:.1%}"
+            )
 
     print(f"\nLexicon: {len(corpora['train']['lexicon'])} words")
 
-
-
     if args.draw_figure:
-        import matplotlib.pyplot as plt
-        import datetime
+        save_figure(corpora)
 
-        plt.figure(figsize = (8, 8))
-
-        total_audio_length = corpora["train"]["audio_length"]["f"] \
-            + corpora["train"]["audio_length"]["m"] \
-            + corpora["train"]["audio_length"]["u"]
-        keys, val = zip(*corpora["train"]["subdir_audiolen"].items())
-        keys = [ k.replace('_', ' ').rstrip('.ali') if v/total_audio_length>0.02 else ''
-                 for k,v in corpora["train"]["subdir_audiolen"].items() ]
-        
-        def labelfn(pct):
-            if pct > 2:
-                return f"{sec2hms(total_audio_length*pct/100)}"
-        plt.pie(val, labels=keys, normalize=True, autopct=labelfn)
-        plt.title(f"Dasparzh ar roadennoù, {sec2hms(total_audio_length)} en holl")
-        plt.savefig(os.path.join(args.output, f"subset_division_{datetime.datetime.now().strftime('%Y-%m-%d')}.png"))
-        print(f"\nFigure saved to \'{os.path.abspath(args.output)}\'")
-        # plt.show()
+    print_subsets_length(corpora)

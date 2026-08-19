@@ -1,19 +1,23 @@
 import re
-from ostilhou import tokenize, detokenize
-from ostilhou.text import (
-    strip_punct, filter_out_chars,
-    split_sentences, extract_parenthesis_content,
-    load_translation_dict, translate_tokens, reverse_translation_dict,
-    normalize, normalize_sentence,
-    inverse_normalize_sentence, inverse_normalize_timecoded,
-    pre_process, sentence_stats,
-    )
-from ostilhou.text.definitions import OPENING_QUOTES, CLOSING_QUOTES, PATTERN_DOTTED_ACRONYM, PUNCTUATION
-from ostilhou.corpora import load_wikipedia_150k, load_sarmoniou
-from ostilhou.asr import phonetize_word
-from ostilhou.asr.post_processing import post_process_timecoded, post_process_text
-from ostilhou.hspell import get_hspell_mistakes
 
+from ostilhou import detokenize, tokenize
+from ostilhou.corpora import load_sarmoniou, load_wikipedia_150k
+from ostilhou.hspell import get_hspell_mistakes
+from ostilhou.text import (
+    filter_out_chars,
+    load_translation_dict,
+    normalize_sentence,
+    pre_process,
+    sentence_stats,
+    split_sentences,
+    strip_punct,
+    translate_tokens,
+)
+from ostilhou.text.definitions import (
+    CLOSING_QUOTES,
+    OPENING_QUOTES,
+    PUNCTUATION,
+)
 
 
 def test_tokenize(sentence):
@@ -33,7 +37,7 @@ def test_normalize(sentence):
 
 
 def test_wiki150_noun_gender():
-    # Find male and female nouns by looking at the words following
+    # Try to guess nouns' genders by looking at the words following
     # the cardinals 'daou', 'tri', 'pevar' (for male nouns) and
     # 'div', 'teir', 'peder' (for female nouns)
     # Write them to separate files
@@ -61,13 +65,11 @@ def test_wiki150_noun_gender():
                         f_noun[word] = f_noun.get(word, 0) + 1
             except ValueError:
                 continue
-    
+
     with open("noun_f.txt", 'w') as f:
-        for noun, _ in sorted(f_noun.items(), key=lambda x: x[1], reverse=True):
-            f.write(f"{noun}\n")
+        f.writelines(f"{noun}\n" for noun, _ in sorted(f_noun.items(), key=lambda x: x[1], reverse=True))
     with open("noun_m.txt", 'w') as f:
-        for noun, _ in sorted(m_noun.items(), key=lambda x: x[1], reverse=True):
-            f.write(f"{noun}\n")
+        f.writelines(f"{noun}\n" for noun, _ in sorted(m_noun.items(), key=lambda x: x[1], reverse=True))
 
 
 
@@ -77,9 +79,6 @@ def test_sarmoniou():
     # Using a translation dictionary to replace words with their modern form
     td = load_translation_dict("ostilhou/dicts/sarmonioù_peurunvan.tsv")
 
-    # with open("sarmonioù.txt", 'w') as f:
-    #     for line in sarmoniou:
-    #         f.write(detokenize( translate(tokenize(line), td) ) + '\n')
     for line in sarmoniou:
         print(detokenize( translate_tokens(tokenize(line), td) ))
 
@@ -92,7 +91,7 @@ def test_clean_ya():
     n_parsed = 0
     # with open("ostilhou/corpora/wikipedia-br-150k.txt", 'r') as fin:
     with open("ya_dump.txt", 'r') as fin:
-        for line in fin.readlines():
+        for line in fin:
             if line:
                 line = pre_process(line).replace('*', '').replace('OOO', '000')
                 line = filter_out_chars(line, OPENING_QUOTES + CLOSING_QUOTES)
@@ -130,7 +129,7 @@ def test_clean_ya():
                         sentence = sentence[3:]
                     elif re.match(r".'\) ", sentence):
                         sentence = sentence[4:]
-                    
+
                     ntok = len(sentence.split())
                     if ntok < 3:
                         # Sentences is too short
@@ -145,7 +144,7 @@ def test_clean_ya():
                         # Capitalize first letter
                         # sentence = sentence[0].upper() + sentence[1:]
                         sentences.add(sentence)
-                    
+
                     # leave out inclusive words for now, as they can't be phonetized yet
                     if '·' in sentence:
                         continue
@@ -173,7 +172,7 @@ def test_clean_ya():
             if not re.search("[0-9]", sentence):
                 fout.write(sentence + '\n')
                 n_kept += 1
-    
+
     print(f"Total sentences: {n_parsed}")
     print(f"Kept: {len(sentences)} ({len(sentences)/n_parsed:.2%})")
     print(f"Kept (normalized): {n_kept} ({n_kept/n_parsed:.2%})")
@@ -198,7 +197,7 @@ if __name__ == "__main__":
     # sentence = filter_out(sentence, OPENING_QUOTES + CLOSING_QUOTES)
     # for s in split_sentences(sentence):
     #     print(s, end='')
-    
+
     # test_wiki150_noun_gender()
     # test_sarmoniou()
     # test_clean_ya()

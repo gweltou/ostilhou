@@ -198,7 +198,7 @@ def concatenate_audiofiles(file_list: list, out_filename: str, remove=False):
         remove (bool):
             remove original files
     """
-    print(f"concatenating {len(file_list)} files")
+    print(f"Concatenating {len(file_list)} files")
 
     if len(file_list) <= 1:
         return

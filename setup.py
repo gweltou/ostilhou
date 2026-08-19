@@ -3,7 +3,7 @@ from os import path
 
 
 NAME = "ostilhou"
-VERSION = "0.2.12"
+VERSION = "0.2.13"
 DESCRIPTION = "Breton language speech to text tools"
 URL = "https://github.com/gweltou/ostilhou/"
 AUTHOR = "Gweltaz Duval-Guennoc"

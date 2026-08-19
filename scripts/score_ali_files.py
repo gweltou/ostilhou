@@ -9,8 +9,8 @@ filepath, audio ext, seg start, seg end, reference, hypothesis, WER, CER
 If using `output` argument, will skip already checked files.
 
 usage:
-    python3 score_ali_files.py data_folder/
     python3 score_ali_files.py data.ali
+    python3 score_ali_files.py data_folder/ --model vosk_model/
     python3 score_ali_files.py list_of_files.txt -o result.txt
 """
 
@@ -55,6 +55,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", type=str, help="Results file")
     parser.add_argument("--noise", type=float, help="Add white noise to audio (dB)")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("--no-score", action="store_true")
     args = parser.parse_args()
     
     load_model(args.model)

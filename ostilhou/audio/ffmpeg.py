@@ -1,11 +1,11 @@
 import subprocess
-
+from collections.abc import Callable
 
 
 def stream_audio_file(
     input_file: str,
     sample_rate: int,
-    callback: callable,
+    callback: Callable,
     buffer_size = 8000,
 ):
     # Configure ffmpeg to output raw audio in the format we need
